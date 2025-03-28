@@ -26,4 +26,12 @@ def create_manufacturer(
     db.refresh(db_manufacturer)
     return db_manufacturer
 
+def get_manufacturer_by_id_type(db: Session, manufacturer: models.Manufacturer) -> Optional[models.Manufacturer]:
+    return db.query(models.Manufacturer).filter(
+        models.Manufacturer.identification_type == manufacturer.identification_type,
+        models.Manufacturer.identification_number == manufacturer.identification_number
+    ).first()
+
+
+
 

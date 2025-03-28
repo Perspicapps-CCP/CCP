@@ -23,7 +23,13 @@ class ManufacturerCreateSchema(BaseModel):
     address: str 
     contact_phone: str 
     email: EmailStr        
-   
+    @field_validator("identification_type")
+    @classmethod
+    def validate_identification_type(cls, value):
+        try:
+            return models.IdentificationType(value)
+        except ValueError:
+            raise ValueError(f"El tipo de identificación '{value}' no es válido.")
 
 
 class DeliveryItemResponseSchema(ManufacturerItemSchema):
