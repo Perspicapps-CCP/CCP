@@ -32,4 +32,15 @@ def get_manufacturer_by_id_type(db: Session, manufacturer: models.Manufacturer) 
         models.Manufacturer.identification_number == manufacturer.identification_number
     ).first()
 
+def get_manufacturers(
+    db: Session, skip: int = 0, limit: int = 10
+) -> List[models.Manufacturer]:
+    return (
+        db.query(models.Manufacturer)
+        .order_by(models.Manufacturer.updated_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
 
