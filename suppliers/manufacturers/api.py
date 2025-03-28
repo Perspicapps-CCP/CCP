@@ -42,5 +42,11 @@ def get_manufacturers(
         .limit(limit)
         .all()
     )
-
+    
+def get_manufacturer(db: Session, manufacturer_id: UUID) -> Optional[models.Manufacturer]:
+    return (
+        db.query(models.Manufacturer)
+        .filter(models.Manufacturer.id == manufacturer_id)
+        .first()
+    )
 
