@@ -31,4 +31,18 @@ def test_create_manufacturer(client: TestClient, manufacturer_payload: Dict) -> 
     assert response.status_code == 200    
     assert response.json()["id"] is not None, "ID cannot be null"
     
-
+def test_create_manufacturer_invalid_id_type(client: TestClient, manufacturer_payload: Dict) -> None:
+    """
+    Test the creation of a manufacturer with invalide id type.
+    """
+    manufacturer_payload["identification_type"] = "AA"
+    response = client.post("/suppliers/manufacturers", json=manufacturer_payload)
+    assert response.status_code == 422        
+    
+def test_create_manufacturer_invalid_email(client: TestClient, manufacturer_payload: Dict) -> None:
+    """
+    Test the creation of a manufacturer with invalide id type.
+    """
+    manufacturer_payload["email"] = "abc123"
+    response = client.post("/suppliers/manufacturers", json=manufacturer_payload)
+    assert response.status_code == 422   
