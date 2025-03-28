@@ -17,11 +17,11 @@ class ManufacturerItemSchema(BaseModel):
 
 
 class ManufacturerCreateSchema(BaseModel):
-    manufacturer_name: str 
-    identification_type: str
-    identification_number: str 
-    address: str 
-    contact_phone: str 
+    manufacturer_name: str  = Field(..., min_length=1) 
+    identification_type: str  = Field(..., min_length=1) 
+    identification_number: str  = Field(..., min_length=1) 
+    address: str  = Field(..., min_length=1) 
+    contact_phone: str  = Field(..., min_length=1) 
     email: EmailStr        
     @field_validator("identification_type")
     @classmethod
