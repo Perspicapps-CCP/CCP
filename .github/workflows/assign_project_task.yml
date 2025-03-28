@@ -42,7 +42,7 @@ jobs:
                 }
               }
             }' -f org=$ORGANIZATION -f number=$PROJECT_NUMBER --jq '.data.organization.projectV2.id')
-          
+
           # Obtener el ID del campo Status
           status_field_id=$(gh api graphql -f query='
             query($project_id: ID!) {
@@ -94,7 +94,7 @@ jobs:
                 projectId: $project_id
                 itemId: $item_id
                 fieldId: $field_id
-                value: { 
+                value: {
                   singleSelectOptionId: $option_id
                 }
               }) {
