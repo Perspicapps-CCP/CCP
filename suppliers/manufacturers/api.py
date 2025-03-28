@@ -1,41 +1,35 @@
-from typing import List
-from uuid import UUID
+from typing import List, Optional
+from uuid import UUID, uuid4
+from fastapi import HTTPException
 
-from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from db_dependency import get_db
-
-from . import mappers, schemas, services
-
-manufacturers_router = APIRouter(prefix="/manufacturers")
+from . import models, schemas
 
 
-@manufacturers_router.post("/", response_model=schemas.ManufacturerDetailSchema)
 def create_manufacturer(
-    manufacturer: schemas.ManufacturerCreateSchema, db: Session = Depends(get_db)
-):    
-    if services.get_manufacturer_by_id_type(db=db, manufacturer=manufacturer):
-         raise HTTPException(status_code=409, detail="Manufacturer already exists")
-    manufacturer = services.create_manufacturer(db=db, manufacturer=manufacturer)
-    return mappers.manufacturer_to_schema(manufacturer)
+    db: Session, manufacturer: schemas.ManufacturerCreateSchema
+) -> models.Manufacturer:
+    """Create a new manufacturer in the database."""
+    db_manufacturer = models.Manufacturer(
+        id=uuid4(),
+        name=manufacturer.manufacturer_name,
+        identification_type=models.IdentificationType(manufacturer.identification_type),
+        identification_number=manufacturer.identification_number,
+        address=manufacturer.address,
+        contact_phone=manufacturer.contact_phone,
+        email=manufacturer.email
+    )
+    db.add(db_manufacturer)
+    db.flush()
+    db.commit()
+    db.refresh(db_manufacturer)
+    return db_manufacturer
 
- 
-@manufacturers_router.get(
-    "/{manufacturer_id}", response_model=schemas.ManufacturerDetailSchema
-)
-def manufacturer_detail(manufacturer_id: UUID, db: Session = Depends(get_db)):
-    db_manufacturer = services.get_manufacturer(db, manufacturer_id=manufacturer_id)
-    if db_manufacturer is None:
-        raise HTTPException(
-            status_code=404, detail="Manufacturer not found"
-        )
-    return mappers.manufacturer_to_schema(db_manufacturer)
+def get_manufacturer_by_id_type(db: Session, manufacturer: models.Manufacturer) -> Optional[models.Manufacturer]:
+    return db.query(models.Manufacturer).filter(
+        models.Manufacturer.identification_type == manufacturer.identification_type,
+        models.Manufacturer.identification_number == manufacturer.identification_number
+    ).first()
 
 
-@manufacturers_router.get("/", response_model=List[schemas.ManufacturerDetailSchema])
-def list_all_manufacturers(
-    skip: int = 0, limit: int = 10, db: Session = Depends(get_db)
-):
-    manufacturers = services.get_manufacturers(db, skip=skip, limit=limit)
-    return [mappers.manufacturer_to_schema(manufacturer) for manufacturer in manufacturers]
