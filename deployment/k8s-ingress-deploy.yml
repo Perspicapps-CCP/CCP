@@ -1,0 +1,39 @@
+# INGRESS
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ccp-ingress
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: "sta-ingress-ip"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /ventas
+        pathType: Prefix
+        backend:
+          service:
+            name: ventas-api
+            port:
+              number: 9001
+      - path: /inventario
+        pathType: Prefix
+        backend:
+          service:
+            name: inventario-api
+            port:
+              number: 8001
+      - path: /manufacturer
+        pathType: Prefix
+        backend:
+          service:
+            name: fabricantes-api
+            port:
+              number: 3002
+      - path: /logistica
+        pathType: Prefix
+        backend:
+          service:
+            name: logistica-api
+            port:
+              number: 9003

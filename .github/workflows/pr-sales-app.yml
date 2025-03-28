@@ -1,0 +1,40 @@
+name: Run unit test before PR approval for sales service
+
+on:
+  pull_request:
+    paths:
+      - "sales/**"
+    branches: [ "main" ]
+env:
+  PROJECT_ID: ccp-perspicapps
+  REGION: us-central1
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Verify branch information
+      run: |
+        echo "GitHub ref: ${{ github.ref }}"
+        echo "PR source branch: ${{ github.head_ref }}"
+        echo "PR target branch: ${{ github.base_ref }}"
+        git branch --show-current
+        git rev-parse HEAD
+    - name: Set up Python 3.13
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.13.1"
+    - name: Install pipenv
+      working-directory: ./sales
+      run: pip install pipenv
+    - name: Install dependencies      
+      working-directory: ./sales
+      run: pipenv install --dev --system --deploy
+    - name: Run unit tests
+      working-directory: ./sales
+      run: pipenv run pytest --cov=. -v -s --cov-fail-under=70

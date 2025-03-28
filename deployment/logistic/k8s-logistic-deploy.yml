@@ -1,0 +1,198 @@
+# logistic DB
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistic-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistic-db
+  template:
+    metadata:
+      labels:
+        app: logistic-db
+    spec:
+      containers:
+      - name: logistic-db
+        image: postgres:latest
+        env:
+        - name: POSTGRES_USER
+          value: logistic
+        - name: POSTGRES_PASSWORD
+          value: postgres
+        - name: POSTGRES_DB
+          value: logistic_db
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 5432
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -d
+            - $(POSTGRES_DB)
+            - -U
+            - $(POSTGRES_USER)
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 5
+        volumeMounts:
+        - name: logistic-data
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: logistic-data
+        persistentVolumeClaim:
+          claimName: logistic-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistic-db
+spec:
+  selector:
+    app: logistic-db
+  ports:
+  - port: 5432
+    targetPort: 5432
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: logistic-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+# logistic Broker Consumer
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistic-broker-consumer
+  labels:
+    app: logistic-broker-consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistic-broker-consumer
+  template:
+    metadata:
+      labels:
+        app: logistic-broker-consumer
+    spec:
+      containers:
+      - name: logistic-broker-consumer
+        image: us-central1-docker.pkg.dev/ccp-perspicapps/ccp-images/logistic:latest
+        command: ["python", "-u", "start_broker_consumer.py"]
+        env:
+        - name: DB_USER
+          value: logistic
+        - name: DB_PASSWORD
+          value: postgres
+        - name: DB_HOST
+          value: logistic-db
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          value: logistic_db
+        - name: BROKER_HOST
+          value: rabbitmq
+        - name: CREATE_DELIVERY_TOPIC
+          value: rpc_create_delivery
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+---
+# logistic API
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistic-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistic-api
+  template:
+    metadata:
+      labels:
+        app: logistic-api
+    spec:
+      containers:
+      - name: logistic-api
+        image: us-central1-docker.pkg.dev/ccp-perspicapps/ccp-images/logistic:latest
+        command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "9003"]
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        ports:
+        - containerPort: 9003
+        env:
+        - name: DB_USER
+          value: logistic
+        - name: DB_PASSWORD
+          value: postgres
+        - name: DB_HOST
+          value: logistic-db
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          value: logistic_db
+        - name: BROKER_HOST
+          value: rabbitmq
+        - name: CREATE_DELIVERY_TOPIC
+          value: rpc_create_delivery
+        livenessProbe:
+          httpGet:
+            path: /logistic/health
+            port: 9003
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 1
+          failureThreshold: 2
+---
+# HEALTHCHECK logistic
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: logistic-config
+spec:
+  healthCheck:
+    checkIntervalSec: 60
+    port: 9003
+    type: HTTP
+    requestPath: /logistic/health
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistic-api
+  annotations:
+    cloud.google.com/backend-config: '{"default": "logistic-config"}'
+spec:
+  selector:
+    app: logistic-api
+  ports:
+  - port: 9003
+    targetPort: 9003

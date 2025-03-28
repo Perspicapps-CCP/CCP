@@ -1,0 +1,198 @@
+# inventory DB
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inventory-db
+  template:
+    metadata:
+      labels:
+        app: inventory-db
+    spec:
+      containers:
+      - name: inventory-db
+        image: postgres:latest
+        env:
+        - name: POSTGRES_USER
+          value: inventory
+        - name: POSTGRES_PASSWORD
+          value: postgres
+        - name: POSTGRES_DB
+          value: inventory_db
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 5432
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -d
+            - $(POSTGRES_DB)
+            - -U
+            - $(POSTGRES_USER)
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 5
+        volumeMounts:
+        - name: inventory-data
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: inventory-data
+        persistentVolumeClaim:
+          claimName: inventory-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-db
+spec:
+  selector:
+    app: inventory-db
+  ports:
+  - port: 5432
+    targetPort: 5432
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: inventory-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+# inventory Broker Consumer
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-broker-consumer
+  labels:
+    app: inventory-broker-consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inventory-broker-consumer
+  template:
+    metadata:
+      labels:
+        app: inventory-broker-consumer
+    spec:
+      containers:
+      - name: inventory-broker-consumer
+        image: us-central1-docker.pkg.dev/ccp-perspicapps/ccp-images/inventory:latest
+        command: ["python", "-u", "start_broker_consumer.py"]
+        env:
+        - name: DB_USER
+          value: inventory
+        - name: DB_PASSWORD
+          value: postgres
+        - name: DB_HOST
+          value: inventory-db
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          value: inventory_db
+        - name: BROKER_HOST
+          value: rabbitmq
+        - name: CREATE_DELIVERY_TOPIC
+          value: rpc_create_delivery
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+---
+# inventory API
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inventory-api
+  template:
+    metadata:
+      labels:
+        app: inventory-api
+    spec:
+      containers:
+      - name: inventory-api
+        image: us-central1-docker.pkg.dev/ccp-perspicapps/ccp-images/inventory:latest
+        command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "9003"]
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        ports:
+        - containerPort: 9003
+        env:
+        - name: DB_USER
+          value: inventory
+        - name: DB_PASSWORD
+          value: postgres
+        - name: DB_HOST
+          value: inventory-db
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          value: inventory_db
+        - name: BROKER_HOST
+          value: rabbitmq
+        - name: CREATE_DELIVERY_TOPIC
+          value: rpc_create_delivery
+        livenessProbe:
+          httpGet:
+            path: /inventory/health
+            port: 9003
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 1
+          failureThreshold: 2
+---
+# HEALTHCHECK inventory
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: inventory-config
+spec:
+  healthCheck:
+    checkIntervalSec: 60
+    port: 9003
+    type: HTTP
+    requestPath: /inventory/health
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-api
+  annotations:
+    cloud.google.com/backend-config: '{"default": "inventory-config"}'
+spec:
+  selector:
+    app: inventory-api
+  ports:
+  - port: 9003
+    targetPort: 9003
