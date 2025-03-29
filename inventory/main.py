@@ -7,11 +7,11 @@ from sqlalchemy.orm import Session
 import schemas
 from database import Base, engine
 from db_dependency import get_db
-from delivieries.api import deliveries_router
+from src.api import deliveries_router
 
 app = FastAPI()
 
-prefix_router = APIRouter(prefix="/logistica")
+prefix_router = APIRouter(prefix="/inventory")
 
 prefix_router.include_router(deliveries_router)
 
@@ -20,7 +20,7 @@ if "pytest" not in sys.modules:
 
 
 # Rest the database
-@prefix_router.post("/reset-db", response_model=schemas.DeleteResponse)
+@prefix_router.post("/reset", response_model=schemas.DeleteResponse)
 def reset(db: Session = Depends(get_db)):
     Base.metadata.drop_all(bind=db.get_bind())
     Base.metadata.create_all(bind=db.get_bind())
