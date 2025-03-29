@@ -46,3 +46,5 @@ def test_create_manufacturer_invalid_email(client: TestClient, manufacturer_payl
     manufacturer_payload["email"] = "abc123"
     response = client.post("/suppliers/manufacturers", json=manufacturer_payload)
     assert response.status_code == 422   
+       
+
