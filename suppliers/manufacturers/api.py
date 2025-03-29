@@ -21,9 +21,7 @@ def create_manufacturer(
     return mappers.manufacturer_to_schema(manufacturer)
 
  
-@manufacturers_router.get(
-    "/{manufacturer_id}", response_model=schemas.ManufacturerDetailSchema
-)
+@manufacturers_router.get("/{manufacturer_id}", response_model=schemas.ManufacturerDetailSchema)
 def manufacturer_detail(manufacturer_id: UUID, db: Session = Depends(get_db)):
     db_manufacturer = services.get_manufacturer(db, manufacturer_id=manufacturer_id)
     if db_manufacturer is None:
