@@ -31,7 +31,7 @@ if "pytest" not in sys.modules:
     seed_database()
 
 
-# Rest the database
+# Reset the database
 @prefix_router.post("/reset-db", response_model=schemas.DeleteResponse)
 def reset(db: Session = Depends(get_db)):
     Base.metadata.drop_all(bind=db.get_bind())

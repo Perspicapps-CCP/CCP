@@ -1,4 +1,4 @@
-# Fite to validate the data that is being sent and recieved to the API
+# File to validate the data that is being sent and received to the API
 
 from pydantic import BaseModel
 
