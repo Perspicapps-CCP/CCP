@@ -2,7 +2,7 @@
 name: Historia de usuario
 about: Crear una historia de usuario
 title: "[HU]-XX "
-labels: Historia_Usuario
+labels: ''
 assignees: ''
 
 ---
