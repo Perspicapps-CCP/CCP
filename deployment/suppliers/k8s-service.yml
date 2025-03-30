@@ -1,0 +1,35 @@
+# HEALTHCHECK suppliers
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: suppliers-back-config
+spec:
+  healthCheck:
+    checkIntervalSec: 60
+    port: 8001
+    type: HTTP
+    requestPath: /suppliers/health
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: suppliers-db
+spec:
+  selector:
+    app: suppliers-db
+  ports:
+  - port: 5432
+    targetPort: 5432
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: suppliers-api
+  annotations:
+    cloud.google.com/backend-config: '{"default": "suppliers-back-config"}'
+spec:
+  selector:
+    app: suppliers-api
+  ports:
+  - port: 8001
+    targetPort: 8001

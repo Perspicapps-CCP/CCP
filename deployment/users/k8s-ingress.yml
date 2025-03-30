@@ -1,0 +1,17 @@
+# INGRESS
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ccp-ingress
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: "sta-ingress-ip"
+spec:
+  rules:
+  - http:
+      - path: /users
+        pathType: Prefix
+        backend:
+          service:
+            name: users-api
+            port:
+              number: 8001

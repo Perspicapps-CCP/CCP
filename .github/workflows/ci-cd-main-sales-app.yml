@@ -9,6 +9,7 @@ on:
 env:
   PROJECT_ID: ccp-perspicapps
   REGION: us-central1
+  CLUSTER_NAME: ccp-autopilot
 
 permissions:
   contents: read
@@ -108,7 +109,7 @@ jobs:
         run: |
           gcloud components install gke-gcloud-auth-plugin
           gke-gcloud-auth-plugin --version
-          gcloud container clusters get-credentials ccp-autopilot --region ${{ env.REGION }}
+          gcloud container clusters get-credentials ${{ env.CLUSTER_NAME }} --region ${{ env.REGION }}
 
       - name: 'Set up Kustomize'
         run: |-

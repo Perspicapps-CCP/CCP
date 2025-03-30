@@ -1,4 +1,15 @@
 # sales DB
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sales-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,11 +29,20 @@ spec:
         image: postgres:latest
         env:
         - name: POSTGRES_USER
-          value: sales
+          valueFrom:
+            secretKeyRef:
+              name: sales-secrets
+              key: DB_USER
         - name: POSTGRES_PASSWORD
-          value: postgres
+          valueFrom:
+            secretKeyRef:
+              name: sales-secrets
+              key: DB_PASSWORD
         - name: POSTGRES_DB
-          value: sales_db
+          valueFrom:
+            configMapKeyRef:
+              name: sales-config
+              key: DB_NAME
         - name: PGDATA
           value: /var/lib/postgresql/data/pgdata
         resources:
@@ -54,28 +74,6 @@ spec:
         persistentVolumeClaim:
           claimName: sales-pvc
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: sales-db
-spec:
-  selector:
-    app: sales-db
-  ports:
-  - port: 5432
-    targetPort: 5432
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: sales-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
----
 # sales Broker Consumer
 apiVersion: apps/v1
 kind: Deployment
@@ -99,19 +97,40 @@ spec:
         command: ["python", "-u", "start_broker_consumer.py"]
         env:
         - name: DB_USER
-          value: sales
+          valueFrom:
+            secretKeyRef:
+              name: sales-secrets
+              key: DB_USER
         - name: DB_PASSWORD
-          value: postgres
+          valueFrom:
+            secretKeyRef:
+              name: sales-secrets
+              key: DB_PASSWORD
         - name: DB_HOST
-          value: sales-db
+          valueFrom:
+            configMapKeyRef:
+              name: sales-config
+              key: DB_HOST
         - name: DB_PORT
-          value: "5432"
+          valueFrom:
+            configMapKeyRef:
+              name: sales-config
+              key: DB_PORT
         - name: DB_NAME
-          value: sales_db
+          valueFrom:
+            configMapKeyRef:
+              name: sales-config
+              key: DB_NAME
         - name: BROKER_HOST
-          value: rabbitmq
-        - name: CREATE_DELIVERY_TOPIC
-          value: rpc_create_delivery
+          valueFrom:
+            configMapKeyRef:
+              name: sales-config
+              key: BROKER_HOST
+        - name: RESERVE_ITEMS_TOPIC
+          valueFrom:
+            configMapKeyRef:
+              name: sales-config
+              key: RESERVE_ITEMS_TOPIC
         resources:
           requests:
             cpu: "100m"
@@ -138,7 +157,7 @@ spec:
       containers:
       - name: sales-api
         image: us-central1-docker.pkg.dev/ccp-perspicapps/ccp-images/sales:latest
-        command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "9003"]
+        command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
         resources:
           requests:
             memory: "128Mi"
@@ -147,52 +166,48 @@ spec:
             memory: "256Mi"
             cpu: "200m"
         ports:
-        - containerPort: 9003
+        - containerPort: 8001
         env:
         - name: DB_USER
-          value: sales
+          valueFrom:
+            secretKeyRef:
+              name: sales-secrets
+              key: DB_USER
         - name: DB_PASSWORD
-          value: postgres
+          valueFrom:
+            secretKeyRef:
+              name: sales-secrets
+              key: DB_PASSWORD
         - name: DB_HOST
-          value: sales-db
+          valueFrom:
+            configMapKeyRef:
+              name: sales-config
+              key: DB_HOST
         - name: DB_PORT
-          value: "5432"
+          valueFrom:
+            configMapKeyRef:
+              name: sales-config
+              key: DB_PORT
         - name: DB_NAME
-          value: sales_db
+          valueFrom:
+            configMapKeyRef:
+              name: sales-config
+              key: DB_NAME
         - name: BROKER_HOST
-          value: rabbitmq
-        - name: CREATE_DELIVERY_TOPIC
-          value: rpc_create_delivery
+          valueFrom:
+            configMapKeyRef:
+              name: sales-config
+              key: BROKER_HOST
+        - name: RESERVE_ITEMS_TOPIC
+          valueFrom:
+            configMapKeyRef:
+              name: sales-config
+              key: RESERVE_ITEMS_TOPIC
         livenessProbe:
           httpGet:
             path: /sales/health
-            port: 9003
+            port: 8001
           initialDelaySeconds: 10
           periodSeconds: 5
           timeoutSeconds: 1
           failureThreshold: 2
----
-# HEALTHCHECK sales
-apiVersion: cloud.google.com/v1
-kind: BackendConfig
-metadata:
-  name: sales-config
-spec:
-  healthCheck:
-    checkIntervalSec: 60
-    port: 9003
-    type: HTTP
-    requestPath: /sales/health
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: sales-api
-  annotations:
-    cloud.google.com/backend-config: '{"default": "sales-config"}'
-spec:
-  selector:
-    app: sales-api
-  ports:
-  - port: 9003
-    targetPort: 9003

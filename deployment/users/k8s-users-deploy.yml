@@ -1,8 +1,8 @@
-# logistic DB
+# users DB
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: logistic-pvc
+  name: users-pvc
 spec:
   accessModes:
     - ReadWriteOnce
@@ -13,35 +13,35 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: logistic-db
+  name: users-db
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: logistic-db
+      app: users-db
   template:
     metadata:
       labels:
-        app: logistic-db
+        app: users-db
     spec:
       containers:
-      - name: logistic-db
+      - name: users-db
         image: postgres:latest
         env:
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
-              name: logistic-secrets
+              name: users-secrets
               key: DB_USER
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: logistic-secrets
+              name: users-secrets
               key: DB_PASSWORD
         - name: POSTGRES_DB
           valueFrom:
             configMapKeyRef:
-              name: logistic-config
+              name: users-config
               key: DB_NAME
         - name: PGDATA
           value: /var/lib/postgresql/data/pgdata
@@ -67,70 +67,70 @@ spec:
           timeoutSeconds: 5
           failureThreshold: 5
         volumeMounts:
-        - name: logistic-data
+        - name: users-data
           mountPath: /var/lib/postgresql/data
       volumes:
-      - name: logistic-data
+      - name: users-data
         persistentVolumeClaim:
-          claimName: logistic-pvc
+          claimName: users-pvc
 ---
-# logistic Broker Consumer
+# users Broker Consumer
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: logistic-broker-consumer
+  name: users-broker-consumer
   labels:
-    app: logistic-broker-consumer
+    app: users-broker-consumer
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
-      app: logistic-broker-consumer
+      app: users-broker-consumer
   template:
     metadata:
       labels:
-        app: logistic-broker-consumer
+        app: users-broker-consumer
     spec:
       containers:
-      - name: logistic-broker-consumer
-        image: us-central1-docker.pkg.dev/ccp-perspicapps/ccp-images/logistic:latest
+      - name: users-broker-consumer
+        image: us-central1-docker.pkg.dev/ccp-perspicapps/ccp-images/users:latest
         command: ["python", "-u", "start_broker_consumer.py"]
         env:
         - name: DB_USER
           valueFrom:
             secretKeyRef:
-              name: logistic-secrets
+              name: users-secrets
               key: DB_USER
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: logistic-secrets
+              name: users-secrets
               key: DB_PASSWORD
         - name: DB_HOST
           valueFrom:
             configMapKeyRef:
-              name: logistic-config
+              name: users-config
               key: DB_HOST
         - name: DB_PORT
           valueFrom:
             configMapKeyRef:
-              name: logistic-config
+              name: users-config
               key: DB_PORT
         - name: DB_NAME
           valueFrom:
             configMapKeyRef:
-              name: logistic-config
+              name: users-config
               key: DB_NAME
         - name: BROKER_HOST
           valueFrom:
             configMapKeyRef:
-              name: logistic-config
+              name: users-config
               key: BROKER_HOST
-        - name: CREATE_DELIVERY_TOPIC
+        - name: RESERVE_ITEMS_TOPIC
           valueFrom:
             configMapKeyRef:
-              name: logistic-config
-              key: CREATE_DELIVERY_TOPIC
+              name: users-config
+              key: RESERVE_ITEMS_TOPIC
         resources:
           requests:
             cpu: "100m"
@@ -139,24 +139,24 @@ spec:
             cpu: "200m"
             memory: "256Mi"
 ---
-# logistic API
+# users API
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: logistic-api
+  name: users-api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: logistic-api
+      app: users-api
   template:
     metadata:
       labels:
-        app: logistic-api
+        app: users-api
     spec:
       containers:
-      - name: logistic-api
-        image: us-central1-docker.pkg.dev/ccp-perspicapps/ccp-images/logistic:latest
+      - name: users-api
+        image: us-central1-docker.pkg.dev/ccp-perspicapps/ccp-images/users:latest
         command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
         resources:
           requests:
@@ -171,41 +171,41 @@ spec:
         - name: DB_USER
           valueFrom:
             secretKeyRef:
-              name: logistic-secrets
+              name: users-secrets
               key: DB_USER
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: logistic-secrets
+              name: users-secrets
               key: DB_PASSWORD
         - name: DB_HOST
           valueFrom:
             configMapKeyRef:
-              name: logistic-config
+              name: users-config
               key: DB_HOST
         - name: DB_PORT
           valueFrom:
             configMapKeyRef:
-              name: logistic-config
+              name: users-config
               key: DB_PORT
         - name: DB_NAME
           valueFrom:
             configMapKeyRef:
-              name: logistic-config
+              name: users-config
               key: DB_NAME
         - name: BROKER_HOST
           valueFrom:
             configMapKeyRef:
-              name: logistic-config
+              name: users-config
               key: BROKER_HOST
-        - name: CREATE_DELIVERY_TOPIC
+        - name: RESERVE_ITEMS_TOPIC
           valueFrom:
             configMapKeyRef:
-              name: logistic-config
-              key: CREATE_DELIVERY_TOPIC
+              name: users-config
+              key: RESERVE_ITEMS_TOPIC
         livenessProbe:
           httpGet:
-            path: /logistic/health
+            path: /users/health
             port: 8001
           initialDelaySeconds: 10
           periodSeconds: 5
