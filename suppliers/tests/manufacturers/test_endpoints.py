@@ -67,13 +67,13 @@ def test_get_manufacturer(client: TestClient, manufacturer_payload: Dict) -> Non
     """
     Test retrieving a manufactrurer by its ID.
     """
-    # First, create a manufacturer
+
     create_response = client.post(
         "/suppliers/manufacturers/", json=manufacturer_payload
     )
     manufacturer_id = create_response.json()["id"]
 
-    # Then, get the manufacturer
+
     response = client.get(f"/suppliers/manufacturers/{manufacturer_id}")
     assert response.status_code == 200
     assert response.json()["id"] == manufacturer_id
@@ -83,6 +83,6 @@ def test_get_manufacturer_not_exists(client: TestClient, manufacturer_payload: D
     """
     Test try retrieving a no existing manufactrurer.
     """
-    # Then, get the manufacturer
+
     response = client.get("/suppliers/manufacturers/6d17bf98-eef1-4d6d-b103-412513f3c8c6")
     assert response.status_code == 404    
