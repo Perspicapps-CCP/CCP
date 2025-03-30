@@ -81,7 +81,7 @@ def test_get_manufacturer(client: TestClient, manufacturer_payload: Dict) -> Non
     
 def test_get_manufacturer_not_exists(client: TestClient, manufacturer_payload: Dict) -> None:
     """
-    Test retrieving a manufactrurer by its ID.
+    Test try retrieving a no existing manufactrurer.
     """
     # Then, get the manufacturer
     response = client.get("/suppliers/manufacturers/6d17bf98-eef1-4d6d-b103-412513f3c8c6")

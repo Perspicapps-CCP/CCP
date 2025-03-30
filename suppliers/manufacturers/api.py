@@ -31,6 +31,7 @@ def manufacturer_detail(manufacturer_id: UUID, db: Session = Depends(get_db)):
     return mappers.manufacturer_to_schema(db_manufacturer)
 
 
+
 @manufacturers_router.get("/", response_model=List[schemas.ManufacturerDetailSchema])
 def list_all_manufacturers(
     skip: int = 0, limit: int = 10, db: Session = Depends(get_db)
