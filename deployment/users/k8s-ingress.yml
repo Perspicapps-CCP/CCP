@@ -4,14 +4,15 @@ kind: Ingress
 metadata:
   name: ccp-ingress
   annotations:
-    kubernetes.io/ingress.global-static-ip-name: "sta-ingress-ip"
+    kubernetes.io/ingress.global-static-ip-name: "ccp-ingress-ip"
 spec:
   rules:
   - http:
-      - path: /users
+      paths:
+      - path: /api/v1/users
         pathType: Prefix
         backend:
           service:
             name: users-api
             port:
-              number: 8001
+              number: 80

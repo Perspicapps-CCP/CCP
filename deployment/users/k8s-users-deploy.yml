@@ -205,7 +205,7 @@ spec:
               key: RESERVE_ITEMS_TOPIC
         livenessProbe:
           httpGet:
-            path: /users/health
+            path: /api/v1/users/health
             port: 8001
           initialDelaySeconds: 10
           periodSeconds: 5
