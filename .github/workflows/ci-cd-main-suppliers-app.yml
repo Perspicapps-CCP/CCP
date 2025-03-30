@@ -122,7 +122,7 @@ jobs:
       - name: 'Deploy to GKE'
         working-directory: ./deployment/suppliers
         run: |-
-          kustomize edit set image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/ccp-images/suppliers:latest=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/ccp-images/users:${{ needs.build.outputs.version_tag }}
+          kustomize edit set image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/ccp-images/suppliers:latest=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/ccp-images/suppliers:${{ needs.build.outputs.version_tag }}
           kustomize build . | kubectl apply -f -
           kubectl rollout status deployment/suppliers-api
           kubectl rollout status deployment/suppliers-broker-consumer
