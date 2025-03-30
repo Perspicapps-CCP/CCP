@@ -34,7 +34,7 @@ def test_create_delivery(client: TestClient, delivery_payload: Dict) -> None:
     """
     Test the creation of a delivery.
     """
-    response = client.post("/logistica/entregas/", json=delivery_payload)
+    response = client.post("/inventory/entregas/", json=delivery_payload)
     assert response.status_code == 200
     assert response.json()["purchase_id"] == delivery_payload["purchase_id"]
 
@@ -45,12 +45,12 @@ def test_get_delivery(client: TestClient, delivery_payload: Dict) -> None:
     """
     # First, create a delivery
     create_response = client.post(
-        "/logistica/entregas/", json=delivery_payload
+        "/inventory/entregas/", json=delivery_payload
     )
     delivery_id = create_response.json()["id"]
 
     # Then, get the delivery
-    response = client.get(f"/logistica/entregas/{delivery_id}")
+    response = client.get(f"/inventory/entregas/{delivery_id}")
     assert response.status_code == 200
     assert response.json()["id"] == delivery_id
 
@@ -59,7 +59,7 @@ def test_list_all_deliveries(client: TestClient) -> None:
     """
     Test listing all deliveries.
     """
-    response = client.get("/logistica/entregas/")
+    response = client.get("/inventory/entregas/")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
@@ -70,15 +70,15 @@ def test_delete_delivery(client: TestClient, delivery_payload: Dict) -> None:
     """
     # First, create a delivery
     create_response = client.post(
-        "/logistica/entregas/", json=delivery_payload
+        "/inventory/entregas/", json=delivery_payload
     )
     delivery_id = create_response.json()["id"]
 
     # Then, delete the delivery
-    response = client.delete(f"/logistica/entregas/{delivery_id}")
+    response = client.delete(f"/inventory/entregas/{delivery_id}")
     assert response.status_code == 200
     assert response.json()["msg"] == "Todos los datos fueron eliminados"
 
     # Verify the delivery is deleted
-    get_response = client.get(f"/logistica/entregas/{delivery_id}")
+    get_response = client.get(f"/inventory/entregas/{delivery_id}")
     assert get_response.status_code == 404

@@ -255,7 +255,11 @@ Crea una nueva bodega.
 ```json
 {
   "warehouse_id": id de la bodega,
-  "user_id": id del usuario que creo la bodega,
+  "warehouse_name": nombre de la bodega,
+  "country": pais en donde está la bodega,
+  "city": pais en donde está la bodega,
+  "address": direccion de la bodega,
+  "phone": telefono de contacto de la bodega,
   "created_at": fecha y hora de creación de la bodega en formato ISO
 }
 ```

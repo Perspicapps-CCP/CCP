@@ -4,4 +4,4 @@ from pydantic import BaseModel
 
 
 class DeleteResponse(BaseModel):
-    msg: str = "Todos los datos fueron eliminados"
+    msg: str = "All data has been deleted"

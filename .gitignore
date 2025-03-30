@@ -1,0 +1,6 @@
+inventory/__pycache__
+inventory/inventory/__pycache__
+inventory/warehouse/__pycache__
+inventory/tests/__pycache__
+inventory/tests/inventory/__pycache__
+inventory/tests/warehouse/__pycache__
