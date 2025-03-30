@@ -1,0 +1,191 @@
+services:
+  rabbitmq:
+    image: rabbitmq:4.0-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: unless-stopped
+    networks:
+      - general
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 30s
+      retries: 3
+  inventory_api:
+    build: ./inventory
+    command: uvicorn main:app --host 0.0.0.0 --port 9001
+    container_name: inventory_api
+    ports:
+      - "9001:9001"
+    environment:
+      DB_USER: inventory
+      DB_PASSWORD: postgres
+      DB_HOST: inventory_db
+      DB_PORT: 5432
+      DB_NAME: inventory_db
+      BROKER_HOST: rabbitmq
+    depends_on:
+      inventory_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - general
+      - inventory_net
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:9001/logistica/health || exit 1" ]
+      interval: 5s
+      timeout: 1s
+      retries: 2
+    restart: on-failure
+
+  inventory_db:
+    image: postgres:latest
+    container_name: inventory_db
+    volumes:
+      - inventory_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: inventory
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: inventory_db
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - inventory_net
+  suppliers_api:
+    build: ./suppliers
+    command: uvicorn main:app --host 0.0.0.0 --port 9002
+    container_name: suppliers_api
+    ports:
+      - "9002:9002"
+    environment:
+      DB_USER: suppliers
+      DB_PASSWORD: postgres
+      DB_HOST: suppliers_db
+      DB_PORT: 5432
+      DB_NAME: suppliers_db
+      BROKER_HOST: rabbitmq
+    depends_on:
+      suppliers_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - general
+      - suppliers_net
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:9001/suppliers/health || exit 1" ]
+      interval: 5s
+      timeout: 1s
+      retries: 2
+    restart: on-failure
+
+  suppliers_db:
+    image: postgres:latest
+    container_name: suppliers_db
+    volumes:
+      - suppliers_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: suppliers
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: suppliers_db
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - suppliers_net
+  users_api:
+    build: ./users
+    command: uvicorn main:app --host 0.0.0.0 --port 9003
+    container_name: users_api
+    ports:
+      - "9003:9003"
+    environment:
+      DB_USER: users
+      DB_PASSWORD: postgres
+      DB_HOST: users_db
+      DB_PORT: 5432
+      DB_NAME: users_db
+      BROKER_HOST: rabbitmq
+    depends_on:
+      users_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - general
+      - users_net
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:9001/api/v1/users/health || exit 1" ]
+      interval: 5s
+      timeout: 1s
+      retries: 2
+    restart: on-failure
+
+  users_broker_consumer:
+    build: ./users
+    command: python -u start_broker_consumer.py
+    container_name: users_broker_consumer
+    environment:
+      DB_USER: users
+      DB_PASSWORD: postgres
+      DB_HOST: users_db
+      DB_PORT: 5432
+      DB_NAME: users_db
+      BROKER_HOST: rabbitmq
+      CREATE_DELIVERY_TOPIC: rpc_create_delivery
+    depends_on:
+      users_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - general
+      - users_net
+
+  users_db:
+    image: postgres:latest
+    container_name: users_db
+    volumes:
+      - users_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: users
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: users_db
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - users_net
+  nginx:
+    image: nginx:latest
+    container_name: nginx_gateway
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - inventory_api
+      - suppliers_api
+      - users_api
+    networks:
+      - general
+    restart: unless-stopped
+volumes:
+  users_data:
+  inventory_data:
+  suppliers_data:
+networks:
+  general:
+  users_net:
+  inventory_net:
+  suppliers_net:

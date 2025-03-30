@@ -4,7 +4,7 @@ kind: Ingress
 metadata:
   name: ccp-ingress
   annotations:
-    kubernetes.io/ingress.global-static-ip-name: "sta-ingress-ip"
+    kubernetes.io/ingress.global-static-ip-name: "ccp-ingress-ip"
 spec:
   rules:
   - http:
@@ -14,4 +14,4 @@ spec:
           service:
             name: suppliers-api
             port:
-              number: 8001
+              number: 80
