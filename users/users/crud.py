@@ -18,3 +18,18 @@ def get_user(db: Session, username: str) -> Optional[models.User]:
     return (
         db.query(models.User).filter(models.User.username == username).first()
     )
+
+
+def create_user(db: Session, user: models.User) -> models.User:
+    """
+    Create a new user in the database.
+    Args:
+        db (Session): The database session to use for the query.
+        user (models.User): The user object to create.
+    Returns:
+        models.User: The created user object.
+    """
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
