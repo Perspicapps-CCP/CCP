@@ -1,9 +1,9 @@
-name: Run CI/CD for users service
+name: Run CI/CD for suppliers service
 
 on:
   push:
     paths:
-      - "users/**"
+      - "suppliers/**"
     branches: [ "main" ]
 
 env:
@@ -28,13 +28,13 @@ jobs:
       with:
         python-version: "3.13.1"
     - name: Install pipenv
-      working-directory: ./users
+      working-directory: ./suppliers
       run: pip install pipenv
     - name: Install dependencies      
-      working-directory: ./users
+      working-directory: ./suppliers
       run: pipenv install --dev --system --deploy
     - name: Run unit tests
-      working-directory: ./users
+      working-directory: ./suppliers
       run: pipenv run pytest --cov=. -v -s --cov-fail-under=70
 
   build:
@@ -75,15 +75,15 @@ jobs:
           gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
       - name: Build image
-        working-directory: ./users
+        working-directory: ./suppliers
         run: |
-          docker build . --tag ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/ccp-images/users:${{ steps.generate_tag.outputs.version_tag }}
-          docker build . --tag ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/ccp-images/users:latest
+          docker build . --tag ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/ccp-images/suppliers:${{ steps.generate_tag.outputs.version_tag }}
+          docker build . --tag ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/ccp-images/suppliers:latest
 
       - name: Push image to artifact registry
         run: |
-          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/ccp-images/users:${{ steps.generate_tag.outputs.version_tag }}
-          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/ccp-images/users:latest
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/ccp-images/suppliers:${{ steps.generate_tag.outputs.version_tag }}
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/ccp-images/suppliers:latest
 
   deploy:
     needs: build
@@ -120,10 +120,10 @@ jobs:
           kustomize version
       
       - name: 'Deploy to GKE'
-        working-directory: ./deployment/users
+        working-directory: ./deployment/suppliers
         run: |-
-          kustomize edit set image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/ccp-images/users:latest=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/ccp-images/users:${{ needs.build.outputs.version_tag }}
+          kustomize edit set image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/ccp-images/suppliers:latest=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/ccp-images/users:${{ needs.build.outputs.version_tag }}
           kustomize build . | kubectl apply -f -
-          kubectl rollout status deployment/users-api
-          kubectl rollout status deployment/users-broker-consumer
+          kubectl rollout status deployment/suppliers-api
+          kubectl rollout status deployment/suppliers-broker-consumer
           kubectl get services -o wide
