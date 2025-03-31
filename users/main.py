@@ -2,15 +2,26 @@
 import sys
 
 from fastapi import APIRouter, Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-
-import schemas
-from database import Base, SessionLocal, engine
-from db_dependency import get_db
 from users import seed_data as users_seed_data
 from users.api import users_router
 
+import config
+import schemas
+from database import Base, SessionLocal, engine
+from db_dependency import get_db
+
 app = FastAPI()
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=config.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 prefix_router = APIRouter(prefix="/api/v1/users")
 # Include the users router

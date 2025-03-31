@@ -5,6 +5,7 @@ on:
     paths:
       - "users/**"
     branches: [ "main" ]
+  workflow_dispatch:
 
 env:
   PROJECT_ID: ccp-perspicapps
@@ -124,9 +125,8 @@ jobs:
         run: |-
           kustomize edit set image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/ccp-images/users:latest=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/ccp-images/users:${{ needs.build.outputs.version_tag }}
           kustomize build . | kubectl apply -f -
-          kubectl apply -f k8s-configmap-secret.yml
+          kubectl apply -f k8s-configmap-secrets.yml
           kubectl apply -f k8s-service.yml
-          kubectl apply -f k8s-ingress.yml
           kubectl rollout status deployment/users-api
           kubectl rollout status deployment/users-broker-consumer
           kubectl get services -o wide
