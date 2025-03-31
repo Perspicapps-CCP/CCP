@@ -15,7 +15,13 @@ BROKER_HOST = os.getenv("BROKER_HOST", "localhost")
 CREATE_DELIVERY_TOPIC = os.getenv(
     "CREATE_DELIVERY_TOPIC", "rpc_create_delivery"
 )
-
+CORS_ORIGINS = os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost,"
+    "http://localhost:4200,"
+    "https://appstaff-dot-ccp-perspicapps.uc.r.appspot.com,"
+    "*",
+).split(",")
 DATABASE_URL = (
     f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )

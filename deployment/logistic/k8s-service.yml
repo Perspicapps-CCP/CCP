@@ -31,5 +31,5 @@ spec:
   selector:
     app: logistic-api
   ports:
-  - port: 8001
+  - port: 80
     targetPort: 8001

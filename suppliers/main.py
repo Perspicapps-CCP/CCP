@@ -2,15 +2,23 @@
 import sys
 
 from fastapi import APIRouter, Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from manufacturers.api import manufacturers_router
 from sqlalchemy.orm import Session
 
+import config
 import schemas
 from database import Base, engine
 from db_dependency import get_db
-from manufacturers.api import manufacturers_router
 
 app = FastAPI()
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=config.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 prefix_router = APIRouter(prefix="/suppliers")
 
 prefix_router.include_router(manufacturers_router)

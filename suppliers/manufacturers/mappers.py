@@ -13,5 +13,5 @@ def manufacturer_to_schema(
         contact_phone=manufacturer.contact_phone,
         email=manufacturer.email,
         created_at=manufacturer.created_at,
-        updated_at=manufacturer.updated_at
+        updated_at=manufacturer.updated_at,
     )

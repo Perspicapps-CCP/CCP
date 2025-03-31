@@ -5,6 +5,7 @@ on:
     paths:
       - "inventory/**"
     branches: [ "main" ]
+  workflow_dispatch:
 
 env:
   PROJECT_ID: ccp-perspicapps
@@ -124,6 +125,8 @@ jobs:
         run: |-
           kustomize edit set image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/ccp-images/inventory:latest=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/ccp-images/inventory:${{ needs.build.outputs.version_tag }}
           kustomize build . | kubectl apply -f -
+          kubectl apply -f k8s-configmap-secrets.yml
+          kubectl apply -f k8s-service.yml
           kubectl rollout status deployment/inventory-api
           kubectl rollout status deployment/inventory-broker-consumer
           kubectl get services -o wide
