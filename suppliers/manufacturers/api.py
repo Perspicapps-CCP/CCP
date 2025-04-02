@@ -1,8 +1,11 @@
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
+from pydantic import ValidationError
+import io
+import csv
 
 from db_dependency import get_db
 
@@ -44,10 +47,68 @@ def manufacturer_detail(manufacturer_id: UUID, db: Session = Depends(get_db)):
     "/", response_model=List[schemas.ManufacturerDetailSchema]
 )
 def list_all_manufacturers(
-    skip: int = 0, limit: int = 10, db: Session = Depends(get_db)
+ db: Session = Depends(get_db)
 ):
-    manufacturers = services.get_manufacturers(db, skip=skip, limit=limit)
+    manufacturers = services.get_manufacturers(db)
     return [
         mappers.manufacturer_to_schema(manufacturer)
         for manufacturer in manufacturers
     ]
+    
+@manufacturers_router.post(
+    "/{manufacturer_id}/products/batch/", response_model=schemas.BatchProductResponseSchema
+)    
+async def create_batch_products(manufacturer_id: UUID, file: UploadFile = File(...), db: Session = Depends(get_db)):
+    db_manufacturer = services.get_manufacturer(
+        db, manufacturer_id=manufacturer_id
+    )
+    if db_manufacturer is None:
+        raise HTTPException(status_code=404, detail="Manufacturer not found")
+    
+    contents = await file.read()
+    decoded_contents = contents.decode("utf-8")
+    csv_reader = csv.DictReader(io.StringIO(decoded_contents))         
+    products = process_file(csv_reader)
+    return services.create_bulk_products(manufacturer_id=manufacturer_id, db=db, products=products)   
+    
+
+def process_file(csv_reader):
+    validated_products = []
+    headers = csv_reader.fieldnames
+    validated_products = []
+    validation_errors = []
+    EXPECTED_HEADERS = ["name", "code", "price", "images"]
+    if not headers or set(headers) != set(EXPECTED_HEADERS):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid headers. Expected headers: {EXPECTED_HEADERS}, but got: {headers}",
+            )
+
+    for line_number, row in enumerate(csv_reader, start=2):
+            try:
+                validated_product = schemas.ProductCreateSchema.from_csv_row(row)
+                validated_products.append(validated_product)
+            except ValidationError as e:
+             validation_errors.append({
+                "line": line_number,
+                "errors": e.errors(),
+            })
+    if validation_errors:
+        formatted_errors = [
+            {
+                "line": error["line"], 
+                "location": str(error["errors"][0].get("loc", "")),
+                "message": str(error["errors"][0].get("msg", ""))
+            }
+            for error in validation_errors
+        ]
+    
+        raise HTTPException(
+                status_code=422,
+                detail={
+                    "error": "Validation failed for some products",
+                    "validation_errors": formatted_errors
+                },
+            )
+    return  validated_products
+
