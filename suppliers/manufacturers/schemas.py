@@ -15,7 +15,9 @@ from pydantic import (
 
 from . import models
 
-NonEmptyStr = Annotated[str, StringConstraints(min_length=1, strip_whitespace=True)]
+NonEmptyStr = Annotated[
+    str, StringConstraints(min_length=1, strip_whitespace=True)
+]
 
 
 class DeleteResponse(BaseModel):
@@ -36,7 +38,9 @@ class ManufacturerCreateSchema(BaseModel):
         try:
             return models.IdentificationType(value)
         except ValueError:
-            raise ValueError(f"El tipo de identificación '{value}' no es válido.")
+            raise ValueError(
+                f"El tipo de identificación '{value}' no es válido."
+            )
 
 
 class ManufacturerProductResponseSchema(BaseModel):
@@ -84,7 +88,8 @@ class ProductCreateSchema(BaseModel):
         images = []
         if row["images"]:
             images = [
-                ProductImageSchema(url=url.strip()) for url in row["images"].split("|")
+                ProductImageSchema(url=url.strip())
+                for url in row["images"].split("|")
             ]
         return cls(
             name=row["name"],

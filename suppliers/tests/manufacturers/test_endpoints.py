@@ -32,11 +32,15 @@ def products_ids_payload() -> Dict[str, List[str]]:
     return {"productsIds": ["98765549-5fab-40bd-8076-65a05e62c808"]}
 
 
-def test_create_manufacturer(client: TestClient, manufacturer_payload: Dict) -> None:
+def test_create_manufacturer(
+    client: TestClient, manufacturer_payload: Dict
+) -> None:
     """
     Test the creation of a manufacturer.
     """
-    response = client.post("/suppliers/manufacturers", json=manufacturer_payload)
+    response = client.post(
+        "/suppliers/manufacturers", json=manufacturer_payload
+    )
     assert response.status_code == 200
     assert response.json()["id"] is not None, "ID cannot be null"
 
@@ -48,7 +52,9 @@ def test_create_manufacturer_invalid_id_type(
     Test the creation of a manufacturer with invalide id type.
     """
     manufacturer_payload["identification_type"] = "AA"
-    response = client.post("/suppliers/manufacturers", json=manufacturer_payload)
+    response = client.post(
+        "/suppliers/manufacturers", json=manufacturer_payload
+    )
     assert response.status_code == 422
 
 
@@ -59,7 +65,9 @@ def test_create_manufacturer_invalid_email(
     Test the creation of a manufacturer with invalide id type.
     """
     manufacturer_payload["email"] = "abc123"
-    response = client.post("/suppliers/manufacturers", json=manufacturer_payload)
+    response = client.post(
+        "/suppliers/manufacturers", json=manufacturer_payload
+    )
     assert response.status_code == 422
 
 
@@ -70,7 +78,9 @@ def test_create_manufacturer_missing_field(
     Test the creation of a manufacturer with em,ail missing.
     """
     del manufacturer_payload["email"]
-    response = client.post("/suppliers/manufacturers", json=manufacturer_payload)
+    response = client.post(
+        "/suppliers/manufacturers", json=manufacturer_payload
+    )
     assert response.status_code == 422
 
 
@@ -83,7 +93,9 @@ def test_list_all_manufacturers(client: TestClient) -> None:
     assert isinstance(response.json(), list)
 
 
-def test_get_manufacturer(client: TestClient, manufacturer_payload: Dict) -> None:
+def test_get_manufacturer(
+    client: TestClient, manufacturer_payload: Dict
+) -> None:
     """
     Test retrieving a manufactrurer by its ID.
     """
@@ -111,7 +123,9 @@ def test_get_manufacturer_not_exists(
     assert response.status_code == 404
 
 
-def test_list_products_by_ids(client: TestClient, products_ids_payload: Dict) -> None:
+def test_list_products_by_ids(
+    client: TestClient, products_ids_payload: Dict
+) -> None:
     """
     Test listing products given ids list.
     """
@@ -142,5 +156,7 @@ def test_get_product_by_manufacturer_id(
         "/suppliers/manufacturers/", json=manufacturer_payload
     )
     manufacturer_id = create_response.json()["id"]
-    response = client.get(f"/suppliers/manufacturers/{manufacturer_id}/products")
+    response = client.get(
+        f"/suppliers/manufacturers/{manufacturer_id}/products"
+    )
     assert response.status_code == 200

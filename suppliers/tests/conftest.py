@@ -19,7 +19,9 @@ engine = create_engine(
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+TestingSessionLocal = sessionmaker(
+    autocommit=False, autoflush=False, bind=engine
+)
 
 
 @pytest.fixture

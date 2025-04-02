@@ -14,7 +14,9 @@ def create_manufacturer(
     db_manufacturer = models.Manufacturer(
         id=uuid4(),
         name=manufacturer.manufacturer_name,
-        identification_type=models.IdentificationType(manufacturer.identification_type),
+        identification_type=models.IdentificationType(
+            manufacturer.identification_type
+        ),
         identification_number=manufacturer.identification_number,
         address=manufacturer.address,
         contact_phone=manufacturer.contact_phone,
@@ -33,7 +35,8 @@ def get_manufacturer_by_id_type(
     return (
         db.query(models.Manufacturer)
         .filter(
-            models.Manufacturer.identification_type == manufacturer.identification_type,
+            models.Manufacturer.identification_type
+            == manufacturer.identification_type,
             models.Manufacturer.identification_number
             == manufacturer.identification_number,
         )
@@ -79,7 +82,9 @@ def get_products(
 
 
 def create_bulk_products(
-    manufacturer_id: UUID, db: Session, products: List[schemas.ProductCreateSchema]
+    manufacturer_id: UUID,
+    db: Session,
+    products: List[schemas.ProductCreateSchema],
 ) -> schemas.BatchProductResponseSchema:
     total_successful_records: int = 0
     total_errors_records: int = 0

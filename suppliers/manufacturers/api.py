@@ -14,14 +14,20 @@ from . import mappers, schemas, services
 manufacturers_router = APIRouter(prefix="/manufacturers")
 
 
-@manufacturers_router.post("/", response_model=schemas.ManufacturerDetailSchema)
+@manufacturers_router.post(
+    "/", response_model=schemas.ManufacturerDetailSchema
+)
 def create_manufacturer(
     manufacturer: schemas.ManufacturerCreateSchema,
     db: Session = Depends(get_db),
 ):
     if services.get_manufacturer_by_id_type(db=db, manufacturer=manufacturer):
-        raise HTTPException(status_code=409, detail="Manufacturer already exists")
-    manufacturer = services.create_manufacturer(db=db, manufacturer=manufacturer)
+        raise HTTPException(
+            status_code=409, detail="Manufacturer already exists"
+        )
+    manufacturer = services.create_manufacturer(
+        db=db, manufacturer=manufacturer
+    )
     return mappers.manufacturer_to_schema(manufacturer)
 
 
@@ -29,17 +35,22 @@ def create_manufacturer(
     "/{manufacturer_id}", response_model=schemas.ManufacturerDetailSchema
 )
 def manufacturer_detail(manufacturer_id: UUID, db: Session = Depends(get_db)):
-    db_manufacturer = services.get_manufacturer(db, manufacturer_id=manufacturer_id)
+    db_manufacturer = services.get_manufacturer(
+        db, manufacturer_id=manufacturer_id
+    )
     if db_manufacturer is None:
         raise HTTPException(status_code=404, detail="Manufacturer not found")
     return mappers.manufacturer_to_schema(db_manufacturer)
 
 
-@manufacturers_router.get("/", response_model=List[schemas.ManufacturerDetailSchema])
+@manufacturers_router.get(
+    "/", response_model=List[schemas.ManufacturerDetailSchema]
+)
 def list_all_manufacturers(db: Session = Depends(get_db)):
     manufacturers = services.get_manufacturers(db)
     return [
-        mappers.manufacturer_to_schema(manufacturer) for manufacturer in manufacturers
+        mappers.manufacturer_to_schema(manufacturer)
+        for manufacturer in manufacturers
     ]
 
 
@@ -48,9 +59,13 @@ def list_all_manufacturers(db: Session = Depends(get_db)):
     response_model=schemas.BatchProductResponseSchema,
 )
 async def create_batch_products(
-    manufacturer_id: UUID, file: UploadFile = File(...), db: Session = Depends(get_db)
+    manufacturer_id: UUID,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
 ):
-    db_manufacturer = services.get_manufacturer(db, manufacturer_id=manufacturer_id)
+    db_manufacturer = services.get_manufacturer(
+        db, manufacturer_id=manufacturer_id
+    )
     if db_manufacturer is None:
         raise HTTPException(status_code=404, detail="Manufacturer not found")
 
@@ -110,7 +125,8 @@ def process_file(csv_reader):
     "/listProducts", response_model=List[schemas.ResponseProductDetailSchema]
 )
 def list_products_by_ids(
-    productsIds: Optional[schemas.ProductsList] = None, db: Session = Depends(get_db)
+    productsIds: Optional[schemas.ProductsList] = None,
+    db: Session = Depends(get_db),
 ):
     products = services.get_products(db, productsIds=productsIds.productsIds)
     return [mappers.product_to_schema(product) for product in products]
@@ -120,6 +136,8 @@ def list_products_by_ids(
     "/{manufacturer_id}/products",
     response_model=List[schemas.ResponseProductDetailSchema],
 )
-def list_manufacturer_products(manufacturer_id: UUID, db: Session = Depends(get_db)):
+def list_manufacturer_products(
+    manufacturer_id: UUID, db: Session = Depends(get_db)
+):
     products = services.get_products(db, manufacturer_id=manufacturer_id)
     return [mappers.product_to_schema(product) for product in products]
