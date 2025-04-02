@@ -1,3 +1,9 @@
 .aider*
 .idea/
 .vscode
+inventory/__pycache__
+inventory/stock/__pycache__
+inventory/warehouse/__pycache__
+inventory/tests/__pycache__
+inventory/tests/stock/__pycache__
+inventory/tests/warehouse/__pycache__

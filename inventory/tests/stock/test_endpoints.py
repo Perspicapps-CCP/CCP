@@ -34,7 +34,7 @@ def test_create_delivery(client: TestClient, delivery_payload: Dict) -> None:
     """
     Test the creation of a delivery.
     """
-    response = client.post("/logistica/entregas/", json=delivery_payload)
+    response = client.post("/inventory/stock", json=delivery_payload)
     assert response.status_code == 200
     assert response.json()["purchase_id"] == delivery_payload["purchase_id"]
 
@@ -44,13 +44,11 @@ def test_get_delivery(client: TestClient, delivery_payload: Dict) -> None:
     Test retrieving a delivery by its ID.
     """
     # First, create a delivery
-    create_response = client.post(
-        "/logistica/entregas/", json=delivery_payload
-    )
+    create_response = client.post("/inventory/stock", json=delivery_payload)
     delivery_id = create_response.json()["id"]
 
     # Then, get the delivery
-    response = client.get(f"/logistica/entregas/{delivery_id}")
+    response = client.get(f"/inventory/stock/{delivery_id}")
     assert response.status_code == 200
     assert response.json()["id"] == delivery_id
 
@@ -59,7 +57,7 @@ def test_list_all_deliveries(client: TestClient) -> None:
     """
     Test listing all deliveries.
     """
-    response = client.get("/logistica/entregas/")
+    response = client.get("/inventory/stock")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
@@ -69,16 +67,14 @@ def test_delete_delivery(client: TestClient, delivery_payload: Dict) -> None:
     Test deleting a delivery by its ID.
     """
     # First, create a delivery
-    create_response = client.post(
-        "/logistica/entregas/", json=delivery_payload
-    )
+    create_response = client.post("/inventory/stock", json=delivery_payload)
     delivery_id = create_response.json()["id"]
 
     # Then, delete the delivery
-    response = client.delete(f"/logistica/entregas/{delivery_id}")
+    response = client.delete(f"/inventory/stock/{delivery_id}")
     assert response.status_code == 200
     assert response.json()["msg"] == "Todos los datos fueron eliminados"
 
     # Verify the delivery is deleted
-    get_response = client.get(f"/logistica/entregas/{delivery_id}")
+    get_response = client.get(f"/inventory/stock/{delivery_id}")
     assert get_response.status_code == 404

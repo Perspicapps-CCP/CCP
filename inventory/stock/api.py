@@ -8,10 +8,10 @@ from db_dependency import get_db
 
 from . import mappers, schemas, services
 
-deliveries_router = APIRouter(prefix="/entregas")
+stock_router = APIRouter(prefix="/stock")
 
 
-@deliveries_router.post("/", response_model=schemas.DeliveryDetailSchema)
+@stock_router.post("", response_model=schemas.DeliveryDetailSchema)
 def create_delivery(
     delivery: schemas.DeliveryCreateSchema, db: Session = Depends(get_db)
 ):
@@ -19,7 +19,7 @@ def create_delivery(
     return mappers.delivery_to_schema(delivery)
 
 
-@deliveries_router.get(
+@stock_router.get(
     "/{delivery_id}", response_model=schemas.DeliveryDetailSchema
 )
 def delivery_detail(delivery_id: UUID, db: Session = Depends(get_db)):
@@ -31,7 +31,7 @@ def delivery_detail(delivery_id: UUID, db: Session = Depends(get_db)):
     return mappers.delivery_to_schema(db_delivery)
 
 
-@deliveries_router.get("/", response_model=List[schemas.DeliveryDetailSchema])
+@stock_router.get("", response_model=List[schemas.DeliveryDetailSchema])
 def list_all_deliveries(
     skip: int = 0, limit: int = 10, db: Session = Depends(get_db)
 ):
@@ -39,9 +39,7 @@ def list_all_deliveries(
     return [mappers.delivery_to_schema(delivery) for delivery in deliveries]
 
 
-@deliveries_router.delete(
-    "/{delivery_id}", response_model=schemas.DeleteResponse
-)
+@stock_router.delete("/{delivery_id}", response_model=schemas.DeleteResponse)
 def delete_delivery(delivery_id: UUID, db: Session = Depends(get_db)):
     db_delivery = services.delete_delivery(db, delivery_id=delivery_id)
     if db_delivery is None:

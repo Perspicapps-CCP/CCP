@@ -1,6 +1,6 @@
 import threading
 
-from delivieries.consumer import CreateDeliveryConsumer
+from stock.consumer import CreateDeliveryConsumer
 
 
 def run_thread(threaded_class: type[threading.Thread], num_errors=0):
