@@ -1,14 +1,22 @@
 # Fite to validate the data that is being sent and recieved to the API
 import datetime
-import uuid 
-from typing import Optional, List, Annotated
-
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, StringConstraints
+import uuid
 from decimal import Decimal
+from typing import Annotated, List, Optional
+
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    StringConstraints,
+    field_validator,
+)
 
 from . import models
 
 NonEmptyStr = Annotated[str, StringConstraints(min_length=1, strip_whitespace=True)]
+
 
 class DeleteResponse(BaseModel):
     msg: str = "Todos los datos fueron eliminados"
@@ -28,9 +36,7 @@ class ManufacturerCreateSchema(BaseModel):
         try:
             return models.IdentificationType(value)
         except ValueError:
-            raise ValueError(
-                f"El tipo de identificación '{value}' no es válido."
-            )
+            raise ValueError(f"El tipo de identificación '{value}' no es válido.")
 
 
 class ManufacturerProductResponseSchema(BaseModel):
@@ -38,17 +44,19 @@ class ManufacturerProductResponseSchema(BaseModel):
     updated_at: Optional[datetime.datetime]
 
     model_config = ConfigDict(from_attributes=True)
-    
+
+
 class ErrorDetailResponseSchema(BaseModel):
     row_file: int
-    detail: str    
-    
+    detail: str
+
+
 class BatchProductResponseSchema(BaseModel):
     total_successful_records: int
     total_errors_records: int
     detail: Optional[List[ErrorDetailResponseSchema]]
-    
-    model_config = ConfigDict(from_attributes=True)    
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ManufacturerDetailSchema(ManufacturerCreateSchema):
@@ -57,44 +65,47 @@ class ManufacturerDetailSchema(ManufacturerCreateSchema):
     updated_at: Optional[datetime.datetime]
 
     model_config = ConfigDict(from_attributes=True)
-    
+
+
 class ProductImageSchema(BaseModel):
-    url: str 
-    
+    url: str
+
     model_config = ConfigDict(from_attributes=True)
-    
+
+
 class ProductCreateSchema(BaseModel):
     product_code: NonEmptyStr
     name: NonEmptyStr
-    price: Decimal 
-    images: List[ProductImageSchema] 
-    
+    price: Decimal
+    images: List[ProductImageSchema]
+
     @classmethod
     def from_csv_row(cls, row: dict):
         images = []
         if row["images"]:
-         images = [ProductImageSchema(url=url.strip()) for url in row["images"].split("|")]
+            images = [
+                ProductImageSchema(url=url.strip()) for url in row["images"].split("|")
+            ]
         return cls(
             name=row["name"],
             product_code=row["product_code"],
             price=row["price"],
-            images=images
+            images=images,
         )
-    
+
     @field_validator("price")
     @classmethod
     def check_price_non_negative(cls, value):
         if value < 0:
-            raise ValueError('Price cannot be negative')
+            raise ValueError("Price cannot be negative")
         return value
-    
+
+
 class ResponseProductDetailSchema(ProductCreateSchema):
-      id: uuid.UUID      
-      images: List[str]
-      model_config = ConfigDict(from_attributes=True)
-      
-      
+    id: uuid.UUID
+    images: List[str]
+    model_config = ConfigDict(from_attributes=True)
+
+
 class ProductsList(BaseModel):
-     productsIds: Optional[List[uuid.UUID]] = None     
-    
-    
+    productsIds: Optional[List[uuid.UUID]] = None

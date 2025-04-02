@@ -19,6 +19,4 @@ CORS_ORIGINS = os.getenv(
     "https://appstaff-dot-ccp-perspicapps.uc.r.appspot.com,"
     "*",
 ).split(",")
-DATABASE_URL = (
-    f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-)
+DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
