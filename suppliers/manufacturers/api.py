@@ -117,5 +117,8 @@ def list_products_by_ids( productsIds: Optional[schemas.ProductsList] = None,  d
     products = services.get_products(db, productsIds = productsIds.productsIds)
     return [mappers.product_to_schema(product) for product in products]
 
-
+@manufacturers_router.get("/{manufacturer_id}/products", response_model=List[schemas.ResponseProductDetailSchema])
+def list_manufacturer_products(manufacturer_id: UUID, db: Session = Depends(get_db)):
+    products = services.get_products(db, manufacturer_id = manufacturer_id)
+    return [mappers.product_to_schema(product) for product in products]
 
