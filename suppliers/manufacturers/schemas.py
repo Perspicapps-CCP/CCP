@@ -64,7 +64,7 @@ class ProductImageSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     
 class ProductCreateSchema(BaseModel):
-    code: NonEmptyStr
+    product_code: NonEmptyStr
     name: NonEmptyStr
     price: Decimal 
     images: List[ProductImageSchema] 
@@ -76,7 +76,7 @@ class ProductCreateSchema(BaseModel):
          images = [ProductImageSchema(url=url.strip()) for url in row["images"].split("|")]
         return cls(
             name=row["name"],
-            code=row["code"],
+            product_code=row["product_code"],
             price=row["price"],
             images=images
         )

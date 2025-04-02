@@ -85,7 +85,7 @@ def create_bulk_products(manufacturer_id: UUID, db: Session, products: List[sche
         db_product = models.ManufacturerProduct(
                 id=uuid4(),
                 manufacturer_id=manufacturer_id,
-                code=product.code,
+                code=product.product_code,
                 name=product.name,
                 price=product.price
             )
@@ -108,7 +108,7 @@ def create_bulk_products(manufacturer_id: UUID, db: Session, products: List[sche
             db.rollback()  
             error: str                  
             if "code" in str(e.orig):
-             error=f"El código '{product.code}' ya existe."
+             error=f"El código '{product.product_code}' ya existe."
             elif "name" in str(e.orig):
              error=f"El nombre '{product.name}' ya existe."
             else:

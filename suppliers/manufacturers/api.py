@@ -77,7 +77,7 @@ def process_file(csv_reader):
     headers = csv_reader.fieldnames
     validated_products = []
     validation_errors = []
-    EXPECTED_HEADERS = ["name", "code", "price", "images"]
+    EXPECTED_HEADERS = ["name", "product_code", "price", "images"]
     if not headers or set(headers) != set(EXPECTED_HEADERS):
             raise HTTPException(
                 status_code=400,

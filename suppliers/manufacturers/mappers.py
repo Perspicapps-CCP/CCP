@@ -21,7 +21,7 @@ def product_to_schema(
 ) -> schemas.ResponseProductDetailSchema:
     return schemas.ResponseProductDetailSchema(
         id=product.id,
-        code=product.code,
+        product_code=product.code,
         name=product.name,
         price=product.price,
         images=[image.url for image in product.images]
