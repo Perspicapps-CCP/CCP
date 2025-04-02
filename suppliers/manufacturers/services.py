@@ -66,7 +66,7 @@ def get_manufacturers(
     )
     
 def get_products(
-    db: Session, productsIds: Optional[List[int]] = None, manufacturer_id: Optional[UUID] = None
+    db: Session, productsIds: Optional[List[str]] = None, manufacturer_id: Optional[UUID] = None
 ) -> List[models.ManufacturerProduct]:
     query = db.query(models.ManufacturerProduct)
     if productsIds:

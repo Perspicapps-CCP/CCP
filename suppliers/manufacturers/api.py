@@ -122,3 +122,5 @@ def list_manufacturer_products(manufacturer_id: UUID, db: Session = Depends(get_
     products = services.get_products(db, manufacturer_id = manufacturer_id)
     return [mappers.product_to_schema(product) for product in products]
 
+
+

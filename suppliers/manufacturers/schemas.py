@@ -1,6 +1,6 @@
 # Fite to validate the data that is being sent and recieved to the API
 import datetime
-import uuid
+import uuid 
 from typing import Optional, List, Annotated
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, StringConstraints
@@ -95,6 +95,6 @@ class ResponseProductDetailSchema(ProductCreateSchema):
       
       
 class ProductsList(BaseModel):
-     productsIds: Optional[List[str]] = None     
+     productsIds: Optional[List[uuid.UUID]] = None     
     
     
