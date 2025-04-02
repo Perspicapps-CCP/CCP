@@ -4,6 +4,7 @@ from uuid import UUID
 import pytest
 from faker import Faker
 from fastapi.testclient import TestClient
+import io
 
 fake = Faker()
 fake.seed_instance(0)
@@ -30,6 +31,15 @@ def products_ids_payload() -> Dict[str, List[str]]:
     Fixture to generate a sample payload for retrieve products.
     """
     return {"productsIds": ["98765549-5fab-40bd-8076-65a05e62c808"]}
+
+
+@pytest.fixture
+def csv_file():
+    csv_data = """product_code,name,price,images
+p001,MProduct1,5000,http://example.com/img4.jpg
+p002,MProduct2,6000,http://example.com/img5.jpg
+"""
+    return io.BytesIO(csv_data.encode("utf-8"))
 
 
 def test_create_manufacturer(
@@ -136,7 +146,7 @@ def test_list_products_by_ids(
     assert isinstance(response.json(), list)
 
 
-def test_list_all_products_(client: TestClient) -> None:
+def test_list_all_products(client: TestClient) -> None:
     """
     Test listing all products.
     """
@@ -145,7 +155,7 @@ def test_list_all_products_(client: TestClient) -> None:
     assert isinstance(response.json(), list)
 
 
-def test_get_product_by_manufacturer_id(
+def test_get_products_by_manufacturer_id(
     client: TestClient, manufacturer_payload: Dict
 ) -> None:
     """
@@ -159,4 +169,19 @@ def test_get_product_by_manufacturer_id(
     response = client.get(
         f"/suppliers/manufacturers/{manufacturer_id}/products"
     )
+    assert response.status_code == 200
+
+
+def test_create_batch_products(
+    client: TestClient, manufacturer_payload: Dict, csv_file
+):
+    create_response = client.post(
+        "/suppliers/manufacturers/", json=manufacturer_payload
+    )
+    manufacturer_id = create_response.json()["id"]
+    response = client.post(
+        f"/suppliers/manufacturers/{manufacturer_id}/products/batch/",
+        files={"file": ("products.csv", csv_file, "text/csv")},
+    )
+
     assert response.status_code == 200
