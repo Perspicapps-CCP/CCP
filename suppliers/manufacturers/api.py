@@ -112,3 +112,10 @@ def process_file(csv_reader):
             )
     return  validated_products
 
+@manufacturers_router.post("/listProducts", response_model=List[schemas.ResponseProductDetailSchema])
+def list_products_by_ids( productsIds: Optional[schemas.ProductsList] = None,  db: Session = Depends(get_db)):
+    products = services.get_products(db, productsIds = productsIds.productsIds)
+    return [mappers.product_to_schema(product) for product in products]
+
+
+
