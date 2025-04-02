@@ -57,7 +57,7 @@ This project is a FastAPI application for managing Inventory. It includes endpoi
 To run the tests, use the following command:
 
 ```sh
-pytest --cov=. -v -s --cov-fail-under=70
+pytest --cov=. -v -s --cov-fail-under=80
 ```
 
 Pre commit
@@ -255,7 +255,11 @@ Crea una nueva bodega.
 ```json
 {
   "warehouse_id": id de la bodega,
-  "user_id": id del usuario que creo la bodega,
+  "warehouse_name": nombre de la bodega,
+  "country": pais en donde está la bodega,
+  "city": ciudad en donde está la bodega,
+  "address": direccion de la bodega,
+  "phone": telefono de contacto de la bodega,
   "created_at": fecha y hora de creación de la bodega en formato ISO
 }
 ```
@@ -440,7 +444,7 @@ Crea el inventario de un producto si este no existe, en caso contrario actualiza
 </tr>
 <tr>
 <td> Ruta </td>
-<td> <strong>/inventory</strong> </td>
+<td> <strong>/inventory/stock</strong> </td>
 </tr>
 <tr>
 <td> Parámetros </td>
@@ -527,7 +531,7 @@ Retorna el listado de inventario que coinciden con los parámetros brindados. So
 </tr>
 <tr>
 <td> Ruta </td>
-<td> <strong>/inventory?product={productId}&warehouse={warehouseId}</strong> </td>
+<td> <strong>/inventory/stock?product={productId}&warehouse={warehouseId}</strong> </td>
 </tr>
 <tr>
 <td> Parámetros </td>
@@ -608,7 +612,7 @@ Retorna el inventario de un producto, solo un usuario autorizado puede realizar 
 </tr>
 <tr>
 <td> Ruta </td>
-<td> <strong>/inventory/{id}</strong> </td>
+<td> <strong>/inventory/stock/{id}</strong> </td>
 </tr>
 <tr>
 <td> Parámetros </td>
@@ -673,4 +677,88 @@ Retorna el inventario de un producto, solo un usuario autorizado puede realizar 
 </td>
 </tr>
 </tbody>
+</table>
+
+### 9. Consulta del inventario en tiempo real
+
+
+Establece una conexión WebSocket para recibir actualizaciones del inventario en tiempo real. Solo un usuario autorizado puede establecer esta conexión.
+
+<table> 
+<tr> 
+<td> Protocolo </td> 
+<td> WebSocket </td> 
+</tr> 
+<tr> 
+<td> Evento </td> 
+<td> <strong>inventory_updates</strong> </td> 
+</tr> 
+<tr> 
+<td> Opciones del socket </td> 
+<td> auth.token: token de autenticación en formato JWT</td>
+</td> 
+</tr> 
+<tr>
+<td> Cuerpo (opcional) </td>
+<td>
+
+```json
+  {
+    "product_id":id del producto,
+    "warehouse_id": id de la bodega
+  }
+```
+</td>
+</tr>
+</table>
+
+
+
+### Respuestas
+<table> 
+<tr> 
+<th> Evento </th> 
+<th> Descripción </th> 
+<th> Formato del mensaje </th> 
+</tr> 
+<tbody> 
+<tr> 
+<td> updated </td> 
+<td>Se recibe cuando hay una actualización en el inventario que coincide con los filtros establecidos.</td> 
+<td>
+
+```json
+{
+  "product_id": id del producto,
+  "warehouse_id": id de la bodega,
+  "quantity": nueva cantidad disponible,
+  "last_update": fecha y hora de la actualización en formato ISO
+}
+```
+</td> 
+</tr> 
+<tr> 
+<td> created </td> 
+<td>Se recibe cuando se crea un nuevo registro de inventario que coincide con los filtros establecidos.</td> 
+<td>
+
+```json
+{
+  "product_id": id del producto,
+  "warehouse_id": id de la bodega,
+  "quantity": cantidad inicial del producto,
+  "last_update": fecha y hora de la creación en formato ISO
+}
+```
+</td> </tr> <tr> <td> error </td> <td>Se recibe cuando ocurre un error en la conexión WebSocket.</td> <td>
+
+```json
+{
+  "code": código del error,
+  "message": descripción del error
+}
+```
+</td> 
+</tr> 
+</tbody> 
 </table>

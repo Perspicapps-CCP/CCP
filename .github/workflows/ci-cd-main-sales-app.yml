@@ -34,9 +34,20 @@ jobs:
     - name: Install dependencies      
       working-directory: ./sales
       run: pipenv install --dev --system --deploy
+    - name: Run linting
+      working-directory: ./sales
+      run: pipenv run black --check .
     - name: Run unit tests
       working-directory: ./sales
-      run: pipenv run pytest --cov=. -v -s --cov-fail-under=70
+      run: pipenv run pytest --cov=. --cov-report=xml:coverage.xml --cov-report=html -v -s --cov-fail-under=80
+    - name: Archive code coverage results
+      uses: actions/upload-artifact@v4
+      with:
+        name: code-coverage-report
+        path: |
+          ./sales/coverage.xml
+          ./sales/htmlcov
+        retention-days: 14
 
   build:
     needs: test

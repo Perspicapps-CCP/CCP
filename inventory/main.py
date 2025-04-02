@@ -9,7 +9,8 @@ import config
 import schemas
 from database import Base, engine
 from db_dependency import get_db
-from delivieries.api import deliveries_router
+from stock.api import stock_router
+from warehouse.api import warehouse_router
 
 app = FastAPI()
 
@@ -20,16 +21,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-prefix_router = APIRouter(prefix="/logistica")
 
-prefix_router.include_router(deliveries_router)
+inventory_router = APIRouter(prefix="/inventory")
+inventory_router.include_router(stock_router)
+inventory_router.include_router(warehouse_router)
 
 if "pytest" not in sys.modules:
     Base.metadata.create_all(bind=engine)
 
 
 # Rest the database
-@prefix_router.post("/reset-db", response_model=schemas.DeleteResponse)
+@inventory_router.post("/reset", response_model=schemas.DeleteResponse)
 def reset(db: Session = Depends(get_db)):
     Base.metadata.drop_all(bind=db.get_bind())
     Base.metadata.create_all(bind=db.get_bind())
@@ -38,9 +40,9 @@ def reset(db: Session = Depends(get_db)):
 
 
 # health
-@prefix_router.get("/health")
+@inventory_router.get("/health")
 def ping():
     return "pong"
 
 
-app.include_router(prefix_router)
+app.include_router(inventory_router)
