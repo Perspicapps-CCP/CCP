@@ -15,3 +15,15 @@ def manufacturer_to_schema(
         created_at=manufacturer.created_at,
         updated_at=manufacturer.updated_at,
     )
+
+
+def product_to_schema(
+    product: models.ManufacturerProduct,
+) -> schemas.ResponseProductDetailSchema:
+    return schemas.ResponseProductDetailSchema(
+        id=product.id,
+        product_code=product.code,
+        name=product.name,
+        price=product.price,
+        images=[image.url for image in product.images],
+    )
