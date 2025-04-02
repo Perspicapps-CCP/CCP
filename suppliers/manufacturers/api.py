@@ -141,3 +141,9 @@ def list_manufacturer_products(
 ):
     products = services.get_products(db, manufacturer_id=manufacturer_id)
     return [mappers.product_to_schema(product) for product in products]
+
+
+@manufacturers_router.post("/reset", response_model=schemas.ResetResponse)
+def reset(db: Session = Depends(get_db)):
+    services.reset(db)
+    return schemas.ResetResponse

@@ -114,3 +114,7 @@ class ResponseProductDetailSchema(ProductCreateSchema):
 
 class ProductsList(BaseModel):
     productsIds: Optional[List[uuid.UUID]] = None
+
+
+class ResetResponse(BaseModel):
+    msg: str = "Todos los datos fueron eliminados"
