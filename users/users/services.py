@@ -25,7 +25,10 @@ def login_user(
 
 
 def create_user(
-    db: Session, payload: schemas.UserBaseSchema, role: str, password: str
+    db: Session,
+    payload: schemas.UserBaseSchema,
+    role: str,
+    password: str,
 ) -> models.User:
     """
     Creates a new user in the database.
@@ -42,7 +45,7 @@ def create_user(
         username=payload.username,
         full_name=payload.full_name,
         email=payload.email,
-        phone_number=payload.phone_number,
+        phone=payload.phone,
         role=role,
         hashed_password=auth.get_password_hash(password),
     )
@@ -50,13 +53,14 @@ def create_user(
 
 
 def create_seller(
-    db: Session, payload: schemas.CreateStaffSchema
+    db: Session, payload: schemas.CreateSellerSchema
 ) -> models.User:
     """
-    Create a new staff user in the database.
+    Create a new seller user in the database.
     Args:
         db (Session): The database session to use for the query.
         user (schemas.CreateStaffSchema): The data of the user to create.
+        User schema is already validated.
     Returns:
         models.User: The created user object.
     """
@@ -66,3 +70,16 @@ def create_seller(
         role=models.RoleEnum.SELLER,
         password=payload.password,
     )
+
+
+def get_all_sellers(db: Session) -> list[models.User]:
+    """
+    Get all sellers from the database.
+    Args:
+        db (Session): The database session to use for the query.
+        skip (int): The number of records to skip. Defaults to 0.
+        limit (int): The maximum number of records to return. Defaults to 100.
+    Returns:
+        list[models.User]: A list of seller user objects.
+    """
+    return crud.get_all_users(db, role=models.RoleEnum.SELLER)

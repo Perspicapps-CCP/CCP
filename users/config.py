@@ -12,7 +12,6 @@ DB_PORT = os.getenv("DB_PORT", "5432")
 DB_NAME = os.getenv("DB_NAME", "users")
 USERS_PATH = os.getenv("USERS_PATH")
 BROKER_HOST = os.getenv("BROKER_HOST", "localhost")
-CREATE_SELLER_TOPIC = os.getenv("CREATE_SELLER_TOPIC", "rpc_create_seller")
 CORS_ORIGINS = os.getenv(
     "CORS_ORIGINS",
     "http://localhost,"

@@ -462,13 +462,11 @@ Crea el inventario de un producto si este no existe, en caso contrario actualiza
 <td>
 
 ```json
-[
   {
     "product_id":id del producto,
     "warehouse_id": id de la bodega,
     "quantity": unidades del producto que se desean registrar en la bodega,
   }
-]
 ```
 </td>
 </tr>
@@ -511,7 +509,10 @@ Crea el inventario de un producto si este no existe, en caso contrario actualiza
 ```json
 {
   "operation_id": id de la operación de carga,
-  "user_id": id del usuario que realizó la carga de inventario,
+  "warehouse_id": id de la bodega en donde se realizó la carga de inventario,
+  "processed_records": número de registros procesados,
+  "successful_records": número de registros cargados exitosamente,
+  "failed_records": número de registros que fallaron,
   "created_at": fecha y hora en que se realizó la carga de inventario, en formato ISO
 }
 ```
@@ -520,7 +521,93 @@ Crea el inventario de un producto si este no existe, en caso contrario actualiza
 </tbody>
 </table>
 
-## 7. Ver y filtrar el inventario
+## 7. Carga masiva de inventario desde CSV
+Permite cargar múltiples registros de inventario a través de un archivo CSV. Crea o actualiza el inventario de productos en las bodegas correspondientes.
+
+<table> 
+<tr> 
+<td> Método </td> 
+<td> POST </td> 
+</tr> 
+<tr> 
+<td> Ruta </td> 
+<td> <strong>/inventory/stock/csv</strong> </td> 
+</tr> 
+<tr> 
+<td> Parámetros </td> 
+<td> N/A </td> 
+</tr> 
+<tr> 
+<td> Encabezados </td> 
+<td>
+
+```Authorization: Bearer token```
+</td>
+</tr> 
+<tr> 
+<td> Cuerpo </td> 
+<td>
+warehouse_id: id de la bodega <br>
+inventory-upload: archivo CSV con formato multipart/form-data
+<br>
+<br>
+El documento CSV debe tener las siguientes columnas: <br>
+product_id: id del producto <br>
+quantity: unidades del producto que se desean registrar en la bodega
+</td> 
+</tr> 
+</table>
+
+### Respuestas
+
+<table> 
+<tr> 
+<th> Código </th> 
+<th> Descripción </th> 
+<th> Cuerpo </th> 
+</tr> 
+<tbody> 
+<tr> 
+<td> 401 </td> 
+<td>El token no es válido o está vencido.</td> 
+<td> N/A </td> 
+</tr> 
+<tr> 
+<td> 403 </td> 
+<td>No hay token en la solicitud</td> 
+<td> N/A </td> 
+</tr> 
+<tr> 
+<td> 400 </td> 
+<td>En el caso que el archivo no sea un CSV válido o no incluya las columnas requeridas.</td> 
+<td> N/A </td> 
+</tr> 
+<tr> 
+<td> 412 </td> 
+<td>En el caso que los valores de los campos no estén entre lo esperado, por ejemplo bodegas inexistentes o cantidades negativas.</td> 
+<td> N/A </td> 
+</tr> 
+<tr> 
+<td> 201 </td> 
+<td>En el caso que la carga de inventario se haya realizado con éxito.</td> 
+<td>
+
+```json
+{
+  "operation_id": id de la operación de carga,
+  "warehouse_id": id de la bodega en donde se realizó la carga de inventario,
+  "processed_records": número de registros procesados,
+  "successful_records": número de registros cargados exitosamente,
+  "failed_records": número de registros que fallaron,
+  "created_at": fecha y hora en que se realizó la carga de inventario, en formato ISO
+}
+```
+</td>
+</tr>
+</tbody>
+</table>
+
+## 8. Ver y filtrar el inventario
 
 Retorna el listado de inventario que coinciden con los parámetros brindados. Solo un usuario autorizado puede realizar esta operación.
 
@@ -601,83 +688,6 @@ En el caso de que ninguno esté presente se devolverá la lista de datos sin fil
 </tbody>
 </table>
 
-## 8. Consultar inventario de un producto
-
-Retorna el inventario de un producto, solo un usuario autorizado puede realizar esta operación.
-
-<table>
-<tr>
-<td> Método </td>
-<td> GET </td>
-</tr>
-<tr>
-<td> Ruta </td>
-<td> <strong>/inventory/stock/{id}</strong> </td>
-</tr>
-<tr>
-<td> Parámetros </td>
-<td> id: id del producto que se desea consultar. </td>
-</tr>
-<tr>
-<td> Encabezados </td>
-<td>
-
-```Authorization: Bearer token```
-</td>
-</tr>
-<tr>
-<td> Cuerpo </td>
-<td> N/A </td>
-</tr>
-</table>
-
-### Respuestas
-
-<table>
-<tr>
-<th> Código </th>
-<th> Descripción </th>
-<th> Cuerpo </th>
-</tr>
-<tbody>
-<tr>
-<td> 401 </td>
-<td>El token no es válido o está vencido.</td>
-<td> N/A </td>
-</tr>
-<tr>
-<td> 403 </td>
-<td>No hay token en la solicitud</td>
-<td> N/A </td>
-</tr>
-<tr>
-<td> 400 </td>
-<td>El productId no es un valor string con formato uuid.</td>
-<td> N/A </td>
-</tr>
-</tr>
-<tr>
-<td> 404 </td>
-<td> No existe inventario para el producto con ese id.</td>
-<td> N/A </td>
-</tr>
-<tr>
-<td> 200 </td>
-<td>Inventario del producto que corresponde al identificador.</td>
-<td>
-
-```json
-  {
-    "product_id":id del producto,
-    "warehouse_id": id de la bodega,
-    "quantity": unidades disponibles del producto en la bodega,
-    "last_update": fecha de la ultima actualización del inventario
-  }
-```
-</td>
-</tr>
-</tbody>
-</table>
 
 ### 9. Consulta del inventario en tiempo real
 

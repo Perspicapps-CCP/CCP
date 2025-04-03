@@ -28,16 +28,49 @@ def fake_warehouse() -> Dict:
     }
 
 
-def test_create_warehouse(client: TestClient, fake_warehouse: Dict) -> None:
+def test_create_warehouse_success(
+    client: TestClient, fake_warehouse: Dict
+) -> None:
     """Test creating a new warehouse"""
+
     # Act
     response = client.post("/inventory/warehouse/", json=fake_warehouse)
 
-    # Assert response
+    # Assert
     assert response.status_code == 200
     response_data = response.json()
     assert response_data["warehouse_name"] == fake_warehouse["warehouse_name"]
     assert response_data["warehouse_id"] is not None
+
+
+def test_create_warehouse_failed_with_invalid_phone_format(
+    client: TestClient, fake_warehouse: Dict
+) -> None:
+    """Test creating a new warehouse"""
+    # Arrange
+    fake_warehouse["phone"] = fake.phone_number()
+
+    # Act
+    response = client.post("/inventory/warehouse/", json=fake_warehouse)
+
+    # Assert
+    assert response.status_code == 400
+
+
+def test_create_warehouse_failed_with_oversized_phone_number(
+    client: TestClient, fake_warehouse: Dict
+) -> None:
+    """Test creating a new warehouse"""
+    # Arrange
+    fake_warehouse["phone"] = ''.join(
+        [str(random.randint(0, 9)) for _ in range(11)]
+    )
+
+    # Act
+    response = client.post("/inventory/warehouse/", json=fake_warehouse)
+
+    # Assert
+    assert response.status_code == 400
 
 
 def test_list_warehouses(client: TestClient, fake_warehouse: Dict):

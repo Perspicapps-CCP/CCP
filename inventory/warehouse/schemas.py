@@ -22,10 +22,14 @@ class WarehouseSchema(BaseModel):
     def validate_phone(cls, v):
         phone_str = str(v)
         if not phone_str.isdigit():
-            raise ValueError("Phone must contain only digits")
+            raise HTTPException(
+                status_code=400, detail="Phone must contain only digits"
+            )
 
         if len(phone_str) < 7 or len(phone_str) > 10:
-            raise ValueError("Phone must be between 7 and 10 digits")
+            raise HTTPException(
+                status_code=400, detail="Phone must be between 7 and 10 digits"
+            )
 
         return phone_str
 

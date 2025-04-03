@@ -1,5 +1,6 @@
 import uuid
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from .auth import get_password_hash
@@ -13,7 +14,7 @@ def create_users(db: Session):
     Args:
         db (Session): The database session.
     """
-    if db.query(User).count() > 0:
+    if db.query(func.count(User.id)).scalar() > 0:
         return
     users = [
         User(
@@ -24,7 +25,6 @@ def create_users(db: Session):
             is_active=True,
             role=RoleEnum.STAFF,
             email="staff_user@test.com",
-            phone_number="1234567890",
         ),
         User(
             id=uuid.uuid4(),
@@ -34,7 +34,7 @@ def create_users(db: Session):
             is_active=True,
             role=RoleEnum.SELLER,
             email="seller_user@test.com",
-            phone_number="2345678901",
+            phone="2345678901",
         ),
         User(
             id=uuid.uuid4(),
@@ -44,7 +44,7 @@ def create_users(db: Session):
             is_active=True,
             role=RoleEnum.BUYER,
             email="buyer_user@test.com",
-            phone_number="3456789012",
+            phone="3456789012",
         ),
     ]
 

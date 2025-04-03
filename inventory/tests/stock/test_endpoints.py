@@ -1,80 +1,409 @@
-from typing import Dict
-
+import csv
+import io
+from uuid import UUID
 import pytest
 from faker import Faker
 from fastapi.testclient import TestClient
+from stock.models import Stock
+from warehouse.models import Warehouse
 
 fake = Faker()
 fake.seed_instance(0)
 
 
-@pytest.fixture
-def delivery_payload() -> Dict:
-    """
-    Fixture to generate a sample payload for creating a delivery.
-    """
+def mock_warehouse():
+    return Warehouse(
+        name="Test Warehouse",
+        country="Test Country",
+        city="Test City",
+        address="Test Address",
+        phone="1234567890",
+    )
+
+
+def mock_stock_db(dummy_warehouse):
+    return Stock(
+        warehouse_id=dummy_warehouse.id,
+        product_id=UUID(fake.uuid4()),
+        quantity=fake.random_int(min=1, max=100),
+    )
+
+
+def mock_stock_dict(dummy_warehouse):
     return {
-        "purchase_id": fake.uuid4(),
-        "address_id": fake.uuid4(),
-        "user_id": fake.uuid4(),
-        "items": [
-            {
-                "product_id": fake.uuid4(),
-                "quantity": fake.random_int(min=1, max=10),
-            },
-            {
-                "product_id": fake.uuid4(),
-                "quantity": fake.random_int(min=1, max=10),
-            },
-        ],
+        "warehouse_id": str(dummy_warehouse.id),
+        "product_id": str(fake.uuid4()),
+        "quantity": fake.random_int(min=1, max=100),
     }
 
 
-def test_create_delivery(client: TestClient, delivery_payload: Dict) -> None:
-    """
-    Test the creation of a delivery.
-    """
-    response = client.post("/inventory/stock", json=delivery_payload)
-    assert response.status_code == 200
-    assert response.json()["purchase_id"] == delivery_payload["purchase_id"]
+@pytest.fixture
+def csv_dummy_file() -> bytes:
+    """Helper para crear un archivo CSV de prueba"""
+    csv_file = io.StringIO()
+    writer = csv.writer(csv_file)
+    writer.writerow(['product_id', 'quantity'])
+    test_data = [
+        [fake.uuid4(), fake.random_int(min=1, max=100)],
+        [fake.uuid4(), fake.random_int(min=1, max=100)],
+        [fake.uuid4(), fake.random_int(min=1, max=100)],
+        [fake.uuid4(), fake.random_int(min=1, max=100)],
+    ]
+
+    for row in test_data:
+        writer.writerow(row)
+    csv_file.seek(0)
+    return csv_file.read().encode('utf-8')
 
 
-def test_get_delivery(client: TestClient, delivery_payload: Dict) -> None:
-    """
-    Test retrieving a delivery by its ID.
-    """
-    # First, create a delivery
-    create_response = client.post("/inventory/stock", json=delivery_payload)
-    delivery_id = create_response.json()["id"]
+def test_upload_inventory_success_create_stock(
+    client: TestClient, db_session
+) -> None:
+    # Arrange
+    dummy_warehouse = mock_warehouse()
+    db_session.add(dummy_warehouse)
+    db_session.flush()
+    db_session.refresh(dummy_warehouse)
 
-    # Then, get the delivery
-    response = client.get(f"/inventory/stock/{delivery_id}")
-    assert response.status_code == 200
-    assert response.json()["id"] == delivery_id
+    dummy_stock = mock_stock_dict(dummy_warehouse)
+
+    # Act
+    response = client.post(
+        "/inventory/stock",
+        json=dummy_stock,
+    )
+
+    # Assert
+    assert response.status_code == 201
+    response_data = response.json()
+    assert response_data["warehouse_id"] == dummy_stock["warehouse_id"]
 
 
-def test_list_all_deliveries(client: TestClient) -> None:
+def test_upload_inventory_success_update_stock(
+    client: TestClient, db_session
+) -> None:
+    # Arrange
+    dummy_warehouse = mock_warehouse()
+    db_session.add(dummy_warehouse)
+    db_session.flush()
+    db_session.refresh(dummy_warehouse)
+
+    dummy_stock = mock_stock_db(dummy_warehouse)
+    db_session.add(dummy_stock)
+    db_session.commit()
+    db_session.refresh(dummy_stock)
+
+    request = mock_stock_dict(dummy_warehouse)
+    request["product_id"] = str(dummy_stock.product_id)
+
+    # Act
+    response = client.post(
+        "/inventory/stock",
+        json=request,
+    )
+
+    # Assert
+    assert response.status_code == 201
+    response_data = response.json()
+    assert response_data["warehouse_id"] == request["warehouse_id"]
+
+
+def test_upload_inventory_failed_warehouse_not_exist(
+    client: TestClient, db_session
+) -> None:
+    # Arrange
+    dummy_warehouse = mock_warehouse()
+    db_session.add(dummy_warehouse)
+    db_session.flush()
+    db_session.refresh(dummy_warehouse)
+
+    dummy_stock = mock_stock_dict(dummy_warehouse)
+    dummy_stock["warehouse_id"] = str(fake.uuid4())
+
+    # Act
+    response = client.post(
+        "/inventory/stock",
+        json=dummy_stock,
+    )
+
+    # Assert
+    assert response.status_code == 400
+
+
+def test_upload_inventory_failed_quantity_negative(
+    client: TestClient, db_session
+) -> None:
+    # Arrange
+    dummy_warehouse = mock_warehouse()
+    db_session.add(dummy_warehouse)
+    db_session.flush()
+    db_session.refresh(dummy_warehouse)
+
+    dummy_stock = mock_stock_dict(dummy_warehouse)
+    dummy_stock["quantity"] = -1
+
+    # Act
+    response = client.post(
+        "/inventory/stock",
+        json=dummy_stock,
+    )
+
+    # Assert
+    assert response.status_code == 400
+
+
+def test_upload_inventory_failed_product_invalid_format(
+    client: TestClient, db_session
+) -> None:
+    # Arrange
+    dummy_warehouse = mock_warehouse()
+    db_session.add(dummy_warehouse)
+    db_session.flush()
+    db_session.refresh(dummy_warehouse)
+
+    dummy_stock = mock_stock_dict(dummy_warehouse)
+    dummy_stock["product_id"] = fake.iana_id()
+
+    # Act
+    response = client.post(
+        "/inventory/stock",
+        json=dummy_stock,
+    )
+
+    # Assert
+    assert response.status_code == 400
+
+
+def test_upload_inventory_csv_success(
+    client: TestClient, csv_dummy_file: bytes, db_session
+) -> None:
     """
-    Test listing all deliveries.
+    Test uploading a CSV file with inventory data.
     """
+    # Arrange
+    dummy_warehouse = mock_warehouse()
+    db_session.add(dummy_warehouse)
+    db_session.commit()
+    db_session.refresh(dummy_warehouse)
+
+    files = {
+        "inventory_upload": (
+            "test.csv",
+            csv_dummy_file,
+            "application/octet-stream",
+        )
+    }
+    data = {"warehouse_id": str(dummy_warehouse.id)}
+
+    # Act
+    response = client.post(
+        "/inventory/stock/csv",
+        files=files,
+        data=data,
+    )
+
+    # Assert
+    assert response.status_code == 201
+    response_data = response.json()
+    assert response_data["warehouse_id"] == str(dummy_warehouse.id)
+
+
+def test_upload_inventory_csv_failed_invalid_warehouse_id_format(
+    client: TestClient, csv_dummy_file: bytes
+) -> None:
+    """
+    Test uploading a CSV file with inventory data.
+    """
+    # Arrange
+    files = {
+        "inventory_upload": (
+            "test.xls",
+            csv_dummy_file,
+            "application/octet-stream",
+        )
+    }
+    data = {"warehouse_id": fake.iana_id()}
+
+    # Act
+    response = client.post(
+        "/inventory/stock/csv",
+        files=files,
+        data=data,
+    )
+
+    # Assert
+    assert response.status_code == 400
+
+
+def test_upload_inventory_csv_failed_warehouse_not_exist(
+    client: TestClient, csv_dummy_file: bytes
+) -> None:
+    """
+    Test uploading a CSV file with unknow warehouse.
+    """
+    # Arrange
+    files = {
+        "inventory_upload": (
+            "test.csv",
+            csv_dummy_file,
+            "application/octet-stream",
+        )
+    }
+    data = {"warehouse_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"}
+
+    # Act
+    response = client.post(
+        "/inventory/stock/csv",
+        files=files,
+        data=data,
+    )
+
+    # Assert
+    assert response.status_code == 400
+
+
+def test_upload_inventory_csv_failed_invalid_file_format(
+    client: TestClient, csv_dummy_file: bytes, db_session
+) -> None:
+    """
+    Test uploading a CSV file with invalid file format.
+    """
+    # Arrange
+    dummy_warehouse = mock_warehouse()
+    db_session.add(dummy_warehouse)
+    db_session.commit()
+    db_session.refresh(dummy_warehouse)
+
+    files = {
+        "inventory_upload": (
+            "test.xls",
+            csv_dummy_file,
+            "application/octet-stream",
+        )
+    }
+    data = {"warehouse_id": str(dummy_warehouse.id)}
+
+    # Act
+    response = client.post(
+        "/inventory/stock/csv",
+        files=files,
+        data=data,
+    )
+
+    # Assert
+    assert response.status_code == 400
+
+
+def test_get_stock_success_with_filters(
+    client: TestClient, db_session
+) -> None:
+    """
+    Test getting stock with valid filters.
+    """
+    # Arrange
+    dummy_warehouse = mock_warehouse()
+    db_session.add(dummy_warehouse)
+    db_session.flush()
+    db_session.refresh(dummy_warehouse)
+
+    dummy_stock = mock_stock_db(dummy_warehouse)
+    db_session.add(dummy_stock)
+    db_session.commit()
+    db_session.refresh(dummy_stock)
+
+    warehouse_param = {"warehouse": str(dummy_warehouse.id)}
+    product_param = {"product": str(dummy_stock.product_id)}
+
+    # Act
+    response_warehouse_filter = client.get(
+        "/inventory/stock",
+        params=warehouse_param,
+    )
+
+    response_product_filter = client.get(
+        "/inventory/stock",
+        params=product_param,
+    )
+
+    # Assert
+    assert response_warehouse_filter.status_code == 200
+    assert isinstance(response_warehouse_filter.json(), list)
+    assert len(response_warehouse_filter.json()) > 0
+
+    assert response_product_filter.status_code == 200
+    assert isinstance(response_product_filter.json(), list)
+    assert len(response_product_filter.json()) > 0
+
+
+def test_get_stock_success_without_filters(
+    client: TestClient, csv_dummy_file: bytes, db_session
+) -> None:
+    """
+    Test getting stock without filters.
+    """
+    # Arrange
+    dummy_warehouse = mock_warehouse()
+    db_session.add(dummy_warehouse)
+    db_session.commit()
+    db_session.refresh(dummy_warehouse)
+
+    files = {
+        "inventory_upload": (
+            "test.csv",
+            csv_dummy_file,
+            "application/octet-stream",
+        )
+    }
+    data = {"warehouse_id": str(dummy_warehouse.id)}
+
+    # Act
+    client.post(
+        "/inventory/stock/csv",
+        files=files,
+        data=data,
+    )
+
     response = client.get("/inventory/stock")
+
+    # Assert
     assert response.status_code == 200
     assert isinstance(response.json(), list)
+    assert len(response.json()) > 0
 
 
-def test_delete_delivery(client: TestClient, delivery_payload: Dict) -> None:
+def test_get_stock_failed_with_invalid_warehouse_format(
+    client: TestClient,
+) -> None:
     """
-    Test deleting a delivery by its ID.
+    Test getting stock with invalid warehouse format.
     """
-    # First, create a delivery
-    create_response = client.post("/inventory/stock", json=delivery_payload)
-    delivery_id = create_response.json()["id"]
+    # Arrange
+    params = {"warehouse": fake.iana_id()}
 
-    # Then, delete the delivery
-    response = client.delete(f"/inventory/stock/{delivery_id}")
-    assert response.status_code == 200
-    assert response.json()["msg"] == "Todos los datos fueron eliminados"
+    # Act
+    response = client.get(
+        "/inventory/stock",
+        params=params,
+    )
 
-    # Verify the delivery is deleted
-    get_response = client.get(f"/inventory/stock/{delivery_id}")
-    assert get_response.status_code == 404
+    # Assert
+    assert response.status_code == 400
+
+
+def test_get_stock_failed_with_invalid_product_format(
+    client: TestClient,
+) -> None:
+    """
+    Test getting stock with invalid product format.
+    """
+    # Arrange
+    params = {"product": fake.iana_id()}
+
+    # Act
+    response = client.get(
+        "/inventory/stock",
+        params=params,
+    )
+
+    # Assert
+    assert response.status_code == 400
