@@ -148,7 +148,8 @@ def test_login_valid_credentials(
     if "user" in response.json():
         user_data = response.json()["user"]
         assert (
-            user_data["username"] == registered_user["credentials"]["username"]
+            user_data["username"]
+            == registered_user["credentials"]["username"]
         )
         assert user_data["email"] == registered_user["credentials"]["email"]
         assert "password" not in user_data
@@ -230,7 +231,9 @@ def test_login_multiple_users(
             profile_response.json()["username"]
             == user["credentials"]["username"]
         )
-        assert profile_response.json()["email"] == user["credentials"]["email"]
+        assert (
+            profile_response.json()["email"] == user["credentials"]["email"]
+        )
         assert profile_response.json()["role"] == user["credentials"]["role"]
 
 
@@ -286,7 +289,8 @@ def test_get_profile_valid_token(
 
     assert response.status_code == 200
     assert (
-        response.json()["username"] == registered_user["user_data"]["username"]
+        response.json()["username"]
+        == registered_user["user_data"]["username"]
     )
     assert response.json()["email"] == registered_user["user_data"]["email"]
     assert (

@@ -59,7 +59,9 @@ def is_email_taken(db: Session, email: str) -> bool:
     Returns:
         bool: True if the email is taken, False otherwise.
     """
-    return db.query(models.User).filter(models.User.email == email).count() > 0
+    return (
+        db.query(models.User).filter(models.User.email == email).count() > 0
+    )
 
 
 def is_phone_taken(db: Session, phone: str) -> bool:
@@ -71,7 +73,9 @@ def is_phone_taken(db: Session, phone: str) -> bool:
     Returns:
         bool: True if the phone number is taken, False otherwise.
     """
-    return db.query(models.User).filter(models.User.phone == phone).count() > 0
+    return (
+        db.query(models.User).filter(models.User.phone == phone).count() > 0
+    )
 
 
 def get_all_users(
