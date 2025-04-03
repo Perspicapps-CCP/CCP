@@ -56,7 +56,7 @@ def create_seller(
     db: Session, payload: schemas.CreateSellerSchema
 ) -> models.User:
     """
-    Create a new staff user in the database.
+    Create a new seller user in the database.
     Args:
         db (Session): The database session to use for the query.
         user (schemas.CreateStaffSchema): The data of the user to create.
