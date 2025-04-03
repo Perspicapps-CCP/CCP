@@ -106,7 +106,7 @@ Authorization: Bearer <access_token>
 
 ## ➕ Create Seller API
 
-### `POST /api/v1/sales/sellers`
+### `POST /api/v1/users/sellers`
 
 Create a new seller using the provided personal and contact information.
 
@@ -211,7 +211,7 @@ Authorization: Bearer <access_token>
 
 ## 📄 List All Sellers API
 
-### `GET /api/v1/sales/sellers`
+### `GET /api/v1/users/sellers`
 
 Retrieve a list of all sellers in the system.
 
