@@ -185,3 +185,27 @@ def test_create_batch_products(
     )
 
     assert response.status_code == 200
+
+
+def test_create_batch_products_no_headers(
+    client: TestClient, manufacturer_payload: Dict, csv_file
+):
+    create_response = client.post(
+        "/suppliers/manufacturers/", json=manufacturer_payload
+    )
+    manufacturer_id = create_response.json()["id"]
+    csv_content = csv_file.getvalue().decode("utf-8").split("\n")[1:]
+    csv_without_headers = "\n".join(csv_content).strip()
+
+    csv_file_no_headers = io.BytesIO(csv_without_headers.encode("utf-8"))
+    response = client.post(
+        f"/suppliers/manufacturers/{manufacturer_id}/products/batch/",
+        files={"file": ("products.csv", csv_file_no_headers, "text/csv")},
+    )
+
+    assert response.status_code == 400
+
+
+def test_reset(client: TestClient):
+    response = client.post("/suppliers/manufacturers/reset")
+    assert response.status_code == 200

@@ -12,6 +12,8 @@ psycopg2-binary = "*"
 uvicorn = {extras = ["standard"], version = "*"}
 gunicorn = "*"
 pika = "*"
+pandas = "*"
+python-multipart = "*"
 
 [dev-packages]
 black = "*"

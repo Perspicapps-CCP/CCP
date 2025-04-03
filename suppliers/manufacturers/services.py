@@ -3,6 +3,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from database import Base
 
 from . import models, schemas
 
@@ -133,3 +134,8 @@ def create_bulk_products(
         total_errors_records=total_errors_records,
         detail=details,
     )
+
+
+def reset(db: Session):
+    Base.metadata.drop_all(bind=db.get_bind())
+    Base.metadata.create_all(bind=db.get_bind())
