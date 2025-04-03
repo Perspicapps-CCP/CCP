@@ -111,9 +111,9 @@ def create_bulk_products(
                         id=uuid4(), product_id=db_product.id, url=image.url
                     )
                 )
-
             if images_data:
                 db.add_all(images_data)
+                db.commit()
 
             total_successful_records += 1
         except (Exception, IntegrityError) as e:
