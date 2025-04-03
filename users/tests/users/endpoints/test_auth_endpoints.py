@@ -22,7 +22,7 @@ def user_credentials() -> Dict:
         "email": fake.email(),
         "password": fake.password(length=12),
         "full_name": fake.name(),
-        "phone_number": fake.phone_number(),
+        "phone": fake.phone_number(),
     }
 
 
@@ -42,7 +42,7 @@ def multiple_users(db_session: Session) -> list:
             email=f"testuser{i}@example.com",
             hashed_password=hashed_password,
             full_name=f"Test User {i}",
-            phone_number=f"123-456-789{i}",
+            phone=f"123-456-789{i}",
             role=RoleEnum.STAFF,
         )
 
@@ -57,7 +57,7 @@ def multiple_users(db_session: Session) -> list:
                     "username": user.username,
                     "email": user.email,
                     "full_name": user.full_name,
-                    "phone_number": user.phone_number,
+                    "phone": user.phone,
                     "role": user.role,
                 },
                 "credentials": {
@@ -65,7 +65,7 @@ def multiple_users(db_session: Session) -> list:
                     "password": password,
                     "email": user.email,
                     "full_name": user.full_name,
-                    "phone_number": user.phone_number,
+                    "phone": user.phone,
                     "role": user.role,
                 },
             }
@@ -87,7 +87,7 @@ def registered_user(db_session: Session, user_credentials: Dict) -> Dict:
         email=user_credentials["email"],
         hashed_password=hashed_password,
         full_name=user_credentials["full_name"],
-        phone_number=user_credentials["phone_number"],
+        phone=user_credentials["phone"],
         role=RoleEnum.STAFF,
     )
 
@@ -102,7 +102,7 @@ def registered_user(db_session: Session, user_credentials: Dict) -> Dict:
             "username": user.username,
             "email": user.email,
             "full_name": user.full_name,
-            "phone_number": user.phone_number,
+            "phone": user.phone,
             "role": user.role,
         },
         "credentials": user_credentials,
@@ -148,8 +148,7 @@ def test_login_valid_credentials(
     if "user" in response.json():
         user_data = response.json()["user"]
         assert (
-            user_data["username"]
-            == registered_user["credentials"]["username"]
+            user_data["username"] == registered_user["credentials"]["username"]
         )
         assert user_data["email"] == registered_user["credentials"]["email"]
         assert "password" not in user_data
@@ -231,9 +230,7 @@ def test_login_multiple_users(
             profile_response.json()["username"]
             == user["credentials"]["username"]
         )
-        assert (
-            profile_response.json()["email"] == user["credentials"]["email"]
-        )
+        assert profile_response.json()["email"] == user["credentials"]["email"]
         assert profile_response.json()["role"] == user["credentials"]["role"]
 
 
@@ -241,7 +238,10 @@ def test_login_nonexistent_user(client: TestClient) -> None:
     """
     Test login with a username that doesn't exist.
     """
-    login_data = {"username": fake.user_name(), "password": fake.password()}
+    login_data = {
+        "username": fake.user_name(),
+        "password": fake.password(),
+    }
 
     response = client.post("/api/v1/users/login/", json=login_data)
 
@@ -286,18 +286,14 @@ def test_get_profile_valid_token(
 
     assert response.status_code == 200
     assert (
-        response.json()["username"]
-        == registered_user["user_data"]["username"]
+        response.json()["username"] == registered_user["user_data"]["username"]
     )
     assert response.json()["email"] == registered_user["user_data"]["email"]
     assert (
         response.json()["full_name"]
         == registered_user["user_data"]["full_name"]
     )
-    assert (
-        response.json()["phone_number"]
-        == registered_user["user_data"]["phone_number"]
-    )
+    assert response.json()["phone"] == registered_user["user_data"]["phone"]
     assert response.json()["role"] == registered_user["user_data"]["role"]
     assert "password" not in response.json()
 

@@ -22,6 +22,21 @@ class RoleEnum(str, enum.Enum):
     BUYER = "BUYER"
 
 
+class IdTypeEnum(str, enum.Enum):
+    """
+    IdTypeEnum is an enumeration that represents
+      different types of identification.
+    Attributes:
+      CC (str): Represents (Citizen ID).
+      NIT (str): Represents (Tax Identification Number).
+      OTHER (str): Represents any other type of identification.
+    """
+
+    CC = "CC"
+    NIT = "NIT"
+    OTHER = "OTHER"
+
+
 class User(Base):
     """
     User Model
@@ -39,7 +54,7 @@ class User(Base):
         updated_at (datetime): Timestamp when the user was last updated.
           Automatically updated.
         email (str): Unique email address of the user, optional.
-        phone_number (str): Unique phone number of the user, optional.
+        phone (str): Unique phone number of the user, optional.
           Unformatted.
     """
 
@@ -54,4 +69,6 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     email = Column(String(256), unique=True, nullable=True)
-    phone_number = Column(String(256), unique=True, nullable=True)
+    phone = Column(String(256), unique=True, nullable=True)
+    id_type = Column(Enum(IdTypeEnum), nullable=True)
+    identification = Column(String(256), nullable=True)

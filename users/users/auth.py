@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 import bcrypt
 from fastapi import Depends, HTTPException, status
@@ -11,7 +11,7 @@ from config import SECRET_KEY
 from db_dependency import get_db
 
 from .crud import get_user
-from .models import User
+from .models import RoleEnum, User
 
 # Security configuration
 SECRET_KEY = SECRET_KEY
@@ -40,7 +40,8 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         bool: True if the password matches, False otherwise.
     """
     return bcrypt.checkpw(
-        plain_password.encode("utf-8"), hashed_password.encode("utf-8")
+        plain_password.encode("utf-8"),
+        hashed_password.encode("utf-8"),
     )
 
 
@@ -102,3 +103,44 @@ def get_current_active_user(current_user=Depends(get_current_user)):
     if not current_user.is_active:
         raise CREDENTIALS_EXPIRED
     return current_user
+
+
+def require_roles(allowed_roles: List[str]):
+    """
+    Dependency to check if the current user has one of the allowed roles.
+
+    Args:
+        allowed_roles (List[str]):
+          A list of roles allowed to access the endpoint.
+
+    Returns:
+        Callable: A dependency function that validates the user's role.
+
+    Raises:
+        HTTPException: If the user does not have the required role.
+    """
+
+    def role_checker(
+        current_user: User = Depends(get_current_active_user),
+    ):
+        if current_user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to perform this action.",
+            )
+        return current_user
+
+    return role_checker
+
+
+def require_staff():
+    """
+    Dependency to check if the current user is a staff member.
+
+    Returns:
+        Callable: A dependency function that validates the user's role.
+
+    Raises:
+        HTTPException: If the user is not a staff member.
+    """
+    return require_roles([RoleEnum.STAFF])
