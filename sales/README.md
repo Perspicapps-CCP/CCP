@@ -47,7 +47,15 @@ Authorization: Bearer <access_token>
 ```json
 {
   "id": "faec7f5d-308e-4d5b-9dbb-564f72c04f4a",
-  "product_id": "ae3f541e-b3b5-4cb6-a018-02f58bbd0c2e",
+  "product": {
+        "id": "0c5c90ab-95e4-4a7b-aad3-6d3ee80cf469",
+        "images": [
+            "http://example.com/img4.jpg"
+        ],
+        "product_code": "p001",
+        "name": "MProduct1",
+        "price": "5000.00"
+  },
   "goal": 1000,
   "start_date": "2025-03-01",
   "end_date": "2025-03-31",
@@ -119,7 +127,15 @@ Authorization: Bearer <access_token>
 [
   {
     "id": "faec7f5d-308e-4d5b-9dbb-564f72c04f4a",
-    "product_id": "ae3f541e-b3b5-4cb6-a018-02f58bbd0c2e",
+    "product": {
+        "id": "0c5c90ab-95e4-4a7b-aad3-6d3ee80cf469",
+        "images": [
+            "http://example.com/img4.jpg"
+        ],
+        "product_code": "p001",
+        "name": "MProduct1",
+        "price": "5000.00"
+    },
     "goal": 1000,
     "start_date": "2025-03-01",
     "end_date": "2025-03-31",
@@ -146,7 +162,15 @@ Authorization: Bearer <access_token>
   },
   {
     "id": "67f4531e-df2a-45ff-bc1f-3640dc0bcb01",
-    "product_id": "f61cc002-6d5d-4d10-a511-9c83d3b8c76e",
+    "product": {
+        "id": "0c5c90ab-95e4-4a7b-aad3-6d3ee80cf469",
+        "images": [
+            "http://example.com/img4.jpg"
+        ],
+        "product_code": "p001",
+        "name": "MProduct1",
+        "price": "5000.00"
+    },
     "goal": 500,
     "start_date": "2025-04-01",
     "end_date": "2025-04-30",
@@ -168,7 +192,7 @@ Authorization: Bearer <access_token>
 | Field         | Type     | Description                             |
 |---------------|----------|-----------------------------------------|
 | id            | UUID     | Unique ID of the sales plan             |
-| product_id    | UUID     | Associated product                      |
+| product       | object   | Associated product                      |
 | goal          | integer  | Sales target                            |
 | start_date    | string   | Start date (YYYY-MM-DD)                 |
 | end_date      | string   | End date (YYYY-MM-DD)                   |
