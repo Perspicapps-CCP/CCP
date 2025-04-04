@@ -5,7 +5,7 @@ from pydantic import ValidationError
 from database import SessionLocal
 from seedwork.base_consumer import BaseConsumer
 
-from .schemas import GetSellersResponseSchema, GetSllersSchema
+from .schemas import GetSellersResponseSchema, GetSellersSchema
 from .services import get_sellers_with_ids
 
 
@@ -26,8 +26,10 @@ class GetSellersConsumer(BaseConsumer):
         """
         db = SessionLocal()
         try:
-            sellers_schema = GetSllersSchema.model_validate(payload)
+            sellers_schema = GetSellersSchema.model_validate(payload)
             sellers = get_sellers_with_ids(db, sellers_schema.seller_ids)
+            # Sort sellers by id position in payload
+            sellers.sort(key=lambda x: sellers_schema.seller_ids.index(x.id))
             return GetSellersResponseSchema.model_validate(
                 {"sellers": sellers}
             ).model_dump_json()

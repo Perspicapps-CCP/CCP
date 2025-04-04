@@ -2,6 +2,7 @@
 import datetime
 import re
 import uuid
+from typing import List
 
 from pydantic import (
     BaseModel,
@@ -75,9 +76,7 @@ class CreateSellerSchema(UserBaseSchema):
         if len(value) < 8:
             raise ValueError("Password must be at least 8 characters long.")
         if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", value):
-            raise ValueError(
-                "Password must contain at least one special character."
-            )
+            raise ValueError("Password must contain at least one special character.")
         return value
 
     @field_validator("username")
@@ -140,9 +139,9 @@ class CreateSellerSchema(UserBaseSchema):
         return value
 
 
-class GetSllersSchema(BaseModel):
-    seller_ids: list[uuid.UUID]
+class GetSellersSchema(BaseModel):
+    seller_ids: List[uuid.UUID]
 
 
 class GetSellersResponseSchema(BaseModel):
-    sellers: list[UserDetailSchema]
+    sellers: List[UserDetailSchema]

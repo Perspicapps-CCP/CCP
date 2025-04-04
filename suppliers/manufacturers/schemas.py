@@ -118,3 +118,13 @@ class ProductsList(BaseModel):
 
 class ResetResponse(BaseModel):
     msg: str = "Todos los datos fueron eliminados"
+
+
+class GetProductsSchema(BaseModel):
+    product_ids: List[uuid.UUID]
+
+
+class GetProductsResponseSchema(BaseModel):
+    products: List[ResponseProductDetailSchema]
+
+    model_config = ConfigDict(from_attributes=True)
