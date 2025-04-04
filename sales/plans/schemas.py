@@ -40,7 +40,9 @@ class CreateSalesPlanSchema(SalesPlanBaseSchema):
         return product_id
 
     @field_validator("end_date")
-    def validate_dates(cls, end_date: datetime, info: ValidationInfo) -> datetime:
+    def validate_dates(
+        cls, end_date: datetime, info: ValidationInfo
+    ) -> datetime:
         if start_date := info.data.get("start_date"):
             if end_date < start_date:
                 raise ValueError("End date must be after start date.")
