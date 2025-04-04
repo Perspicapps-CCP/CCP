@@ -24,3 +24,25 @@ def create_sales_plan(
     db.commit()
     db.refresh(payload)
     return payload
+
+
+def get_all_sales_plans(db: Session) -> List[models.SalesPlan]:
+    """
+    Get all sales plans.
+    """
+    return (
+        db.query(models.SalesPlan)
+        .order_by(models.SalesPlan.created_at.desc())
+        .all()
+    )
+
+
+def get_sales_plan(db: Session, plan_id: uuid.UUID) -> models.SalesPlan:
+    """
+    Get a sales plan by ID.
+    """
+    return (
+        db.query(models.SalesPlan)
+        .filter(models.SalesPlan.id == plan_id)
+        .first()
+    )

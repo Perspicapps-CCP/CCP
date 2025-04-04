@@ -1,3 +1,4 @@
+from typing import List
 from uuid import UUID, uuid4
 
 import pytest
@@ -140,3 +141,112 @@ def test_successful_creation(
     assert len(db_sellers) == len(valid_payload["seller_ids"])
     db_seller_ids = [str(seller.seller_id) for seller in db_sellers]
     assert set(db_seller_ids) == set(valid_payload["seller_ids"])
+
+
+@pytest.fixture
+def seed_plans(db_session: Session) -> callable:
+    """
+    Seed the database with sales plans and their sellers for testing.
+
+    Returns:
+        Callable[[int, int], List[SalesPlan]]:
+          A function to seed plans with sellers.
+    """
+
+    def _seed_plans(
+        count: int = 2, sellers_per_plan: int = 2
+    ) -> List[SalesPlan]:
+        plans = []
+        for _ in range(count):
+            plan = SalesPlan(
+                id=uuid4(),
+                product_id=uuid4(),
+                goal=fake.random_int(min=1, max=1000),
+                start_date=fake.date_this_year(),
+                end_date=fake.date_this_year(),
+                created_at=fake.date_time_this_year(),
+                updated_at=fake.date_time_this_year(),
+            )
+            db_session.add(plan)
+            db_session.commit()
+
+            # Add sellers to the plan
+            for _ in range(sellers_per_plan):
+                seller = SellerInPlan(
+                    id=uuid4(),
+                    seller_id=uuid4(),
+                    plan_id=plan.id,
+                    created_at=fake.date_time_this_year(),
+                    updated_at=fake.date_time_this_year(),
+                )
+                db_session.add(seller)
+
+            plans.append(plan)
+        db_session.commit()
+        plans.sort(
+            key=lambda x: x.created_at, reverse=True
+        )  # Sort plans by start date
+        return plans
+
+    return _seed_plans
+
+
+def test_list_plans_with_data(client: TestClient, seed_plans):
+    """
+    Test the list plans endpoint when there are plans in the database.
+    """
+    plans = seed_plans(
+        3, sellers_per_plan=2
+    )  # Seed 3 plans with 2 sellers each
+
+    response = client.get("/api/v1/sales/plans/")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert len(data) == 3
+    for i, plan in enumerate(plans):
+        assert data[i]["id"] == str(plan.id)
+        assert data[i]["goal"] == plan.goal
+        assert data[i]["start_date"] == str(plan.start_date)
+        assert data[i]["end_date"] == str(plan.end_date)
+        assert len(data[i]["sellers"]) == 2  # Verify sellers are included
+
+
+def test_list_plans_empty_database(client: TestClient):
+    """
+    Test the list plans endpoint when the database is empty.
+    """
+    response = client.get("/api/v1/sales/plans/")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert len(data) == 0
+
+
+def test_get_plan_exists(client: TestClient, seed_plans):
+    """
+    Test retrieving a specific plan when it exists.
+    """
+    plans = seed_plans(1, sellers_per_plan=2)  # Seed 1 plan with 2 sellers
+    plan = plans[0]
+
+    response = client.get(f"/api/v1/sales/plans/{plan.id}/")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["id"] == str(plan.id)
+    assert data["goal"] == plan.goal
+    assert data["start_date"] == str(plan.start_date)
+    assert data["end_date"] == str(plan.end_date)
+    assert len(data["sellers"]) == 2  # Verify sellers are included
+
+
+def test_get_plan_not_found(client: TestClient):
+    """
+    Test retrieving a specific plan when it does not exist.
+    """
+    non_existent_plan_id = uuid4()
+
+    response = client.get(f"/api/v1/sales/plans/{non_existent_plan_id}/")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Sales plan not found"
