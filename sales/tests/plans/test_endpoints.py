@@ -183,9 +183,7 @@ def seed_plans(db_session: Session) -> callable:
 
             plans.append(plan)
         db_session.commit()
-        plans.sort(
-            key=lambda x: x.created_at, reverse=True
-        )  # Sort plans by start date
+        plans.sort(key=lambda x: x.created_at, reverse=True)
         return plans
 
     return _seed_plans
