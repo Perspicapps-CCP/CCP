@@ -138,3 +138,11 @@ class CreateSellerSchema(UserBaseSchema):
         if crud.is_phone_taken(db, value):
             raise ValueError("Phone number is already taken.")
         return value
+
+
+class GetSllersSchema(BaseModel):
+    seller_ids: list[uuid.UUID]
+
+
+class GetSellersResponseSchema(BaseModel):
+    sellers: list[UserDetailSchema]

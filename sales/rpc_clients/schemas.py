@@ -12,8 +12,8 @@ class SellerSchema(BaseModel):
     email: str
     username: str
     phone: str
-    id_type: str
-    identification: str
+    id_type: Optional[str]
+    identification: Optional[str]
     created_at: datetime.datetime
     updated_at: Optional[datetime.datetime]
 
