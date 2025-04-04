@@ -1,4 +1,4 @@
-# Shcema for user data validation
+# Schema for plans data validation
 import uuid
 from datetime import date, datetime
 from typing import List
@@ -40,11 +40,11 @@ class CreateSalesPlanSchema(SalesPlanBaseSchema):
         return product_id
 
     @field_validator("end_date")
-    def validate_dates(cls, date: datetime, info: ValidationInfo) -> datetime:
+    def validate_dates(cls, end_date: datetime, info: ValidationInfo) -> datetime:
         if start_date := info.data.get("start_date"):
-            if date < start_date:
+            if end_date < start_date:
                 raise ValueError("End date must be after start date.")
-        return date
+        return end_date
 
     @field_validator("seller_ids")
     def validate_seller_ids(

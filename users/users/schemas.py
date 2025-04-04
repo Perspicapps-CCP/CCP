@@ -76,7 +76,9 @@ class CreateSellerSchema(UserBaseSchema):
         if len(value) < 8:
             raise ValueError("Password must be at least 8 characters long.")
         if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", value):
-            raise ValueError("Password must contain at least one special character.")
+            raise ValueError(
+                "Password must contain at least one special character."
+            )
         return value
 
     @field_validator("username")
