@@ -118,3 +118,12 @@ class ProductsList(BaseModel):
 
 class ResetResponse(BaseModel):
     msg: str = "Todos los datos fueron eliminados"
+
+
+class ImageUploadResponse(BaseModel):
+    operation_id: uuid.UUID
+    product_id: uuid.UUID
+    processed_records: int
+    successful_records: int
+    failed_records: int
+    created_at: datetime.datetime

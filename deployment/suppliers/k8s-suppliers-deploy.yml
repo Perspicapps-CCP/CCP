@@ -203,6 +203,27 @@ spec:
             configMapKeyRef:
               name: suppliers-config
               key: RESERVE_ITEMS_TOPIC
+        - name: GCS_BUCKET_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: suppliers-config
+              key: GCS_BUCKET_NAME
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          valueFrom:
+            configMapKeyRef:
+              name: suppliers-config
+              key: GOOGLE_APPLICATION_CREDENTIALS
+        volumeMounts:
+        - name: gcp-key-volume
+          mountPath: /etc/gcp
+          readOnly: true
+      volumes:
+      - name: gcp-key-volume
+        secret:
+          secretName: gcp-bucket-sa-key
+          items:
+          - key: service-account-key.json
+            path: service-account-key.json
         livenessProbe:
           httpGet:
             path: /suppliers/health
