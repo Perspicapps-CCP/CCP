@@ -1,5 +1,7 @@
 # Mock database
 from typing import Any, Generator
+from unittest import mock
+from unittest.mock import MagicMock
 
 import pytest
 from fastapi import FastAPI
@@ -11,6 +13,7 @@ from sqlalchemy.pool import StaticPool
 from database import Base
 from db_dependency import get_db
 from main import app as init_app
+from storage_dependency import get_storage_bucket
 
 SQLALCHEMY_DATABASE_URL = "sqlite://"
 
@@ -40,6 +43,14 @@ def app() -> Generator[FastAPI, Any, None]:
 
 
 @pytest.fixture
+def mock_storage_bucket() -> Generator[MagicMock, Any, None]:
+    mock_blob = MagicMock()
+    mock_bucket = MagicMock()
+    mock_bucket.blob.return_value = mock_blob
+    yield mock_bucket
+
+
+@pytest.fixture
 def db_session(app: FastAPI) -> Generator["TestingSessionLocal", Any, None]:
     """
     Creates a fresh sqlalchemy session for each test that operates in a
@@ -66,7 +77,7 @@ def db_session(app: FastAPI) -> Generator["TestingSessionLocal", Any, None]:
 
 @pytest.fixture()
 def client(
-    app: FastAPI, db_session: "TestingSessionLocal"
+    app: FastAPI, mock_storage_bucket, db_session: "TestingSessionLocal"
 ) -> Generator[TestClient, Any, None]:
     """
     Create a new FastAPI TestClient that uses the `db_session`
@@ -81,6 +92,27 @@ def client(
             pass
 
     app.dependency_overrides[get_db] = _get_test_db
+    app.dependency_overrides[get_storage_bucket] = lambda: mock_storage_bucket
     with TestClient(app) as client:
         # Set authorixation token
         yield client
+
+
+@pytest.fixture(autouse=True)
+def mock_rabbitmq_client(request):
+    """
+    Mock the RabbitMQ client (pika) to avoid actual RabbitMQ calls.
+    """
+    if request.node.get_closest_marker("skip_mock_rabbitmq"):
+        yield  # Skip the fixture
+        return
+
+    # Mock the pika connection and channel
+    mock_connection = mock.MagicMock()
+    mock_channel = mock.MagicMock()
+
+    # Mock pika.BlockingConnection to return the mock connection
+    with mock.patch("pika.BlockingConnection", return_value=mock_connection):
+        # Mock the connection.channel() to return the mock channel
+        mock_connection.channel.return_value = mock_channel
+        yield mock_channel

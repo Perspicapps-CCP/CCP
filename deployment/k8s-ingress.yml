@@ -23,7 +23,7 @@ spec:
             name: suppliers-api
             port:
               number: 80
-      - path: /sales
+      - path: /api/v1/sales
         pathType: Prefix
         backend:
           service:

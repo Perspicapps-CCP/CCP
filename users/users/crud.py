@@ -1,4 +1,5 @@
-from typing import Optional
+import uuid
+from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
@@ -104,4 +105,22 @@ def get_all_users(
         query = query.offset(skip)
     if limit:
         query = query.limit(limit)
+    return query.all()
+
+
+def get_users_by_ids(
+    db: Session, ids: List[uuid.UUID], role: Optional[str] = None
+) -> list[models.User]:
+    """
+    Get users by their IDs.
+    Args:
+        db (Session): The database session to use for the query.
+        ids (list[str]): A lisIDt of user IDs to retrieve.
+    Returns:
+        list[models.User]: A list of user objects.
+    """
+    query = db.query(models.User)
+    if role:
+        query = query.filter(models.User.role == role)
+    query = query.filter(models.User.id.in_(ids))
     return query.all()

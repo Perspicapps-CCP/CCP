@@ -2,6 +2,7 @@
 import datetime
 import re
 import uuid
+from typing import List
 
 from pydantic import (
     BaseModel,
@@ -138,3 +139,11 @@ class CreateSellerSchema(UserBaseSchema):
         if crud.is_phone_taken(db, value):
             raise ValueError("Phone number is already taken.")
         return value
+
+
+class GetSellersSchema(BaseModel):
+    seller_ids: List[uuid.UUID]
+
+
+class GetSellersResponseSchema(BaseModel):
+    sellers: List[UserDetailSchema]

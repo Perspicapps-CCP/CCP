@@ -39,26 +39,26 @@ This project is a FastAPI application for managing sales and purchases. It inclu
 
 1. Start the Memcached server using Docker:
 
-    sh```
+    ```sh
     docker run -d --name memcached -p 11211:11211 memcached
     ```
 
 2. Run the FastAPI application:
 
     ```sh
-    uvicorn main:app --reload
+    uvicorn main:app --port 8000 --reload
     ```
 
     The application will be available at `http://127.0.0.1:8000`.
 
 ## Endpoints
 
-### Health Check
+### 1. Health Check
 
 - **GET** `/ventas/health`
   - Response: `"pong"`
 
-### Purchases
+### 2. Purchases
 
 - **POST** [purchases](/ventas/compras/)
   - Request Body:
@@ -90,18 +90,38 @@ This project is a FastAPI application for managing sales and purchases. It inclu
 - **DELETE** `/ventas/compras/{purchase_id}`
   - Response: `DeleteResponse`
 
+
+### 3. Add product pictures
+
+- **POST** `/suppliers/manufacturers/{manufacturer_id}/products/image/`
+  - Form Data:
+    - `product_id`: ID of the product to add an image to
+    - `product_image`: Collection of image files to upload
+  - Response: `ImageUploadResponse`
+    ```json
+    {
+      "operation_id": ID of the upload operation,
+      "product_id": ID of the product to which images were uploaded,
+      "processed_records": number of images processed,
+      "successful_records": number of images successfully uploaded,
+      "failed_records": number of images that failed to upload,
+      "created_at": date and time when the image upload was performed, in ISO format
+    }
+    ```
+  - Status Codes:
+    - `201`: Images successfully uploaded
+    - `400`: Invalid request (missing product_id or image files)
+    - `404`: Manufacturer or product not found
+    - `415`: Unsupported media type
+
+
 ## Running Tests
 
 To run the tests, use the following command:
 
 ```sh
-    uvicorn main:app  --port 8000
-```
-
-
-
 pytest --cov=. -v -s --cov-fail-under=70
-
+```
 
 Pre commit
 

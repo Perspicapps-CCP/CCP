@@ -27,3 +27,16 @@ def product_to_schema(
         price=product.price,
         images=[image.url for image in product.images],
     )
+
+
+def operation_to_schema(
+    operation: models.ProductImage,
+) -> schemas.ImageUploadResponse:
+    return schemas.ImageUploadResponse(
+        operation_id=operation.id,
+        product_id=operation.product_id,
+        processed_records=operation.processed_records,
+        successful_records=operation.successful_records,
+        failed_records=operation.failed_records,
+        created_at=operation.created_at,
+    )

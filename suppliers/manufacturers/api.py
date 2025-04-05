@@ -1,14 +1,23 @@
 import csv
 import io
-from typing import List, Optional
+from typing import Annotated, List, Optional
 from uuid import UUID
-
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+import uuid
+from google.cloud import storage
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    UploadFile,
+    status,
+)
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from db_dependency import get_db
-
+from storage_dependency import get_storage_bucket
 from . import mappers, schemas, services
 
 manufacturers_router = APIRouter(prefix="/manufacturers")
@@ -147,3 +156,80 @@ def list_manufacturer_products(
 def reset(db: Session = Depends(get_db)):
     services.reset(db)
     return schemas.ResetResponse
+
+
+@manufacturers_router.post(
+    "/{manufacturer_id}/products/image",
+    response_model=schemas.ImageUploadResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+@manufacturers_router.post(
+    "/{manufacturer_id}/products/image/",
+    response_model=schemas.ImageUploadResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def upload_product_images(
+    manufacturer_id: UUID,
+    product_id: Annotated[UUID, Form()],
+    product_image: Annotated[List[UploadFile], File(...)],
+    db: Session = Depends(get_db),
+    bucket: storage.Bucket = Depends(get_storage_bucket),
+):
+    db_manufacturer = services.get_manufacturer(
+        db, manufacturer_id=manufacturer_id
+    )
+    if db_manufacturer is None:
+        raise HTTPException(status_code=404, detail="Manufacturer not found")
+
+    product = services.get_product(
+        db, manufacturer_id=manufacturer_id, product_id=product_id
+    )
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    processed_records = len(product_image)
+    successful_records = 0
+    failed_records = 0
+
+    try:
+
+        for image in product_image:
+            try:
+                content_type = image.content_type
+                if not content_type or not content_type.startswith("image/"):
+                    failed_records += 1
+                    continue
+
+                if await services.file_is_too_large(image):
+                    failed_records += 1
+                    continue
+
+                filename = f"{uuid.uuid4()}_{image.filename}"
+                blob = bucket.blob(f"products/{product_id}/{filename}")
+                blob.upload_from_file(image.file)
+
+                services.save_image_product_uri(
+                    db=db,
+                    product_id=product_id,
+                    image_name=filename,
+                )
+
+                successful_records += 1
+            except Exception:
+                failed_records += 1
+
+        operation = services.create_operation(
+            db=db,
+            product_id=product_id,
+            processed_records=processed_records,
+            successful_records=successful_records,
+            failed_records=failed_records,
+        )
+
+        return mappers.operation_to_schema(operation)
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error when try to process the file: {str(e)}",
+        )

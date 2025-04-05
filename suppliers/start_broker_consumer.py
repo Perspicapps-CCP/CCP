@@ -1,6 +1,6 @@
 import threading
 
-from delivieries.consumer import CreateDeliveryConsumer
+from manufacturers.consumers import GetProductsConsumer
 
 
 def run_thread(threaded_class: type[threading.Thread], num_errors=0):
@@ -17,4 +17,4 @@ def start_threads(threaded_classes: list):
         run_thread(threaded_class)
 
 
-start_threads([CreateDeliveryConsumer])
+start_threads([GetProductsConsumer])

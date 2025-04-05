@@ -7,6 +7,7 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    Integer,
     Numeric,
     String,
 )
@@ -51,6 +52,7 @@ class ManufacturerProduct(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     manufacturer = relationship("Manufacturer", back_populates="products")
     images = relationship("ProductImage", back_populates="product")
+    operations = relationship("Operation", back_populates="product")
 
 
 class ProductImage(Base):
@@ -62,3 +64,21 @@ class ProductImage(Base):
     )
     url = Column(String, nullable=False)
     product = relationship("ManufacturerProduct", back_populates="images")
+
+
+class Operation(Base):
+    __tablename__ = "operations"
+    id = Column(
+        UUID(as_uuid=True), primary_key=True, default=lambda: uuid.uuid4()
+    )
+    product_id = Column(
+        UUID(as_uuid=True), ForeignKey("manufacturer_products.id")
+    )
+    processed_records = Column(Integer, nullable=False, default=0)
+    successful_records = Column(Integer, nullable=False, default=0)
+    failed_records = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    product = relationship("ManufacturerProduct", back_populates="operations")
+
+    def __repr__(self):
+        return f"<Operation(id={self.id}, product_id={self.product_id}, processed_records={self.processed_records}, successful_records={self.successful_records}, failed_records={self.failed_records}, created_at={self.created_at})>"

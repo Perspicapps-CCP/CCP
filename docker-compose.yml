@@ -70,6 +70,7 @@ services:
       DB_PORT: 5432
       DB_NAME: suppliers_db
       BROKER_HOST: rabbitmq
+      GOOGLE_APPLICATION_CREDENTIALS: /etc/gcp/service-account-key.json
     depends_on:
       suppliers_db:
         condition: service_healthy
@@ -84,7 +85,25 @@ services:
       timeout: 1s
       retries: 2
     restart: on-failure
-
+  suppliers_broker_consumer:
+    build: ./suppliers
+    command: python -u start_broker_consumer.py
+    container_name: suppliers_broker_consumer
+    environment:
+      DB_USER: suppliers
+      DB_PASSWORD: postgres
+      DB_HOST: suppliers_db
+      DB_PORT: 5432
+      DB_NAME: suppliers_db
+      BROKER_HOST: rabbitmq
+    depends_on:
+      suppliers_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - general
+      - suppliers_net
   suppliers_db:
     image: postgres:latest
     container_name: suppliers_db
@@ -140,7 +159,6 @@ services:
       DB_PORT: 5432
       DB_NAME: users_db
       BROKER_HOST: rabbitmq
-      CREATE_DELIVERY_TOPIC: rpc_create_delivery
     depends_on:
       users_db:
         condition: service_healthy
