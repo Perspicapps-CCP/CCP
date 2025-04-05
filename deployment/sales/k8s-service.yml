@@ -8,7 +8,7 @@ spec:
     checkIntervalSec: 60
     port: 8001
     type: HTTP
-    requestPath: /sales/health
+    requestPath: /api/v1/sales/health
 ---
 apiVersion: v1
 kind: Service
