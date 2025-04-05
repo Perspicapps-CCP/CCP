@@ -35,7 +35,7 @@ services:
       - general
       - inventory_net
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:9001/logistica/health || exit 1" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:9001/inventory/health || exit 1" ]
       interval: 5s
       timeout: 1s
       retries: 2
@@ -80,7 +80,7 @@ services:
       - general
       - suppliers_net
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:9001/suppliers/health || exit 1" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:9002/suppliers/health || exit 1" ]
       interval: 5s
       timeout: 1s
       retries: 2
@@ -142,7 +142,7 @@ services:
       - general
       - users_net
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:9001/api/v1/users/health || exit 1" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:9003/api/v1/users/health || exit 1" ]
       interval: 5s
       timeout: 1s
       retries: 2
@@ -206,7 +206,7 @@ services:
       - general
       - sales_net
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:9001/api/v1/sales/health || exit 1" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:9004/api/v1/sales/health || exit 1" ]
       interval: 5s
       timeout: 1s
       retries: 2
