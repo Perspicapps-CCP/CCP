@@ -4,13 +4,20 @@ from typing import Annotated, List, Optional
 from uuid import UUID
 import uuid
 from google.cloud import storage
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    UploadFile,
+    status,
+)
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
-from config import GCS_BUCKET_NAME
 from db_dependency import get_db
-
+from storage_dependency import get_storage_bucket
 from . import mappers, schemas, services
 
 manufacturers_router = APIRouter(prefix="/manufacturers")
@@ -154,16 +161,19 @@ def reset(db: Session = Depends(get_db)):
 @manufacturers_router.post(
     "/{manufacturer_id}/products/image",
     response_model=schemas.ImageUploadResponse,
+    status_code=status.HTTP_201_CREATED,
 )
 @manufacturers_router.post(
     "/{manufacturer_id}/products/image/",
     response_model=schemas.ImageUploadResponse,
+    status_code=status.HTTP_201_CREATED,
 )
 async def upload_product_images(
     manufacturer_id: UUID,
     product_id: Annotated[UUID, Form()],
     product_image: Annotated[List[UploadFile], File(...)],
     db: Session = Depends(get_db),
+    bucket: storage.Bucket = Depends(get_storage_bucket),
 ):
     db_manufacturer = services.get_manufacturer(
         db, manufacturer_id=manufacturer_id
@@ -182,8 +192,6 @@ async def upload_product_images(
     failed_records = 0
 
     try:
-        storage_client = storage.Client()
-        bucket = storage_client.bucket(GCS_BUCKET_NAME)
 
         for image in product_image:
             try:

@@ -52,6 +52,7 @@ class ManufacturerProduct(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     manufacturer = relationship("Manufacturer", back_populates="products")
     images = relationship("ProductImage", back_populates="product")
+    operations = relationship("Operation", back_populates="product")
 
 
 class ProductImage(Base):
@@ -70,7 +71,9 @@ class Operation(Base):
     id = Column(
         UUID(as_uuid=True), primary_key=True, default=lambda: uuid.uuid4()
     )
-    product_id = Column(UUID(as_uuid=True), ForeignKey("manufacturer_products.id"))
+    product_id = Column(
+        UUID(as_uuid=True), ForeignKey("manufacturer_products.id")
+    )
     processed_records = Column(Integer, nullable=False, default=0)
     successful_records = Column(Integer, nullable=False, default=0)
     failed_records = Column(Integer, nullable=False, default=0)

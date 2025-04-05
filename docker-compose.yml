@@ -70,6 +70,7 @@ services:
       DB_PORT: 5432
       DB_NAME: suppliers_db
       BROKER_HOST: rabbitmq
+      GOOGLE_APPLICATION_CREDENTIALS: /etc/gcp/service-account-key.json
     depends_on:
       suppliers_db:
         condition: service_healthy
