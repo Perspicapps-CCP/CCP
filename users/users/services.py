@@ -1,4 +1,5 @@
-from typing import Optional
+import uuid
+from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
@@ -83,3 +84,19 @@ def get_all_sellers(db: Session) -> list[models.User]:
         list[models.User]: A list of seller user objects.
     """
     return crud.get_all_users(db, role=models.RoleEnum.SELLER)
+
+
+def get_sellers_with_ids(
+    db: Session, seller_ids: List[uuid.UUID]
+) -> list[models.User]:
+    """
+    Get sellers by their IDs.
+    Args:
+        db (Session): The database session to use for the query.
+        seller_ids (list[schemas.UUIDSchema]): A list of seller IDs to retrieve.
+    Returns:
+        list[models.User]: A list of seller user objects.
+    """
+    return crud.get_users_by_ids(
+        db, ids=seller_ids, role=models.RoleEnum.SELLER
+    )

@@ -1,8 +1,10 @@
 from typing import List, Optional
 from uuid import UUID, uuid4
 
+from fastapi import UploadFile
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from config import GCS_BUCKET_NAME
 from database import Base
 
 from . import models, schemas
@@ -82,6 +84,33 @@ def get_products(
     return query.order_by(models.ManufacturerProduct.updated_at.desc()).all()
 
 
+def get_product(
+    db: Session,
+    product_id: UUID,
+    manufacturer_id: UUID,
+) -> models.ManufacturerProduct:
+    query = (
+        db.query(models.ManufacturerProduct)
+        .filter(models.ManufacturerProduct.id == product_id)
+        .filter(models.ManufacturerProduct.manufacturer_id == manufacturer_id)
+    )
+    return query.first()
+
+
+def save_image_product_uri(
+    db: Session, product_id: UUID, image_name: str
+) -> models.ProductImage:
+    """Save the image URI in the database."""
+    db_image = models.ProductImage(
+        product_id=product_id,
+        url=f"https://storage.cloud.google.com/{GCS_BUCKET_NAME}/products/{product_id}/{image_name}",
+    )
+    db.add(db_image)
+    db.commit()
+    db.refresh(db_image)
+    return db_image
+
+
 def create_bulk_products(
     manufacturer_id: UUID,
     db: Session,
@@ -111,9 +140,9 @@ def create_bulk_products(
                         id=uuid4(), product_id=db_product.id, url=image.url
                     )
                 )
-
             if images_data:
                 db.add_all(images_data)
+                db.commit()
 
             total_successful_records += 1
         except (Exception, IntegrityError) as e:
@@ -139,3 +168,49 @@ def create_bulk_products(
 def reset(db: Session):
     Base.metadata.drop_all(bind=db.get_bind())
     Base.metadata.create_all(bind=db.get_bind())
+
+
+def create_operation(
+    db: Session,
+    product_id: UUID,
+    processed_records: int,
+    successful_records: int,
+    failed_records: int,
+) -> models.Operation:
+    """Create a new operation in the database."""
+    db_operation = models.Operation(
+        product_id=product_id,
+        processed_records=processed_records,
+        successful_records=successful_records,
+        failed_records=failed_records,
+    )
+    db.add(db_operation)
+    db.commit()
+    db.refresh(db_operation)
+    return db_operation
+
+
+async def file_is_too_large(image: UploadFile) -> bool:
+    # Validate file size (e.g., max 5MB)
+    max_size = 5 * 1024 * 1024  # 5MB
+
+    # Check content length if available in headers
+    content_length = image.headers.get("content-length")
+    if content_length and int(content_length) > max_size:
+        return True
+
+    chunk_size = 8192  # 8KB chunk
+    total_size = 0
+    file_too_large = False
+
+    while True:
+        chunk = await image.read(chunk_size)
+        if not chunk:
+            break
+        total_size += len(chunk)
+        if total_size > max_size:
+            file_too_large = True
+            break
+
+    await image.seek(0)
+    return file_too_large

@@ -1,0 +1,29 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "boilerplate"
+
+[packages]
+fastapi = {extras = ["standard"], version = "*"}
+sqlalchemy = "*"
+python-dotenv = "*"
+pydantic = "*"
+psycopg2-binary = "*"
+uvicorn = {extras = ["standard"], version = "*"}
+gunicorn = "*"
+pika = "*"
+python-jose = "*"
+bcrypt = "*"
+
+[dev-packages]
+black = "*"
+pytest = "*"
+faker = "*"
+coverage = "*"
+pytest-cov = "*"
+pre-commit = "*"
+docformatter = "*"
+
+[requires]
+python_version = "3.13"
+python_full_version = "3.13.1"
