@@ -93,7 +93,6 @@ def seller_payload() -> dict:
         "phone": fake.phone_number(),
         "id_type": "CC",
         "identification": fake.ssn(),
-        "password": fake.password(length=12, special_chars=True),
     }
 
 
