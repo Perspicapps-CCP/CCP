@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 from fastapi import UploadFile
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+
 from config import GCS_BUCKET_NAME
 from database import Base
 
@@ -75,7 +76,7 @@ def get_products(
     manufacturer_id: Optional[UUID] = None,
 ) -> List[models.ManufacturerProduct]:
     query = db.query(models.ManufacturerProduct)
-    if productsIds:
+    if productsIds is not None:
         query = query.filter(models.ManufacturerProduct.id.in_(productsIds))
     if manufacturer_id:
         query = query.filter(
