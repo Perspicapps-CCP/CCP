@@ -29,7 +29,6 @@ def create_user(
     db: Session,
     payload: schemas.UserBaseSchema,
     role: str,
-    password: str,
 ) -> models.User:
     """
     Creates a new user in the database.
@@ -48,7 +47,7 @@ def create_user(
         email=payload.email,
         phone=payload.phone,
         role=role,
-        hashed_password=auth.get_password_hash(password),
+        hashed_password='invalid_value',
     )
     return crud.create_user(db, user)
 
@@ -69,7 +68,6 @@ def create_seller(
         db,
         payload=payload,
         role=models.RoleEnum.SELLER,
-        password=payload.password,
     )
 
 
@@ -93,7 +91,8 @@ def get_sellers_with_ids(
     Get sellers by their IDs.
     Args:
         db (Session): The database session to use for the query.
-        seller_ids (list[schemas.UUIDSchema]): A list of seller IDs to retrieve.
+        seller_ids (list[schemas.UUIDSchema]): A list of seller IDs
+          to retrieve.
     Returns:
         list[models.User]: A list of seller user objects.
     """

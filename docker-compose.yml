@@ -35,7 +35,7 @@ services:
       - general
       - inventory_net
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:9001/logistica/health || exit 1" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:9001/inventory/health || exit 1" ]
       interval: 5s
       timeout: 1s
       retries: 2
@@ -80,7 +80,7 @@ services:
       - general
       - suppliers_net
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:9001/suppliers/health || exit 1" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:9002/suppliers/health || exit 1" ]
       interval: 5s
       timeout: 1s
       retries: 2
@@ -142,7 +142,7 @@ services:
       - general
       - users_net
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:9001/api/v1/users/health || exit 1" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:9003/api/v1/users/health || exit 1" ]
       interval: 5s
       timeout: 1s
       retries: 2
@@ -184,6 +184,70 @@ services:
       retries: 5
     networks:
       - users_net
+  sales_api:
+    build: ./sales
+    command: uvicorn main:app --host 0.0.0.0 --port 9004
+    container_name: sales_api
+    ports:
+      - "9004:9004"
+    environment:
+      DB_USER: sales
+      DB_PASSWORD: postgres
+      DB_HOST: sales_db
+      DB_PORT: 5432
+      DB_NAME: sales_db
+      BROKER_HOST: rabbitmq
+    depends_on:
+      sales_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - general
+      - sales_net
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:9004/api/v1/sales/health || exit 1" ]
+      interval: 5s
+      timeout: 1s
+      retries: 2
+    restart: on-failure
+
+  sales_broker_consumer:
+    build: ./sales
+    command: python -u start_broker_consumer.py
+    container_name: sales_broker_consumer
+    environment:
+      DB_USER: sales
+      DB_PASSWORD: postgres
+      DB_HOST: sales_db
+      DB_PORT: 5432
+      DB_NAME: sales_db
+      BROKER_HOST: rabbitmq
+    depends_on:
+      sales_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - general
+      - sales_net
+
+  sales_db:
+    image: postgres:latest
+    container_name: sales_db
+    volumes:
+      - sales_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: sales
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sales_db
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sales_net
   nginx:
     image: nginx:latest
     container_name: nginx_gateway
@@ -195,6 +259,7 @@ services:
       - inventory_api
       - suppliers_api
       - users_api
+      - sales_api
     networks:
       - general
     restart: unless-stopped
@@ -202,8 +267,10 @@ volumes:
   users_data:
   inventory_data:
   suppliers_data:
+  sales_data:
 networks:
   general:
   users_net:
   inventory_net:
   suppliers_net:
+  sales_net:
