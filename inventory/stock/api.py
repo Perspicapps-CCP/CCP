@@ -11,7 +11,9 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 from io import StringIO
+from uuid import UUID
 from db_dependency import get_db
+from rpc_clients.suppliers_client import SuppliersClient
 
 from . import mappers, schemas, services
 
@@ -26,6 +28,7 @@ stock_router = APIRouter(prefix="/stock")
 def upload_inventory(
     request: schemas.StockRequestSchema,
     db: Session = Depends(get_db),
+    suppliers_client: SuppliersClient = Depends(SuppliersClient),
 ):
     """
     load products stock in a warehouse
@@ -33,8 +36,15 @@ def upload_inventory(
 
     if not services.get_warehouse(db, request.warehouse_id):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="The warehouse does not exist",
+        )
+
+    product = suppliers_client.get_products([request.product_id])
+    if not product or len(product) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="The product does not exist",
         )
 
     successful_records = 0
@@ -82,23 +92,19 @@ def upload_inventory(
     status_code=status.HTTP_201_CREATED,
 )
 async def upload_inventory_csv(
-    warehouse_id: Annotated[str, Form()],
+    warehouse_id: Annotated[UUID, Form()],
     inventory_upload: Annotated[UploadFile, File(...)],
     db: Session = Depends(get_db),
+    suppliers_client: SuppliersClient = Depends(SuppliersClient),
 ):
     """
     Carga masiva de inventario desde un archivo CSV.
     El archivo debe contener las columnas: product_id, quantity
     """
 
-    try:
-        schemas.WarehouseIdSchema(warehouse_id=warehouse_id)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
     if not services.get_warehouse(db, warehouse_id):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="La bodega no existe",
         )
 
@@ -108,11 +114,9 @@ async def upload_inventory_csv(
             detail="The file must be a CSV",
         )
 
-    contents = await inventory_upload.read()
-    s = StringIO(contents.decode("utf-8"))
-
     try:
-
+        contents = await inventory_upload.read()
+        s = StringIO(contents.decode("utf-8"))
         df = pd.read_csv(s)
 
         required_columns = ["product_id", "quantity"]
@@ -134,9 +138,15 @@ async def upload_inventory_csv(
                     failed_records += 1
                     continue
 
+                # Validar que el producto exista
+                product = suppliers_client.get_products([record["product_id"]])
+                if not product or len(product) == 0:
+                    failed_records += 1
+                    continue
+
                 # Buscar si ya existe el producto en la bodega
                 existing_stock = services.get_stock(
-                    db, warehouse_id, record["product_id"]
+                    db, warehouse_id, UUID(record["product_id"])
                 )
 
                 if existing_stock:
@@ -144,7 +154,7 @@ async def upload_inventory_csv(
                     services.increase_stock(
                         db,
                         warehouse_id=warehouse_id,
-                        product_id=record["product_id"],
+                        product_id=UUID(record["product_id"]),
                         quantity=record["quantity"],
                     )
                 else:
@@ -152,7 +162,7 @@ async def upload_inventory_csv(
                     services.create_stock(
                         db,
                         warehouse_id=warehouse_id,
-                        product_id=record["product_id"],
+                        product_id=UUID(record["product_id"]),
                         quantity=record["quantity"],
                     )
 

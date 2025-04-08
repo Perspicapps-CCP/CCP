@@ -5,8 +5,20 @@ from typing import Dict
 from faker import Faker
 from fastapi.testclient import TestClient
 
+from warehouse.models import Warehouse
+
 fake = Faker()
 fake.seed_instance(0)
+
+
+def mock_warehouse_db():
+    return Warehouse(
+        name="Test Warehouse",
+        country="Test Country",
+        city="Test City",
+        address="Test Address",
+        phone="1234567890",
+    )
 
 
 @pytest.fixture
@@ -73,10 +85,13 @@ def test_create_warehouse_failed_with_oversized_phone_number(
     assert response.status_code == 400
 
 
-def test_list_warehouses(client: TestClient, fake_warehouse: Dict):
+def test_list_warehouses(client: TestClient, db_session):
     """Test listing warehouses with filters"""
     # Act
-    warehouse = client.post("/inventory/warehouse", json=fake_warehouse)
+    dummy_warehouse = mock_warehouse_db()
+    db_session.add(dummy_warehouse)
+    db_session.commit()
+    db_session.refresh(dummy_warehouse)
 
     # Test without filters
     response = client.get("/inventory/warehouse")
@@ -85,35 +100,32 @@ def test_list_warehouses(client: TestClient, fake_warehouse: Dict):
     assert len(response.json()) > 0
 
     # Test with name filter
-    response = client.get(
-        f"/inventory/warehouse?name={fake_warehouse['warehouse_name']}"
-    )
+    response = client.get(f"/inventory/warehouse?name={dummy_warehouse.name}")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
     assert len(response.json()) > 0
 
     # Test with id filter
-    response = client.get(
-        f"/inventory/warehouse?id={warehouse.json()['warehouse_id']}"
-    )
+    response = client.get(f"/inventory/warehouse?id={dummy_warehouse.id}")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
     assert len(response.json()) > 0
 
 
-def test_get_single_warehouse(client: TestClient, fake_warehouse: Dict):
+def test_get_single_warehouse(client: TestClient, db_session):
     """Test getting a single warehouse by ID"""
     # Act
-    warehouse = client.post("/inventory/warehouse", json=fake_warehouse)
+    dummy_warehouse = mock_warehouse_db()
+    db_session.add(dummy_warehouse)
+    db_session.commit()
+    db_session.refresh(dummy_warehouse)
 
     # Test warehouse found
-    response = client.get(
-        f"/inventory/warehouse/{warehouse.json()['warehouse_id']}"
-    )
+    response = client.get(f"/inventory/warehouse/{dummy_warehouse.id}")
     assert response.status_code == 200
     response_data = response.json()
-    assert response_data["warehouse_id"] == warehouse.json()["warehouse_id"]
-    assert response_data["warehouse_name"] == fake_warehouse["warehouse_name"]
+    assert response_data["warehouse_id"] == str(dummy_warehouse.id)
+    assert response_data["warehouse_name"] == dummy_warehouse.name
 
     # Test warehouse not found
     response = client.get("/inventory/warehouse/999")
