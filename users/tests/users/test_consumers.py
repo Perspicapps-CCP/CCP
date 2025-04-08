@@ -85,3 +85,41 @@ class TestGetSellersConsumer:
             assert seller.full_name == seller_data["full_name"]
             assert seller.phone == seller_data["phone"]
             assert seller.role == seller_data["role"]
+
+    def test_list_missing_sellers(self, db_session: Session):
+        """
+        Test GetsellersConsumer with a valid payload and verify the data.
+        """
+        consumer = GetSellersConsumer()
+        valid_payload = {
+            "seller_ids": [
+                str(uuid.uuid4()),
+                str(uuid.uuid4()),
+                str(uuid.uuid4()),
+            ]
+        }
+        with mock.patch("users.consumers.SessionLocal") as get_session:
+            get_session.return_value = db_session
+            # Parse the JSON response
+            sellers_data = consumer.process_payload(valid_payload)
+            sellers_data = json.loads(sellers_data)
+
+        assert "sellers" in sellers_data
+        assert len(sellers_data["sellers"]) == 0
+
+    @pytest.mark.usefixtures("sellers_in_db")
+    def test_empty_sellers(self, db_session: Session):
+        """
+        Test GetsellersConsumer with an empty list of product IDs.
+        """
+        consumer = GetSellersConsumer()
+        valid_payload = {"seller_ids": []}
+
+        with mock.patch("users.consumers.SessionLocal") as get_session:
+            get_session.return_value = db_session
+            # Parse the JSON response
+            sellers_data = consumer.process_payload(valid_payload)
+            sellers_data = json.loads(sellers_data)
+
+        assert "sellers" in sellers_data
+        assert len(sellers_data["sellers"]) == 0

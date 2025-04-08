@@ -33,7 +33,11 @@ class GetProductsConsumer(BaseConsumer):
             )
             # Sort sellers by id position in payload
             products.sort(
-                key=lambda x: products_schema.product_ids.index(x.id)
+                key=lambda x: (
+                    products_schema.product_ids.index(x.id)
+                    if x.id in products_schema.product_ids
+                    else -1
+                )
             )
             return GetProductsResponseSchema.model_validate(
                 {

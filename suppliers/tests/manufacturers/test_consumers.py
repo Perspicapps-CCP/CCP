@@ -109,3 +109,41 @@ class TestGetProductsConsumer:
             assert product.code == product_data["product_code"]
             assert product.name == product_data["name"]
             assert str(product.price) == product_data["price"]
+
+    def test_list_missing_products(self, db_session: Session):
+        """
+        Test GetProductsConsumer with a valid payload and verify the data.
+        """
+        consumer = GetProductsConsumer()
+        valid_payload = {
+            "product_ids": [
+                str(uuid.uuid4()),
+                str(uuid.uuid4()),
+                str(uuid.uuid4()),
+            ]
+        }
+        with mock.patch("manufacturers.consumers.SessionLocal") as get_session:
+            get_session.return_value = db_session
+            # Parse the JSON response
+            products_data = consumer.process_payload(valid_payload)
+            products_data = json.loads(products_data)
+
+        assert "products" in products_data
+        assert len(products_data["products"]) == 0
+
+    @pytest.mark.usefixtures("products_in_db")
+    def test_empty_products(self, db_session: Session):
+        """
+        Test GetProductsConsumer with an empty list of product IDs.
+        """
+        consumer = GetProductsConsumer()
+        valid_payload = {"product_ids": []}
+
+        with mock.patch("manufacturers.consumers.SessionLocal") as get_session:
+            get_session.return_value = db_session
+            # Parse the JSON response
+            products_data = consumer.process_payload(valid_payload)
+            products_data = json.loads(products_data)
+
+        assert "products" in products_data
+        assert len(products_data["products"]) == 0

@@ -82,7 +82,7 @@ metadata:
   labels:
     app: sales-broker-consumer
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: sales-broker-consumer
