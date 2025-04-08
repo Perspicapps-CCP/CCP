@@ -283,3 +283,63 @@ Authorization: Bearer <access_token>
   "detail": "You do not have permission to perform this action"
 }
 ```
+
+
+## 🔐 Seller Login API, sames as staff.
+
+### `POST /api/v1/users/login`
+
+Authenticate a seller using username and password.
+
+✅ This endpoint is shared by all user roles (`SELLER`, `STAFF`, `BUYER`).
+⛔ No token is required for this request.
+
+---
+
+### 📥 Request Body
+
+```json
+{
+  "username": "wilveque",
+  "password": "securePassword123"
+}
+```
+
+| Field     | Type   | Required | Description         |
+|-----------|--------|----------|---------------------|
+| username  | string | ✅       | Seller’s username   |
+| password  | string | ✅       | Seller’s password   |
+
+---
+
+### 📤 Response (200 OK)
+
+```json
+{
+  "access_token": "jwt_token_here",
+  "user": {
+    "id": "3f9c962a-6b71-41d2-a9e0-b98c0c245e4a",
+    "username": "wilveque",
+    "email": "wilveque@ccp.com.co",
+    "role": "SELLER"
+  }
+}
+```
+
+| Field         | Type   | Description                         |
+|---------------|--------|-------------------------------------|
+| access_token  | string | JWT token for authenticated sessions |
+| user          | object | Authenticated seller information     |
+| user.role     | string | Always `SELLER` for sellers          |
+
+---
+
+### ❌ Error Responses
+
+#### 401 Unauthorized
+
+```json
+{
+  "detail": "Invalid credentials"
+}
+```

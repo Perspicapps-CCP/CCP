@@ -217,3 +217,344 @@ Authorization: Bearer <access_token>
   "detail": "You do not have permission to perform this action"
 }
 ```
+
+## 📄 List Seller Sales API
+
+### `GET /api/v1/sales/sales/`
+
+Retrieve all sales records made by sellers. Each record includes order and seller details.
+
+> ⚠️ This endpoint is **not paginated** — it returns the full list of sales.
+
+---
+
+### 🔐 Authentication
+
+Requires Bearer Token (JWT) in the `Authorization` header:
+
+```
+Authorization: Bearer <access_token>
+```
+
+---
+
+### 📤 Response (200 OK)
+
+```json
+[
+  {
+    "order": {
+      "id": "eec0aa19-d22f-4c5f-a27e-0f32fa8a6ac2",
+      "number": "3155185411"
+    },
+    "city": "Bogota",
+    "date": "2025-04-01",
+    "value": 120000,
+    "seller": {
+      "id": "3f9c962a-6b71-41d2-a9e0-b98c0c245e4a",
+      "full_name": "Wilson Ventas Quevedo",
+      "email": "wilveque@ccp.com.co",
+      "username": "wilveque",
+      "phone": "+57 2325248847",
+      "id_type": "CC",
+      "identification": "101448745887"
+    }
+  }
+]
+```
+
+---
+
+### 🔍 Field Reference
+
+| Field       | Type   | Description                             |
+|-------------|--------|-----------------------------------------|
+| order       | object | Contains `id` (UUID) and `number` (string) |
+| city        | string | City where the sale occurred            |
+| date        | string | Date of the sale (`YYYY-MM-DD`)         |
+| value       | number | Sale amount in local currency           |
+| seller      | object | Full seller profile (same structure used in seller endpoints) |
+
+---
+
+### ❌ Error Responses
+
+#### 401 Unauthorized
+
+```json
+{
+  "detail": "Not authenticated"
+}
+```
+
+#### 403 Forbidden
+
+```json
+{
+  "detail": "You do not have permission to view sales"
+}
+```
+
+## 📤 Export Sales API
+
+### `GET /api/v1/sales/sales/export/`
+
+Export seller sales as a CSV file using optional filters like seller and date range.
+
+---
+
+### 🔐 Authentication
+
+Requires Bearer Token (JWT) in the `Authorization` header:
+
+```
+Authorization: Bearer <access_token>
+```
+
+---
+
+### 📥 Query Parameters
+
+| Param        | Type   | Required | Description                                  |
+|--------------|--------|----------|----------------------------------------------|
+| seller_id    | UUID   | ❌       | Filter sales by specific seller              |
+| start_date   | string | ❌       | Filter from this date (`YYYY-MM-DD`)         |
+| end_date     | string | ❌       | Filter until this date (`YYYY-MM-DD`)        |
+
+**Example request:**
+
+```
+GET /api/v1/sales/sales/export/?seller_id=3f9c962a-6b71-41d2-a9e0-b98c0c245e4a&start_date=2025-04-01&end_date=2025-04-30
+```
+
+---
+
+### 📤 Response (200 OK)
+
+**Content-Type:** `text/csv`
+**Content-Disposition:** `attachment; filename="sales_export.csv"`
+
+Returns a downloadable `.csv` file with sales data.
+
+**Example CSV Format:**
+
+```
+order_id,order_number,date,city,seller_name,seller_phone,value
+eec0aa19-d22f-4c5f-a27e-0f32fa8a6ac2,3155185411,2025-04-01,Bogota,Wilson Ventas Quevedo,+57 2325248847,120000
+...
+```
+
+---
+
+### ❌ Error Responses
+
+#### 400 Bad Request
+
+```json
+{
+  "detail": "Invalid date range: end_date must be after start_date"
+}
+```
+
+#### 401 Unauthorized
+
+```json
+{
+  "detail": "Not authenticated"
+}
+```
+
+#### 403 Forbidden
+
+```json
+{
+  "detail": "You do not have permission to export sales"
+}
+```
+
+## 📍 List Routes API and filter routes
+
+### `GET /api/v1/sales/routes/`
+
+Retrieve all sales routes for the authenticated client with optional filters: client, address (partial), and date range.
+
+---
+
+### 🔐 Authentication
+
+Requires Bearer Token (JWT) in the `Authorization` header:
+
+```
+Authorization: Bearer <access_token>
+```
+
+---
+
+### 📥 Query Parameters (Optional)
+
+| Param        | Type   | Description                                             |
+|--------------|--------|---------------------------------------------------------|
+| client_id    | UUID   | Filter by client user ID                                |
+| address      | string | Filter by address line or reference (partial match)     |
+| start_date   | string | Filter from date (`YYYY-MM-DD`)                         |
+| end_date     | string | Filter to date (`YYYY-MM-DD`)                           |
+
+**Example request:**
+
+```
+GET /api/v1/sales/routes/?client_id=3f9c962a-6b71-41d2-a9e0-b98c0c245e4a&start_date=2025-02-20&end_date=2025-02-21&address=Siempre Viva
+```
+
+---
+
+### 📤 Response (200 OK)
+
+```json
+[
+  {
+    "id": "6cb8129b-12f5-4703-a3d4-1fc519bb3873",
+    "client": {
+      "id": "3f9c962a-6b71-41d2-a9e0-b98c0c245e4a",
+      "full_name": "Cosme Fulanito",
+      "email": "cosme@ccp.com.co",
+      "username": "cosmef",
+      "phone": "+57 3000000000",
+      "id_type": "CC",
+      "identification": "101000000000",
+      "role": "BUYER"
+    },
+    "address": {
+      "line": "Av Siempre Viva 123",
+      "neighborhood": "Centro",
+      "city": "Bogota",
+      "state": "Cundinamarca",
+      "country": "Colombia",
+      "latitude": 4.7110,
+      "longitude": -74.0721
+    },
+    "date": "2025-02-20"
+  }
+]
+```
+
+---
+
+### 📦 Address Object Format
+
+| Field         | Type    | Description                     |
+|---------------|---------|---------------------------------|
+| line          | string  | Street address line             |
+| neighborhood  | string  | Neighborhood or locality        |
+| city          | string  | City                            |
+| state         | string  | State or department             |
+| country       | string  | Country name                    |
+| latitude      | float   | Optional latitude (GPS)         |
+| longitude     | float   | Optional longitude (GPS)        |
+
+---
+
+### ❌ Error Responses
+
+#### 401 Unauthorized
+
+```json
+{
+  "detail": "Not authenticated"
+}
+```
+
+#### 422 Validation Error
+
+```json
+{
+  "detail": [
+    {
+      "loc": ["query", "start_date"],
+      "msg": "Invalid date format",
+      "type": "value_error.date"
+    }
+  ]
+}
+```
+
+## 🔎 Get Route Detail API
+
+### `GET /api/v1/sales/routes/{route_id}`
+
+Retrieve the details of a specific sales route by its ID.
+
+---
+
+### 🔐 Authentication
+
+Requires Bearer Token (JWT) in the `Authorization` header:
+
+```
+Authorization: Bearer <access_token>
+```
+
+---
+
+### 📥 Path Parameter
+
+| Param     | Type | Required | Description           |
+|-----------|------|----------|-----------------------|
+| route_id  | UUID | ✅       | Unique ID of the route |
+
+---
+
+### 📤 Response (200 OK)
+
+```json
+{
+  "id": "6cb8129b-12f5-4703-a3d4-1fc519bb3873",
+  "client": {
+    "id": "3f9c962a-6b71-41d2-a9e0-b98c0c245e4a",
+    "full_name": "Cosme Fulanito",
+    "email": "cosme@ccp.com.co",
+    "username": "cosmef",
+    "phone": "+57 3000000000",
+    "id_type": "CC",
+    "identification": "101000000000",
+    "role": "BUYER"
+  },
+  "address": {
+    "line": "Av Siempre Viva 123",
+    "neighborhood": "Centro",
+    "city": "Bogota",
+    "state": "Cundinamarca",
+    "country": "Colombia",
+    "latitude": 4.7110,
+    "longitude": -74.0721
+  },
+  "date": "2025-02-20"
+}
+```
+
+---
+
+### ❌ Error Responses
+
+#### 404 Not Found
+
+```json
+{
+  "detail": "Route not found"
+}
+```
+
+#### 401 Unauthorized
+
+```json
+{
+  "detail": "Not authenticated"
+}
+```
+
+#### 403 Forbidden
+
+```json
+{
+  "detail": "You do not have access to this route"
+}
+```
