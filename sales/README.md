@@ -372,11 +372,11 @@ eec0aa19-d22f-4c5f-a27e-0f32fa8a6ac2,3155185411,2025-04-01,Bogota,Wilson Ventas 
 }
 ```
 
-## 📍 List Routes API and filter routes
+## 📍 List Routes API
 
 ### `GET /api/v1/sales/routes/`
 
-Retrieve all sales routes for the authenticated client with optional filters: client, address (partial), and date range.
+Retrieve all sales routes. Each route includes multiple client stops with full client and address info.
 
 ---
 
@@ -394,16 +394,10 @@ Authorization: Bearer <access_token>
 
 | Param        | Type   | Description                                             |
 |--------------|--------|---------------------------------------------------------|
-| client_id    | UUID   | Filter by client user ID                                |
+| client_id    | UUID   | Filter routes that include this client                  |
 | address      | string | Filter by address line or reference (partial match)     |
 | start_date   | string | Filter from date (`YYYY-MM-DD`)                         |
 | end_date     | string | Filter to date (`YYYY-MM-DD`)                           |
-
-**Example request:**
-
-```
-GET /api/v1/sales/routes/?client_id=3f9c962a-6b71-41d2-a9e0-b98c0c245e4a&start_date=2025-02-20&end_date=2025-02-21&address=Siempre Viva
-```
 
 ---
 
@@ -412,44 +406,61 @@ GET /api/v1/sales/routes/?client_id=3f9c962a-6b71-41d2-a9e0-b98c0c245e4a&start_d
 ```json
 [
   {
-    "id": "6cb8129b-12f5-4703-a3d4-1fc519bb3873",
-    "client": {
-      "id": "3f9c962a-6b71-41d2-a9e0-b98c0c245e4a",
-      "full_name": "Cosme Fulanito",
-      "email": "cosme@ccp.com.co",
-      "username": "cosmef",
-      "phone": "+57 3000000000",
-      "id_type": "CC",
-      "identification": "101000000000",
-      "role": "BUYER"
-    },
-    "address": {
-      "line": "Av Siempre Viva 123",
-      "neighborhood": "Centro",
-      "city": "Bogota",
-      "state": "Cundinamarca",
-      "country": "Colombia",
-      "latitude": 4.7110,
-      "longitude": -74.0721
-    },
-    "date": "2025-02-20"
+    "id": "f8e9a492-9bd1-40c6-9a6a-fc4f56eaeaf1",
+    "date": "2025-02-20",
+    "stops": [
+      {
+        "client": {
+          "id": "3f9c962a-6b71-41d2-a9e0-b98c0c245e4a",
+          "full_name": "Cosme Fulanito",
+          "email": "cosme@ccp.com.co",
+          "username": "cosmef",
+          "phone": "+57 3000000000",
+          "id_type": "CC",
+          "identification": "101000000000",
+          "role": "BUYER"
+        },
+        "address": {
+          "line": "Av Siempre Viva 123",
+          "neighborhood": "Centro",
+          "city": "Bogota",
+          "state": "Cundinamarca",
+          "country": "Colombia",
+          "latitude": 4.7110,
+          "longitude": -74.0721
+        }
+      }
+    ]
+  },
+  {
+    "id": "2d59c857-2d2b-4a4b-9b16-2a4377d11e3a",
+    "date": "2025-02-21",
+    "stops": [
+      {
+        "client": {
+          "id": "0e86f3d2-1b8a-4a25-a2c6-7842d1ec421f",
+          "full_name": "Jumbo Market",
+          "email": "jumbo@market.co",
+          "username": "jumbo",
+          "phone": "+57 3201234567",
+          "id_type": "NIT",
+          "identification": "900123456",
+          "role": "BUYER"
+        },
+        "address": {
+          "line": "Cra 50 #42-10",
+          "neighborhood": "Chapinero",
+          "city": "Bogota",
+          "state": "Cundinamarca",
+          "country": "Colombia",
+          "latitude": 4.6584,
+          "longitude": -74.0935
+        }
+      }
+    ]
   }
 ]
 ```
-
----
-
-### 📦 Address Object Format
-
-| Field         | Type    | Description                     |
-|---------------|---------|---------------------------------|
-| line          | string  | Street address line             |
-| neighborhood  | string  | Neighborhood or locality        |
-| city          | string  | City                            |
-| state         | string  | State or department             |
-| country       | string  | Country name                    |
-| latitude      | float   | Optional latitude (GPS)         |
-| longitude     | float   | Optional longitude (GPS)        |
 
 ---
 
@@ -481,7 +492,7 @@ GET /api/v1/sales/routes/?client_id=3f9c962a-6b71-41d2-a9e0-b98c0c245e4a&start_d
 
 ### `GET /api/v1/sales/routes/{route_id}`
 
-Retrieve the details of a specific sales route by its ID.
+Retrieve the full detail of a specific route, including all client stops.
 
 ---
 
@@ -507,29 +518,65 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "id": "6cb8129b-12f5-4703-a3d4-1fc519bb3873",
-  "client": {
-    "id": "3f9c962a-6b71-41d2-a9e0-b98c0c245e4a",
-    "full_name": "Cosme Fulanito",
-    "email": "cosme@ccp.com.co",
-    "username": "cosmef",
-    "phone": "+57 3000000000",
-    "id_type": "CC",
-    "identification": "101000000000",
-    "role": "BUYER"
-  },
-  "address": {
-    "line": "Av Siempre Viva 123",
-    "neighborhood": "Centro",
-    "city": "Bogota",
-    "state": "Cundinamarca",
-    "country": "Colombia",
-    "latitude": 4.7110,
-    "longitude": -74.0721
-  },
-  "date": "2025-02-20"
+  "id": "f8e9a492-9bd1-40c6-9a6a-fc4f56eaeaf1",
+  "date": "2025-02-20",
+  "stops": [
+    {
+      "client": {
+        "id": "3f9c962a-6b71-41d2-a9e0-b98c0c245e4a",
+        "full_name": "Cosme Fulanito",
+        "email": "cosme@ccp.com.co",
+        "username": "cosmef",
+        "phone": "+57 3000000000",
+        "id_type": "CC",
+        "identification": "101000000000",
+        "role": "BUYER"
+      },
+      "address": {
+        "line": "Av Siempre Viva 123",
+        "neighborhood": "Centro",
+        "city": "Bogota",
+        "state": "Cundinamarca",
+        "country": "Colombia",
+        "latitude": 4.7110,
+        "longitude": -74.0721
+      }
+    },
+    {
+      "client": {
+        "id": "0e86f3d2-1b8a-4a25-a2c6-7842d1ec421f",
+        "full_name": "Jumbo Market",
+        "email": "jumbo@market.co",
+        "username": "jumbo",
+        "phone": "+57 3201234567",
+        "id_type": "NIT",
+        "identification": "900123456",
+        "role": "BUYER"
+      },
+      "address": {
+        "line": "Cra 50 #42-10",
+        "neighborhood": "Chapinero",
+        "city": "Bogota",
+        "state": "Cundinamarca",
+        "country": "Colombia",
+        "latitude": 4.6584,
+        "longitude": -74.0935
+      }
+    }
+  ]
 }
 ```
+
+---
+
+### 📦 Stops Array
+
+Each item in `stops` contains:
+
+| Field   | Type   | Description                          |
+|---------|--------|--------------------------------------|
+| client  | object | Buyer user object                    |
+| address | object | Full structured address              |
 
 ---
 
