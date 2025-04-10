@@ -106,3 +106,9 @@ def create_operation(
     db.commit()
     db.refresh(db_operation)
     return db_operation
+
+
+def get_list_all_products(db: Session) -> list[models.Stock]:
+    """Get stock list by filter params."""
+    db_stock = db.query(models.Stock)
+    return db_stock.all()

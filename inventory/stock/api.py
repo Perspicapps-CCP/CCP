@@ -211,3 +211,14 @@ def list_stock(
         db, warehouse_id=params.warehouse, product_id=params.product
     )
     return mappers.stock_list_to_schema(stock)
+
+
+@stock_router.get(
+    "/products", response_model=List[schemas.StockProductResponseSchema]
+)
+def list_all_products_stock(db: Session = Depends(get_db)):
+    """
+    Listar el inventario de productos en la bodega.
+    """
+    stock = services.get_list_all_products(db)
+    return mappers.stock_product_list_to_schema(stock)

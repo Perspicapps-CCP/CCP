@@ -1,5 +1,6 @@
 # Fite to validate the data that is being sent and recieved to the API
 import datetime
+from decimal import Decimal
 import uuid
 from fastapi import HTTPException
 from typing import List, Optional
@@ -59,3 +60,15 @@ class OperationResponseSchema(BaseModel):
     successful_records: int
     failed_records: int
     created_at: datetime.datetime
+
+
+class StockProductResponseSchema(BaseModel):
+    product_name: str
+    product_code: str
+    manufacturer_name: str
+    price: Decimal
+    images: List[str]
+    product_id: uuid.UUID
+    warehouse_id: uuid.UUID
+    quantity: int
+    last_updated: datetime.datetime
