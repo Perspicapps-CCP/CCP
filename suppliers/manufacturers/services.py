@@ -104,7 +104,7 @@ def save_image_product_uri(
     """Save the image URI in the database."""
     db_image = models.ProductImage(
         product_id=product_id,
-        url=f"https://storage.cloud.google.com/{GCS_BUCKET_NAME}/products/{product_id}/{image_name}",
+        url=f"https://storage.googleapis.com/{GCS_BUCKET_NAME}/products/{product_id}/{image_name}",
     )
     db.add(db_image)
     db.commit()
