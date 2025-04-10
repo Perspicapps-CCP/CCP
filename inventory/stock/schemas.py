@@ -1,5 +1,6 @@
 # Fite to validate the data that is being sent and recieved to the API
 import datetime
+from decimal import Decimal
 import uuid
 from fastapi import HTTPException
 from typing import List, Optional
@@ -34,49 +35,14 @@ class StockResponseSchema(BaseModel):
 
 
 class FilterRequest(BaseModel):
-    product: Optional[str] = None
-    warehouse: Optional[str] = None
-
-    @field_validator('product', mode='before')
-    def validate_product_param(cls, v):
-        if v is not None:
-            try:
-                uuid.UUID(v)
-            except ValueError:
-                raise HTTPException(
-                    status_code=400,
-                    detail="The product parameter must be a valid UUID format",
-                )
-        return v
-
-    @field_validator('warehouse', mode='before')
-    def validate_warehouse_param(cls, v):
-        if v is not None:
-            try:
-                uuid.UUID(v)
-            except ValueError:
-                raise HTTPException(
-                    status_code=400,
-                    detail="The warehouse parameter must be a valid UUID format",
-                )
-        return v
+    product: Optional[uuid.UUID] = None
+    warehouse: Optional[uuid.UUID] = None
 
 
 class StockRequestSchema(BaseModel):
-    warehouse_id: str
-    product_id: str
+    warehouse_id: uuid.UUID
+    product_id: uuid.UUID
     quantity: int
-
-    @field_validator('warehouse_id', 'product_id', mode='before')
-    def validate_uuid(cls, v):
-        try:
-            uuid.UUID(v)
-        except ValueError:
-            raise HTTPException(
-                status_code=400,
-                detail="The warehouse_id and product_id must be a valid UUID",
-            )
-        return v
 
     @field_validator('quantity', mode='before')
     def validate_quantity(cls, v):
@@ -87,18 +53,6 @@ class StockRequestSchema(BaseModel):
         return v
 
 
-class WarehouseIdSchema(BaseModel):
-    warehouse_id: str
-
-    @field_validator('warehouse_id')
-    def validate_warehouse_id(cls, v):
-        try:
-            uuid.UUID(v)
-        except ValueError:
-            raise ValueError("The warehouse_id must be a valid UUID")
-        return v
-
-
 class OperationResponseSchema(BaseModel):
     operation_id: uuid.UUID
     warehouse_id: uuid.UUID
@@ -106,3 +60,15 @@ class OperationResponseSchema(BaseModel):
     successful_records: int
     failed_records: int
     created_at: datetime.datetime
+
+
+class StockProductResponseSchema(BaseModel):
+    product_name: str
+    product_code: str
+    manufacturer_name: str
+    price: Decimal
+    images: List[str]
+    product_id: uuid.UUID
+    warehouse_id: uuid.UUID
+    quantity: int
+    last_updated: datetime.datetime
