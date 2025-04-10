@@ -109,6 +109,7 @@ class ProductCreateSchema(BaseModel):
 class ResponseProductDetailSchema(ProductCreateSchema):
     id: uuid.UUID
     images: List[str]
+    manufacturer: ManufacturerDetailSchema
     model_config = ConfigDict(from_attributes=True)
 
 
