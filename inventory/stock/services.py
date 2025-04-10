@@ -41,9 +41,8 @@ def get_list_stock(
         db_stock = db_stock.filter(models.Stock.product_id == UUID(product_id))
     return db_stock.all()
 
-def get_list_all_stock(
-    db: Session
-) -> list[models.Stock]:
+
+def get_list_all_stock(db: Session) -> list[models.Stock]:
     """Get stock list by filter params."""
     db_stock = db.query(models.Stock)
     return db_stock.all()
