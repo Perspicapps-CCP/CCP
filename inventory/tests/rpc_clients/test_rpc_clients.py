@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 from faker import Faker
 
@@ -23,9 +23,12 @@ class TestSuppliersClient:
         """
         Fixture to create a SuppliersClient instance with a mocked call_broker.
         """
-        client = SuppliersClient()
-        client.call_broker = mock_call_broker
-        return client
+        with patch('pika.BlockingConnection') as mock_connection:
+            mock_channel = MagicMock()
+            mock_connection.return_value.channel.return_value = mock_channel
+            client = SuppliersClient()
+            client.call_broker = mock_call_broker
+            return client
 
     def test_get_products_calls_broker_with_correct_routing_key(
         self, suppliers_client: SuppliersClient, mock_call_broker: MagicMock
