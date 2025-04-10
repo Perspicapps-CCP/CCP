@@ -71,4 +71,5 @@ class StockProductResponseSchema(BaseModel):
     product_id: uuid.UUID
     warehouse_id: uuid.UUID
     quantity: int
+    warehouse_name: str
     last_updated: datetime.datetime
