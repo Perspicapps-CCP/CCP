@@ -62,6 +62,10 @@ class TestSuppliersClient:
                 "name": fake.word(),
                 "price": fake.random_number(digits=5),
                 "images": [fake.image_url() for _ in range(3)],
+                "manufacturer": {
+                    "id": str(uuid4()),
+                    "manufacturer_name": fake.company(),
+                },
             },
             {
                 "id": str(product_ids[1]),
@@ -69,6 +73,10 @@ class TestSuppliersClient:
                 "name": fake.word(),
                 "price": fake.random_number(digits=5),
                 "images": [fake.image_url() for _ in range(3)],
+                "manufacturer": {
+                    "id": str(uuid4()),
+                    "manufacturer_name": fake.company(),
+                },
             },
         ]
         mock_response = {"products": products_response}
@@ -101,6 +109,10 @@ class TestSuppliersClient:
             "name": fake.word(),
             "price": fake.random_number(digits=5),
             "images": [fake.image_url() for _ in range(3)],
+            "manufacturer": {
+                "id": str(uuid4()),
+                "manufacturer_name": fake.company(),
+            },
         }
         mock_response = {"products": [product_reponse]}
         mock_call_broker.return_value = mock_response
