@@ -4,6 +4,7 @@ import uuid
 from fastapi import HTTPException
 from typing import List, Optional
 from pydantic import BaseModel, field_validator
+from decimal import Decimal
 
 
 class DeliveryItemSchema(BaseModel):
@@ -27,6 +28,18 @@ class DeliveryDetailSchema(DeliveryCreateSchema):
 
 
 class StockResponseSchema(BaseModel):
+    product_id: uuid.UUID
+    warehouse_id: uuid.UUID
+    quantity: int
+    last_updated: datetime.datetime
+
+
+class StockProductResponseSchema(BaseModel):
+    product_name: str
+    product_code: str
+    manufacturer_name: str
+    price: Decimal
+    images: List[str]
     product_id: uuid.UUID
     warehouse_id: uuid.UUID
     quantity: int

@@ -1,4 +1,5 @@
 from . import models, schemas
+from rpc_clients.suppliers_client import SuppliersClient
 
 
 def delivery_to_schema(
@@ -19,6 +20,46 @@ def stock_list_to_schema(
         )
         for stock in stock_list
     ]
+
+
+from typing import List
+
+
+def stock_product_list_to_schema(
+    stock_list: list[models.Stock],
+) -> list[schemas.StockResponseSchema]:
+    products = SuppliersClient().get_all_products()
+    result: List[schemas.StockResponseSchema] = []
+
+    for stock in stock_list:
+        product = next(
+            (p for p in products if p["id"] == stock.product_id), None
+        )
+
+        schema = schemas.StockResponseSchema(
+            product_name=product["name"] if product else None,
+            product_code=product["code"] if product else None,
+            manufacturer_name=(
+                product["manufacturer"]["name"]
+                if product and product.get("manufacturer")
+                else None
+            ),
+            price=product["price"] if product else None,
+            images=(
+                product["images"]
+                if product and isinstance(product["images"], list)
+                else []
+            ),
+            warehouse_name=stock.warehouse.name if stock.warehouse else None,
+            product_id=stock.product_id,
+            warehouse_id=stock.warehouse_id,
+            quantity=stock.quantity,
+            last_updated=stock.updated_at or stock.created_at,
+        )
+
+        result.append(schema)
+
+    return result
 
 
 def operation_to_schema(
