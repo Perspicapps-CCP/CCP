@@ -37,14 +37,13 @@ def operation_to_schema(
 
 def stock_product_list_to_schema(
     stock_list: list[models.Stock],
-) -> list[schemas.StockResponseSchema]:
-    result: list[schemas.StockResponseSchema] = []
+) -> list[schemas.StockProductResponseSchema]:
+    result: list[schemas.StockProductResponseSchema] = []
     product_ids = [stock.product_id for stock in stock_list]
     products = SuppliersClient().get_products(product_ids)
     for stock in stock_list:
         product = next((p for p in products if p.id == stock.product_id), None)
-
-        schema = schemas.StockResponseSchema(
+        schema = schemas.StockProductResponseSchema(
             product_name=product.name if product else None,
             product_code=product.product_code if product else None,
             manufacturer_name=(
