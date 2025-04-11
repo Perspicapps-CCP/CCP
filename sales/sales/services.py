@@ -3,10 +3,12 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from . import crud, models
+from . import crud, models, schemas
 
 
-def get_all_sales(db: Session) -> List[models.Sale]:
+def get_all_sales(
+    db: Session, filters: schemas.ListSalesQueryParamsSchema
+) -> List[models.Sale]:
     """
     Retrieve all sales from the database.
 
@@ -16,7 +18,7 @@ def get_all_sales(db: Session) -> List[models.Sale]:
     Returns:
         List[Sale]: A list of Sale objects.
     """
-    return crud.get_all_sales(db)
+    return crud.get_all_sales(db, filters)
 
 
 def get_sale_by_id(db: Session, sale_id: UUID) -> models.Sale:

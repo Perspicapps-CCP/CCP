@@ -1,7 +1,7 @@
-from typing import List
+from typing import Annotated, List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from db_dependency import get_db
@@ -22,13 +22,22 @@ sales_router = APIRouter(prefix="/sales", tags=["Sales"])
     },
 )
 def list_sales(
+    filter_query: Annotated[schemas.ListSalesQueryParamsSchema, Query()],
     db: Session = Depends(get_db),
 ) -> List[schemas.SaleDetailSchema]:
     """
     List all sales.
     """
-    sales = services.get_all_sales(db)
-    return mappers.sales_to_schema(sales)
+    sales = services.get_all_sales(db, filter_query)
+    response = mappers.sales_to_schema(sales)
+    if filter_query.seller_name:
+        response = [
+            sale
+            for sale in response
+            if filter_query.seller_name.lower()
+            in sale.seller.full_name.lower()
+        ]
+    return response
 
 
 @sales_router.get(

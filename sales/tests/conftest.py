@@ -1,6 +1,6 @@
 # Mock database
 import uuid
-from typing import Any, Dict, Generator, List
+from typing import Any, Generator, List
 from unittest import mock
 
 import pytest
@@ -99,7 +99,7 @@ def client(
         yield client
 
 
-def generate_fake_sellers(seller_ids) -> List[Dict]:
+def generate_fake_sellers(seller_ids) -> List[SellerSchema]:
     """
     Generate fake sellers for testing.
     """
@@ -123,7 +123,7 @@ def generate_fake_sellers(seller_ids) -> List[Dict]:
     ]
 
 
-def generate_fake_products(product_ids) -> List[Dict]:
+def generate_fake_products(product_ids) -> List[ProductSchema]:
     """
     Generate fake products for testing.
     """

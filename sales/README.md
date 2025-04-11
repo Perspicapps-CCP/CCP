@@ -1,4 +1,3 @@
-
 ## 📋 Create Sales Plan
 
 ### `POST /api/v1/sales/plans`
@@ -32,13 +31,13 @@ Authorization: Bearer <access_token>
 }
 ```
 
-| Field        | Type     | Required | Description                                    |
-|--------------|----------|----------|------------------------------------------------|
-| product_id   | UUID     | ✅       | ID of the product                              |
-| goal         | integer  | ✅       | Sales goal for the plan                        |
-| start_date   | string   | ✅       | Start date (format: `YYYY-MM-DD`)             |
-| end_date     | string   | ✅       | End date (format: `YYYY-MM-DD`)               |
-| seller_ids   | UUID[]   | ✅       | Array of seller UUIDs assigned to this plan   |
+| Field      | Type    | Required | Description                                 |
+| ---------- | ------- | -------- | ------------------------------------------- |
+| product_id | UUID    | ✅       | ID of the product                           |
+| goal       | integer | ✅       | Sales goal for the plan                     |
+| start_date | string  | ✅       | Start date (format: `YYYY-MM-DD`)           |
+| end_date   | string  | ✅       | End date (format: `YYYY-MM-DD`)             |
+| seller_ids | UUID[]  | ✅       | Array of seller UUIDs assigned to this plan |
 
 ---
 
@@ -48,13 +47,11 @@ Authorization: Bearer <access_token>
 {
   "id": "faec7f5d-308e-4d5b-9dbb-564f72c04f4a",
   "product": {
-        "id": "0c5c90ab-95e4-4a7b-aad3-6d3ee80cf469",
-        "images": [
-            "http://example.com/img4.jpg"
-        ],
-        "product_code": "p001",
-        "name": "MProduct1",
-        "price": "5000.00"
+    "id": "0c5c90ab-95e4-4a7b-aad3-6d3ee80cf469",
+    "images": ["http://example.com/img4.jpg"],
+    "product_code": "p001",
+    "name": "MProduct1",
+    "price": "5000.00"
   },
   "goal": 1000,
   "start_date": "2025-03-01",
@@ -82,10 +79,10 @@ Authorization: Bearer <access_token>
 }
 ```
 
-| Field         | Type   | Description                            |
-|---------------|--------|----------------------------------------|
-| id            | UUID   | Unique ID of the created plan          |
-| sellers       | array  | List of seller objects (full structure)|
+| Field   | Type  | Description                             |
+| ------- | ----- | --------------------------------------- |
+| id      | UUID  | Unique ID of the created plan           |
+| sellers | array | List of seller objects (full structure) |
 
 ---
 
@@ -128,13 +125,11 @@ Authorization: Bearer <access_token>
   {
     "id": "faec7f5d-308e-4d5b-9dbb-564f72c04f4a",
     "product": {
-        "id": "0c5c90ab-95e4-4a7b-aad3-6d3ee80cf469",
-        "images": [
-            "http://example.com/img4.jpg"
-        ],
-        "product_code": "p001",
-        "name": "MProduct1",
-        "price": "5000.00"
+      "id": "0c5c90ab-95e4-4a7b-aad3-6d3ee80cf469",
+      "images": ["http://example.com/img4.jpg"],
+      "product_code": "p001",
+      "name": "MProduct1",
+      "price": "5000.00"
     },
     "goal": 1000,
     "start_date": "2025-03-01",
@@ -163,13 +158,11 @@ Authorization: Bearer <access_token>
   {
     "id": "67f4531e-df2a-45ff-bc1f-3640dc0bcb01",
     "product": {
-        "id": "0c5c90ab-95e4-4a7b-aad3-6d3ee80cf469",
-        "images": [
-            "http://example.com/img4.jpg"
-        ],
-        "product_code": "p001",
-        "name": "MProduct1",
-        "price": "5000.00"
+      "id": "0c5c90ab-95e4-4a7b-aad3-6d3ee80cf469",
+      "images": ["http://example.com/img4.jpg"],
+      "product_code": "p001",
+      "name": "MProduct1",
+      "price": "5000.00"
     },
     "goal": 500,
     "start_date": "2025-04-01",
@@ -189,14 +182,14 @@ Authorization: Bearer <access_token>
 ]
 ```
 
-| Field         | Type     | Description                             |
-|---------------|----------|-----------------------------------------|
-| id            | UUID     | Unique ID of the sales plan             |
-| product       | object   | Associated product                      |
-| goal          | integer  | Sales target                            |
-| start_date    | string   | Start date (YYYY-MM-DD)                 |
-| end_date      | string   | End date (YYYY-MM-DD)                   |
-| sellers       | array    | List of seller objects (full structure) |
+| Field      | Type    | Description                             |
+| ---------- | ------- | --------------------------------------- |
+| id         | UUID    | Unique ID of the sales plan             |
+| product    | object  | Associated product                      |
+| goal       | integer | Sales target                            |
+| start_date | string  | Start date (YYYY-MM-DD)                 |
+| end_date   | string  | End date (YYYY-MM-DD)                   |
+| sellers    | array   | List of seller objects (full structure) |
 
 ---
 
@@ -218,8 +211,6 @@ Authorization: Bearer <access_token>
 }
 ```
 
-
-
 ## 📄 List Seller Sales API
 
 ### `GET /api/v1/sales/sales/`
@@ -240,9 +231,21 @@ Authorization: Bearer <access_token>
 
 ---
 
+## 🔎 Query Parameters
+
+| Param          | Type    | Required | Description                                          |
+| -------------- | ------- | -------- | ---------------------------------------------------- |
+| `seller_id`    | UUID[]  | ❌       | Filter sales by seller id                            |
+| `start_date`   | string  | ❌       | Filter sales from this date (`YYYY-MM-DD`)           |
+| `end_date`     | string  | ❌       | Filter sales until this date (`YYYY-MM-DD`)          |
+| `seller_name`  | string  | ❌       | Filter sales where the seller name matches (partial) |
+| `order_number` | integer | ❌       | Filter by the exact order number                     |
+
+---
+
 ## 📤 Response (200 OK)
 
-```json
+````json
 [
   {
     "id": "eec0aa19-d22f-4c5f-a27e-0f32fa8a6ac2",
@@ -361,4 +364,4 @@ Authorization: Bearer <access_token>
 {
   "detail": "Not authenticated"
 }
-```
+````

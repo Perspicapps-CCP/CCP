@@ -1,3 +1,5 @@
+from typing import Callable, List
+from unittest import mock
 from uuid import uuid4
 
 import pytest
@@ -6,12 +8,13 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from sales.models import Sale, SaleItem
+from tests.conftest import generate_fake_sellers
 
 fake = Faker()
 
 
 @pytest.fixture
-def seed_sales(db_session: Session):
+def seed_sales(db_session: Session) -> Callable[[int, int], List[Sale]]:
     """
     Seed the database with sales and their items for testing.
 
@@ -20,7 +23,7 @@ def seed_sales(db_session: Session):
           A function to seed sales with items.
     """
 
-    def _seed_sales(count: int = 2, items_per_sale: int = 2):
+    def _seed_sales(count: int = 2, items_per_sale: int = 2) -> List[Sale]:
         sales = []
         for _ in range(count):
             sale = Sale(
@@ -93,6 +96,102 @@ def test_list_sales_empty_database(client: TestClient):
 
     data = response.json()
     assert len(data) == 0
+
+
+def test_filter_sales_by_order_number(client: TestClient, seed_sales):
+    """
+    Test filtering sales by order number.
+    """
+    sales = seed_sales(3, items_per_sale=2)  # Seed 3 sales
+    sale = sales[0]  # Use the first sale for filtering
+
+    response = client.get(
+        f"/api/v1/sales/sales/?order_number={sale.order_number}"
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["id"] == str(sale.id)
+    assert data[0]["order_number"] == sale.order_number
+    assert data[0]["total_value"] == str(sale.total_value)
+    assert data[0]["currency"] == sale.currency
+
+
+def test_filter_sales_by_seller_id(client: TestClient, seed_sales):
+    """
+    Test filtering sales by seller ID.
+    """
+    sales = seed_sales(3, items_per_sale=2)  # Seed 3 sales
+    sale = sales[0]  # Use the first sale for filtering
+    sale_last = sales[-1]  # Use the last sale for filtering
+
+    response = client.get(
+        f"/api/v1/sales/sales/?seller_id={sale.seller_id}&"
+        f"seller_id={sale_last.seller_id}"
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert len(data) == 2
+    for sale in [sale, sale_last]:
+        assert any(
+            item["id"] == str(sale.id)
+            and item["seller"]["id"] == str(sale.seller_id)
+            for item in data
+        )
+
+
+def test_filter_sales_by_date_range(client: TestClient, seed_sales):
+    """
+    Test filtering sales by start_date and end_date.
+    """
+    sales = seed_sales(3, items_per_sale=2)  # Seed 3 sales
+    start_date = sales[0].created_at.date()
+    end_date = sales[-1].created_at.date()
+
+    expected_sales = [
+        sale
+        for sale in sales
+        if start_date <= sale.created_at.date() <= end_date
+    ]
+    expected_sales.sort(key=lambda x: x.created_at, reverse=True)
+
+    response = client.get(
+        f"/api/v1/sales/sales/?start_date={start_date}&end_date={end_date}"
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert len(data) == len(
+        expected_sales
+    )  # All sales should fall within the range
+    for sale, response_sale in zip(expected_sales, data):
+        assert response_sale["id"] == str(sale.id)
+
+
+@pytest.mark.skip_mock_users
+def test_filter_sales_by_seller_name(client: TestClient, seed_sales):
+    """
+    Test filtering sales by seller name.
+    """
+    sells = seed_sales(3, items_per_sale=2)  # Seed 3 sales
+
+    sellers = generate_fake_sellers([sale.seller_id for sale in sells])
+
+    with mock.patch(
+        "rpc_clients.users_client.UsersClient.get_sellers",
+        return_value=sellers,
+        autospec=True,
+    ):
+        response = client.get(
+            f"/api/v1/sales/sales/?seller_name={sellers[0].full_name}"
+        )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["seller"]["full_name"] == sellers[0].full_name
 
 
 def test_get_sale_exists(client: TestClient, seed_sales):

@@ -1,12 +1,16 @@
 from typing import List
 from uuid import UUID
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from .models import Sale
+from .schemas import ListSalesQueryParamsSchema
 
 
-def get_all_sales(db: Session) -> List[Sale]:
+def get_all_sales(
+    db: Session, filters: ListSalesQueryParamsSchema
+) -> List[Sale]:
     """
     Retrieve all sales from the database, ordered by the oldest first.
 
@@ -16,12 +20,21 @@ def get_all_sales(db: Session) -> List[Sale]:
     Returns:
         List[Sale]: A list of Sale objects.
     """
-    return (
+    qs = (
         db.query(Sale)
         .options(joinedload(Sale.items))
         .order_by(Sale.created_at.desc())
-        .all()
     )
+    if filters.seller_id:
+        qs = qs.filter(Sale.seller_id.in_(filters.seller_id))
+    if filters.start_date:
+        qs = qs.filter(func.date(Sale.created_at) >= filters.start_date)
+    if filters.end_date:
+        qs = qs.filter(func.date(Sale.created_at) <= filters.end_date)
+    if filters.order_number:
+        qs = qs.filter(Sale.order_number == filters.order_number)
+
+    return qs.all()
 
 
 def get_sale_by_id(db: Session, sale_id: UUID) -> Sale:

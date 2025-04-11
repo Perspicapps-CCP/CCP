@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from typing import List, Optional
 from uuid import UUID
@@ -40,5 +40,15 @@ class SaleDetailSchema(BaseModel):
     created_at: datetime
     updated_at: Optional[datetime]
     items: List[SaleItemSchema]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ListSalesQueryParamsSchema(BaseModel):
+    order_number: Optional[int] = None
+    seller_name: Optional[str] = None
+    seller_id: Optional[List[UUID]] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
 
     model_config = ConfigDict(from_attributes=True)
