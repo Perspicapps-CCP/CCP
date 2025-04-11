@@ -247,7 +247,7 @@ Authorization: Bearer <access_token>
   {
     "id": "eec0aa19-d22f-4c5f-a27e-0f32fa8a6ac2",
     "order_number": 3155185411,
-    "addres": {
+    "address": {
       "street": "Cra 9 #23-12",
       "city": "Bogota",
       "state": "Cundinamarca",
@@ -302,7 +302,7 @@ Authorization: Bearer <access_token>
 |----------------|------------------------|--------------------------------------------------|
 | `id`           | UUID                   | Unique identifier for the sale                   |
 | `order_number` | integer                | Order number associated with the sale            |
-| `addres`       | `AddressSchema`        | Address details for shipping or billing          |
+| `address`       | `AddressSchema`        | Address details for shipping or billing          |
 | `total_value`  | decimal                | Total value of the sale                          |
 | `currency`     | string                 | Currency code (e.g., USD, COP)                   |
 | `created_at`   | datetime (ISO 8601)    | Timestamp when the sale was created              |
@@ -361,5 +361,4 @@ Authorization: Bearer <access_token>
 {
   "detail": "Not authenticated"
 }
-```
 ```
