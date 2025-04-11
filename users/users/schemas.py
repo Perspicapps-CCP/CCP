@@ -1,7 +1,7 @@
 # Shcema for user data validation
 import datetime
 import uuid
-from typing import List
+from typing import List, Optional
 
 from pydantic import (
     BaseModel,
@@ -117,7 +117,7 @@ class CreateSellerSchema(UserBaseSchema):
 
 
 class GetSellersSchema(BaseModel):
-    seller_ids: List[uuid.UUID]
+    seller_ids: Optional[List[uuid.UUID]]
 
 
 class GetSellersResponseSchema(BaseModel):

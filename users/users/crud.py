@@ -109,7 +109,7 @@ def get_all_users(
 
 
 def get_users_by_ids(
-    db: Session, ids: List[uuid.UUID], role: Optional[str] = None
+    db: Session, ids: Optional[List[uuid.UUID]], role: Optional[str] = None
 ) -> list[models.User]:
     """
     Get users by their IDs.
@@ -122,5 +122,6 @@ def get_users_by_ids(
     query = db.query(models.User)
     if role:
         query = query.filter(models.User.role == role)
-    query = query.filter(models.User.id.in_(ids))
+    if ids is not None:
+        query = query.filter(models.User.id.in_(ids))
     return query.all()

@@ -217,3 +217,149 @@ Authorization: Bearer <access_token>
   "detail": "You do not have permission to perform this action"
 }
 ```
+
+
+
+## 📄 List Seller Sales API
+
+### `GET /api/v1/sales/sales/`
+
+Retrieve all sales records made by sellers. Each record includes order and seller details.
+
+> ⚠️ This endpoint is **not paginated** — it returns the full list of sales.
+
+---
+
+### 🔐 Authentication
+
+Requires Bearer Token (JWT) in the `Authorization` header:
+
+```
+Authorization: Bearer <access_token>
+```
+
+---
+
+## 📤 Response (200 OK)
+
+```json
+[
+  {
+    "id": "eec0aa19-d22f-4c5f-a27e-0f32fa8a6ac2",
+    "order_number": 3155185411,
+    "addres": {
+      "street": "Cra 9 #23-12",
+      "city": "Bogota",
+      "state": "Cundinamarca",
+      "postal_code": "110111",
+      "country": "Colombia"
+    },
+    "total_value": 120000.0,
+    "currency": "COP",
+    "created_at": "2025-04-01T15:04:05Z",
+    "updated_at": "2025-04-01T15:04:05Z",
+    "seller": {
+      "id": "3f9c962a-6b71-41d2-a9e0-b98c0c245e4a",
+      "full_name": "Wilson Ventas Quevedo",
+      "email": "wilveque@ccp.com.co",
+      "username": "wilveque",
+      "phone": "+57 2325248847",
+      "id_type": "CC",
+      "identification": "101448745887",
+      "created_at": "2025-01-10T10:00:00Z",
+      "updated_at": "2025-04-01T15:00:00Z"
+    },
+    "items": [
+      {
+        "id": "16e5e4ac-5432-4b67-9891-325892d30352",
+        "product": {
+          "id": "a3bfa4a6-394c-4db9-ae87-d18b760e688e",
+          "images": [
+            "https://example.com/image1.jpg",
+            "https://example.com/image2.jpg"
+          ],
+          "product_code": "PRD12345",
+          "name": "Wireless Mouse",
+          "price": 60000.0
+        },
+        "quantity": 2,
+        "unit_price": 60000.0,
+        "total_value": 120000.0,
+        "created_at": "2025-04-01T15:00:00Z",
+        "updated_at": "2025-04-01T15:00:00Z"
+      }
+    ]
+  }
+]
+
+---
+
+## 🔍 Field Reference
+
+### Top-Level Fields
+
+| Field          | Type                   | Description                                      |
+|----------------|------------------------|--------------------------------------------------|
+| `id`           | UUID                   | Unique identifier for the sale                   |
+| `order_number` | integer                | Order number associated with the sale            |
+| `addres`       | `AddressSchema`        | Address details for shipping or billing          |
+| `total_value`  | decimal                | Total value of the sale                          |
+| `currency`     | string                 | Currency code (e.g., USD, COP)                   |
+| `created_at`   | datetime (ISO 8601)    | Timestamp when the sale was created              |
+| `updated_at`   | datetime (ISO 8601)    | Timestamp when the sale was last updated         |
+| `seller`       | `SellerSchema`         | Seller information                               |
+| `items`        | List[`SaleItemSchema`] | List of items in the sale                        |
+
+---
+
+### Address Fields (`AddressSchema`)
+
+| Field         | Type   | Description        |
+|---------------|--------|--------------------|
+| `street`      | string | Street address     |
+| `city`        | string | City name          |
+| `state`       | string | State or province  |
+| `postal_code` | string | ZIP or postal code |
+| `country`     | string | Country            |
+
+---
+
+### Seller Fields (`SellerSchema`)
+
+| Field            | Type     | Description                          |
+|------------------|----------|--------------------------------------|
+| `id`             | UUID     | Unique identifier for the seller     |
+| `full_name`      | string   | Full name of the seller              |
+| `email`          | string   | Email address                        |
+| `username`       | string   | Username                             |
+| `phone`          | string   | Contact number                       |
+| `id_type`        | string   | Type of identification document      |
+| `identification` | string   | Document number                      |
+| `created_at`     | datetime | Seller account creation timestamp    |
+| `updated_at`     | datetime | Last update timestamp                |
+
+---
+
+### Item Fields (`SaleItemSchema`)
+
+| Field         | Type     | Description                         |
+|---------------|----------|-------------------------------------|
+| `id`          | UUID     | Unique identifier for the sale item |
+| `product`     | Product  | Product details                     |
+| `quantity`    | integer  | Quantity sold                       |
+| `unit_price`  | decimal  | Price per unit                      |
+| `total_value` | decimal  | Quantity × unit_price               |
+| `created_at`  | datetime | Item creation timestamp             |
+| `updated_at`  | datetime | Last update timestamp               |
+---
+
+### ❌ Error Responses
+
+#### 401 Unauthorized
+
+```json
+{
+  "detail": "Not authenticated"
+}
+```
+```
