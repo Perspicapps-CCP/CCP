@@ -1,3 +1,4 @@
+import csv
 from typing import Callable, List
 from unittest import mock
 from uuid import uuid4
@@ -61,6 +62,7 @@ def seed_sales(db_session: Session) -> Callable[[int, int], List[Sale]]:
 
             sales.append(sale)
         db_session.commit()
+        sales.sort(key=lambda x: x.created_at, reverse=True)
         return sales
 
     return _seed_sales
@@ -71,9 +73,6 @@ def test_list_sales_with_data(client: TestClient, seed_sales):
     Test the list sales endpoint when there are sales in the database.
     """
     sales = seed_sales(3, items_per_sale=2)  # Seed 3 sales with 2 items each
-    # Order by created_at to ensure the order is consistent
-    sales.sort(key=lambda x: x.created_at, reverse=True)
-
     response = client.get("/api/v1/sales/sales/")
     assert response.status_code == 200
 
@@ -221,3 +220,109 @@ def test_get_sale_not_found(client: TestClient):
     response = client.get(f"/api/v1/sales/sales/{non_existent_sale_id}")
     assert response.status_code == 404
     assert response.json()["detail"] == "Sale not found."
+
+
+def test_export_sales_as_csv(client: TestClient, seed_sales):
+    """
+    Test exporting sales as a CSV file.
+    """
+    sales = seed_sales(3, items_per_sale=2)  # Seed 3 sales
+
+    response = client.get("/api/v1/sales/sales/export/")
+    assert response.status_code == 200
+    assert response.headers["Content-Type"] == "text/csv; charset=utf-8"
+    assert "Content-Disposition" in response.headers
+    assert response.headers["Content-Disposition"].startswith(
+        "attachment; filename="
+    )
+    assert response.headers["Content-Disposition"].endswith("_sales.csv")
+    # Verify the CSV content
+    csv_content = response.content.decode("utf-8")
+
+    # Parse as CSV
+    csv_reader = csv.reader(csv_content.splitlines())
+    header = next(csv_reader)
+    assert header == [
+        "Sale ID",
+        "Order Number",
+        "Seller ID",
+        "Seller Name",
+        "Total Value",
+        "Currency",
+        "Sale At",
+    ]
+    for sale in sales:
+        row = next(csv_reader)
+        assert row[0] == str(sale.id)
+        assert row[1] == str(sale.order_number)
+        assert row[2] == str(sale.seller_id)
+        assert row[4] == str(sale.total_value)
+        assert row[5] == sale.currency
+        assert row[6] == sale.created_at.isoformat()
+
+    # Ensure no extra rows in the CSV
+    with pytest.raises(StopIteration):
+        next(csv_reader)
+
+
+def test_export_sales_as_csv_with_filters(client: TestClient, seed_sales):
+    """
+    Test exporting sales as a CSV file with seller and date filters.
+    """
+    # Seed 5 sales with 2 items each
+    sales = seed_sales(5, items_per_sale=2)
+
+    # Use the first sale's seller_id and date range for filtering
+    seller_id = sales[0].seller_id
+    start_date = sales[0].created_at.date()
+    end_date = sales[-1].created_at.date()
+
+    # Filtered sales
+    filtered_sales = [
+        sale
+        for sale in sales
+        if sale.seller_id == seller_id
+        and start_date <= sale.created_at.date() <= end_date
+    ]
+
+    response = client.get(
+        f"/api/v1/sales/sales/export/?seller_id={seller_id}&"
+        f"start_date={start_date}&end_date={end_date}"
+    )
+    assert response.status_code == 200
+    assert response.headers["Content-Type"] == "text/csv; charset=utf-8"
+    assert "Content-Disposition" in response.headers
+    assert response.headers["Content-Disposition"].startswith(
+        "attachment; filename="
+    )
+    assert response.headers["Content-Disposition"].endswith("_sales.csv")
+
+    # Verify the CSV content
+    csv_content = response.content.decode("utf-8")
+
+    # Parse as CSV
+    csv_reader = csv.reader(csv_content.splitlines())
+    header = next(csv_reader)
+    assert header == [
+        "Sale ID",
+        "Order Number",
+        "Seller ID",
+        "Seller Name",
+        "Total Value",
+        "Currency",
+        "Sale At",
+    ]
+
+    # Verify filtered sales in the CSV
+    for sale in filtered_sales:
+        row = next(csv_reader)
+        assert row[0] == str(sale.id)
+        assert row[1] == str(sale.order_number)
+        assert row[2] == str(sale.seller_id)
+        assert row[4] == str(sale.total_value)
+        assert row[5] == sale.currency
+        assert row[6] == sale.created_at.isoformat()
+
+    # Ensure no extra rows in the CSV
+    with pytest.raises(StopIteration):
+        next(csv_reader)

@@ -365,3 +365,68 @@ Authorization: Bearer <access_token>
   "detail": "Not authenticated"
 }
 ````
+
+## 📤 Export Sales API
+
+### `GET /api/v1/sales/sales/export/`
+
+Export seller sales as a CSV file using optional filters like seller and date range.
+
+---
+
+### 🔐 Authentication
+
+Requires Bearer Token (JWT) in the `Authorization` header:
+
+```
+Authorization: Bearer <access_token>
+```
+
+---
+
+### 📥 Query Parameters
+
+| Param          | Type    | Required | Description                                          |
+| -------------- | ------- | -------- | ---------------------------------------------------- |
+| `seller_id`    | UUID[]  | ❌       | Filter sales by seller id                            |
+| `start_date`   | string  | ❌       | Filter sales from this date (`YYYY-MM-DD`)           |
+| `end_date`     | string  | ❌       | Filter sales until this date (`YYYY-MM-DD`)          |
+| `seller_name`  | string  | ❌       | Filter sales where the seller name matches (partial) |
+| `order_number` | integer | ❌       | Filter by the exact order number                     |
+
+**Example request:**
+
+```
+GET /api/v1/sales/sales/export/?seller_id=3f9c962a-6b71-41d2-a9e0-b98c0c245e4a&start_date=2025-04-01&end_date=2025-04-30
+```
+
+---
+
+### 📤 Response (200 OK)
+
+**Content-Type:** `text/csv`
+**Content-Disposition:** `attachment; filename="sales_export.csv"`
+
+Returns a downloadable `.csv` file with sales data.
+
+**Example CSV Format:**
+
+```
+Sale ID,Order Number,Seller ID,Seller Name,Total Value,Currency,Sale At
+3245915c-e5f1-469e-9be0-ba6ce31001e5,2,3307ebb9-c3eb-4316-8dc2-34014a0ce1f3,Seller User,17000.00,USD,2025-04-11T08:22:44.690397
+915880ea-50cb-4406-bbc2-35d3fafa063b,1,31cfd214-31a7-47d3-944f-a95c0703c6fb,Seller User,17000.00,USD,2025-04-11T08:21:32.506203
+...
+```
+
+---
+
+### ❌ Error Responses
+
+
+#### 401 Unauthorized
+
+```json
+{
+  "detail": "Not authenticated"
+}
+```
