@@ -9,6 +9,7 @@ from rpc_clients.schemas import ProductSchema, SellerSchema
 
 
 class AddressSchema(BaseModel):
+    id: UUID
     street: str
     city: str
     state: str
