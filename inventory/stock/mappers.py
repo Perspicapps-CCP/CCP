@@ -44,20 +44,20 @@ def stock_product_list_to_schema(
     for stock in stock_list:
         product = next((p for p in products if p.id == stock.product_id), None)
         schema = schemas.StockProductResponseSchema(
-            product_name=product.name if product else None,
-            product_code=product.product_code if product else None,
+            product_name=product.name,
+            product_code=product.product_code,
             manufacturer_name=(
                 product.manufacturer.manufacturer_name
                 if product and product.manufacturer
                 else None
             ),
-            price=product.price if product else None,
+            price=product.price,
             images=(
                 product.images
                 if product and isinstance(product.images, list)
                 else []
             ),
-            warehouse_name=stock.warehouse.name if stock.warehouse else None,
+            warehouse_name=stock.warehouse.name,
             product_id=stock.product_id,
             warehouse_id=stock.warehouse_id,
             quantity=stock.quantity,

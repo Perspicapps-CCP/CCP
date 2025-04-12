@@ -9,7 +9,7 @@ sqlalchemy = "*"
 python-dotenv = "*"
 pydantic = "*"
 psycopg2-binary = "*"
-uvicorn = {extras = ["standard"], version = "*"}
+uvicorn = "*"
 gunicorn = "*"
 pika = "*"
 pandas = "*"
