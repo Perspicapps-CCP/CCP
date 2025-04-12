@@ -122,7 +122,7 @@ class ResetResponse(BaseModel):
 
 
 class GetProductsSchema(BaseModel):
-    product_ids: List[uuid.UUID]
+    product_ids: Optional[List[uuid.UUID]]
 
 
 class GetProductsResponseSchema(BaseModel):

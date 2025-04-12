@@ -47,7 +47,7 @@ def create_user(
         email=payload.email,
         phone=payload.phone,
         role=role,
-        hashed_password='invalid_value',
+        hashed_password="invalid_value",
     )
     return crud.create_user(db, user)
 
@@ -85,7 +85,7 @@ def get_all_sellers(db: Session) -> list[models.User]:
 
 
 def get_sellers_with_ids(
-    db: Session, seller_ids: List[uuid.UUID]
+    db: Session, seller_ids: Optional[List[uuid.UUID]]
 ) -> list[models.User]:
     """
     Get sellers by their IDs.

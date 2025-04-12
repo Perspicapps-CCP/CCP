@@ -29,13 +29,14 @@ class GetSellersConsumer(BaseConsumer):
             sellers_schema = GetSellersSchema.model_validate(payload)
             sellers = get_sellers_with_ids(db, sellers_schema.seller_ids)
             # Sort sellers by id position in payload
-            sellers.sort(
-                key=lambda x: (
-                    sellers_schema.seller_ids.index(x.id)
-                    if x.id in sellers_schema.seller_ids
-                    else -1
+            if sellers_schema.seller_ids:
+                sellers.sort(
+                    key=lambda x: (
+                        sellers_schema.seller_ids.index(x.id)
+                        if x.id in sellers_schema.seller_ids
+                        else -1
+                    )
                 )
-            )
             return GetSellersResponseSchema.model_validate(
                 {"sellers": sellers}
             ).model_dump_json()
