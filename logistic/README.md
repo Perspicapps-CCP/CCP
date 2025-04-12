@@ -27,58 +27,14 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "shipping_number": "GU-20250410-001",
-  "licence_plate": "XYZ-123",
-  "diver_name": "Carlos Ramírez",
-  "warehouse": {
-    "warehouse_id": "e7a3b2c1-5d9f-48e6-b0a7-c2d1f3e4a5b6",
-    "warehouse_name": "Bodega Principal Bogotá"
-  },
-  "delivery_status": "scheduled",
-  "order": [
-    {
-      "order_number": "ORD-2025-0412",
-      "order_address": "Calle 123 #45-67, Bogotá",
-      "customer_phone_number": "+57 3001234567",
-      "product": [
-        {
-          "product_id": "0c5c90ab-95e4-4a7b-aad3-6d3ee80cf469",
-          "product_code": "P001",
-          "product_name": "Laptop Empresarial X500",
-          "quantity": 1,
-          "images": [
-            "https://example.com/images/laptop1.jpg",
-            "https://example.com/images/laptop1_alt.jpg"
-          ]
-        },
-        {
-          "product_id": "71ba32ed-9a1c-42d3-8c89-3f1e4e5d6c7b",
-          "product_code": "P002",
-          "product_name": "Monitor UltraWide 34\"",
-          "quantity": 2,
-          "images": [
-            "https://example.com/images/monitor.jpg"
-          ]
-        }
-      ]
+    "shipping_number": "GU-20250410-001",
+    "licence_plate": "XYZ-123",
+    "diver_name": "Carlos Ramírez",
+    "warehouse": {
+      "warehouse_id": "e7a3b2c1-5d9f-48e6-b0a7-c2d1f3e4a5b6",
+      "warehouse_name": "Bodega Principal Bogotá"
     },
-    {
-      "order_number": "ORD-2025-0415",
-      "order_address": "Carrera 78 #23-45, Bogotá",
-      "customer_phone_number": "+57 3109876543",
-      "product": [
-        {
-          "product_id": "a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6",
-          "product_code": "P003",
-          "product_name": "Teclado Mecánico RGB",
-          "quantity": 3,
-          "images": [
-            "https://example.com/images/keyboard.jpg"
-          ]
-        }
-      ]
-    }
-  ]
+    "delivery_status": "scheduled"
 }
 ```
 |Field	|Type	|	Description|
@@ -88,7 +44,7 @@ Authorization: Bearer <access_token>
 |diver_name	|string	|Name of the delivery driver|
 |warehouse	|object	|Information about the pickup warehouse|
 |delivery_status	|string	|Current status of the delivery route|
-|order	|array	|List of orders included in this delivery route|
+|orders	|array	|List of orders included in this delivery route|
 
 ❌ Error Responses
 
@@ -108,6 +64,144 @@ Authorization: Bearer <access_token>
 ```json
 {
   "detail": "No pending orders for this warehouse on the specified date"
+}
+```
+401 Unauthorized
+```json
+{
+  "detail": "Not authenticated"
+}
+```
+403 Forbidden
+```json
+{
+  "detail": "You do not have permission to perform this action"
+}
+```
+
+## Get Deliveries
+### `GET /logistic/delivery/{shipping_number}`
+
+Retrieves detailed information about a specific delivery route by its shipping number.
+---
+🔐 Authentication
+Requires Bearer Token (JWT) in the `Authorization` header:
+
+```
+Authorization: Bearer <access_token>
+```
+---
+
+📥 Request Parameters
+
+```query string
+  shipping_number: "GU-20250410-001"
+```
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| shipping_number | string | ✅ | Unique tracking number for the delivery route |
+
+
+📤 Response (200 OK)
+
+```json
+[{
+    "shipping_number": "GU-20250410-001",
+    "licence_plate": "XYZ-123",
+    "diver_name": "Carlos Ramírez",
+    "warehouse": {
+      "warehouse_id": "e7a3b2c1-5d9f-48e6-b0a7-c2d1f3e4a5b6",
+      "warehouse_name": "Bodega Principal Bogotá"
+    },
+    "delivery_status": "scheduled",
+    "orders": [{
+        "order_number": "ORD-2025-0412",
+        "order_address": "Calle 123 #45-67, Bogotá",
+        "customer_phone_number": "+57 3001234567",
+        "product_id": "0c5c90ab-95e4-4a7b-aad3-6d3ee80cf469",
+        "product_code": "P001",
+        "product_name": "Laptop Empresarial X500",
+        "quantity": 1,
+        "images":["https://example.com/images/laptop1.jpg", "https://example.com/images/laptop1.jpg"]
+    }]
+}]
+```
+
+|Field	|Type	|	Description|
+|-|-|-|
+|shipping_number	|string	|Unique tracking number for the delivery route|
+|licence_plate	|string	|License plate of the delivery vehicle|
+|diver_name	|string	|Name of the delivery driver|
+|warehouse	|object	|Information about the pickup warehouse|
+|delivery_status	|string	|Current status of the delivery route|
+|orders	|array	|List of orders included in this delivery route|
+
+❌ Error Responses
+
+404 Not Found
+```json
+{
+  "detail": "Delivery with shipping number GU-20250410-001 not found"
+}
+```
+401 Unauthorized
+```json
+{
+  "detail": "Not authenticated"
+}
+```
+403 Forbidden
+```json
+{
+  "detail": "You do not have permission to perform this action"
+}
+```
+
+## Get Delivery Route
+### `GET /logistic/route/{shipping_number}`
+
+Retrieves geographic routing information for a specific delivery, including delivery points with coordinates.
+
+---
+🔐 Authentication
+Requires Bearer Token (JWT) in the `Authorization` header:
+
+```
+Authorization: Bearer <access_token>
+```
+---
+
+📥 Request Parameters
+
+```query string
+  shipping_number: "GU-20250410-001"
+```
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| shipping_number | string | ✅ | Unique tracking number for the delivery route |
+
+📤 Response (200 OK)
+
+```json
+[{
+   "shipping_number": "GU-20250410-001",
+   "order_number": "ORD-2025-0412",
+   "order_address": "Calle 123 #45-67, Bogotá",
+   "order_customer_name": "Ramon Valdez",
+   "customer_phone_number": "+57 3001234567",
+   "latitude":"4.645707804636481",
+   "longitude":"-74.10965904880698",
+}]
+```
+
+❌ Error Responses
+
+404 Not Found
+```json
+{
+  "detail": "Delivery with shipping number GU-20250410-001 not found"
 }
 ```
 401 Unauthorized

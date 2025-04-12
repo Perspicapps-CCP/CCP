@@ -248,6 +248,72 @@ services:
       retries: 5
     networks:
       - sales_net
+
+  logistic_api:
+    build: ./logistic
+    command: uvicorn main:app --host 0.0.0.0 --port 9005
+    container_name: logistic_api
+    ports:
+      - "9005:9005"
+    environment:
+      DB_USER: logistic
+      DB_PASSWORD: postgres
+      DB_HOST: logistic_db
+      DB_PORT: 5432
+      DB_NAME: logistic_db
+      BROKER_HOST: rabbitmq
+    depends_on:
+      logistic_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - general
+      - logistic_net
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:9004/api/v1/logistic/health || exit 1" ]
+      interval: 5s
+      timeout: 1s
+      retries: 2
+    restart: on-failure
+
+  logistic_broker_consumer:
+    build: ./logistic
+    command: python -u start_broker_consumer.py
+    container_name: logistic_broker_consumer
+    environment:
+      DB_USER: logistic
+      DB_PASSWORD: postgres
+      DB_HOST: logistic_db
+      DB_PORT: 5432
+      DB_NAME: logistic_db
+      BROKER_HOST: rabbitmq
+    depends_on:
+      logistic_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - general
+      - logistic_net
+
+  logistic_db:
+    image: postgres:latest
+    container_name: logistic_db
+    volumes:
+      - logistic_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: logistic
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: logistic_db
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - logistic_net    
+
   nginx:
     image: nginx:latest
     container_name: nginx_gateway
@@ -260,6 +326,7 @@ services:
       - suppliers_api
       - users_api
       - sales_api
+      - logistic_api
     networks:
       - general
     restart: unless-stopped
@@ -268,9 +335,11 @@ volumes:
   inventory_data:
   suppliers_data:
   sales_data:
+  logistic_data:
 networks:
   general:
   users_net:
   inventory_net:
   suppliers_net:
   sales_net:
+  logistic_net:
