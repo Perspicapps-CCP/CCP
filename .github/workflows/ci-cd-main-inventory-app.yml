@@ -48,6 +48,17 @@ jobs:
           ./inventory/coverage.xml
           ./inventory/htmlcov
         retention-days: 14
+    - name: Analyze with SonarCloud
+      uses: SonarSource/sonarqube-scan-action@v5.1.0
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        projectBaseDir: ./inventory
+        args: >
+          -Dsonar.projectKey=ccp-inventory
+          -Dsonar.organization=perspicapps-ccp
+          -Dsonar.exclusions=**/__pycache__/**,**/*.pyc,**/htmlcov/**
+          -Dsonar.verbose=true
 
   build:
     needs: test
