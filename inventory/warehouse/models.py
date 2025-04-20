@@ -10,7 +10,7 @@ class Warehouse(Base):
     __tablename__ = "warehouses"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String, nullable=False)
+    name = Column(String, nullable=False, unique=True)
     country = Column(String, nullable=False)
     city = Column(String, nullable=False)
     address = Column(String, nullable=False)

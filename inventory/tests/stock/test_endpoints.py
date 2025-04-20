@@ -1,9 +1,11 @@
 import csv
 import io
+from unittest.mock import MagicMock
 from uuid import UUID
 import pytest
 from faker import Faker
 from fastapi.testclient import TestClient
+from rpc_clients.suppliers_client import SuppliersClient
 from stock.models import Stock
 from warehouse.models import Warehouse
 
@@ -11,7 +13,7 @@ fake = Faker()
 fake.seed_instance(0)
 
 
-def mock_warehouse():
+def mock_warehouse_db():
     return Warehouse(
         name="Test Warehouse",
         country="Test Country",
@@ -56,16 +58,30 @@ def csv_dummy_file() -> bytes:
     return csv_file.read().encode('utf-8')
 
 
+@pytest.fixture
+def mock_suppliers_client():
+    mock_client = MagicMock()
+    mock_client.get_products.return_value = []
+    return mock_client
+
+
 def test_upload_inventory_success_create_stock(
-    client: TestClient, db_session
+    client: TestClient, db_session, mock_suppliers_client
 ) -> None:
     # Arrange
-    dummy_warehouse = mock_warehouse()
+    dummy_warehouse = mock_warehouse_db()
     db_session.add(dummy_warehouse)
-    db_session.flush()
+    db_session.commit()
     db_session.refresh(dummy_warehouse)
 
     dummy_stock = mock_stock_dict(dummy_warehouse)
+
+    mock_suppliers_client.get_products.return_value = [
+        {"id": dummy_stock["product_id"], "name": "Test Product"}
+    ]
+    client.app.dependency_overrides[SuppliersClient] = (
+        lambda: mock_suppliers_client
+    )
 
     # Act
     response = client.post(
@@ -80,10 +96,10 @@ def test_upload_inventory_success_create_stock(
 
 
 def test_upload_inventory_success_update_stock(
-    client: TestClient, db_session
+    client: TestClient, db_session, mock_suppliers_client
 ) -> None:
     # Arrange
-    dummy_warehouse = mock_warehouse()
+    dummy_warehouse = mock_warehouse_db()
     db_session.add(dummy_warehouse)
     db_session.flush()
     db_session.refresh(dummy_warehouse)
@@ -92,6 +108,13 @@ def test_upload_inventory_success_update_stock(
     db_session.add(dummy_stock)
     db_session.commit()
     db_session.refresh(dummy_stock)
+
+    mock_suppliers_client.get_products.return_value = [
+        {"id": dummy_stock.product_id, "name": "Test Product"}
+    ]
+    client.app.dependency_overrides[SuppliersClient] = (
+        lambda: mock_suppliers_client
+    )
 
     request = mock_stock_dict(dummy_warehouse)
     request["product_id"] = str(dummy_stock.product_id)
@@ -112,9 +135,9 @@ def test_upload_inventory_failed_warehouse_not_exist(
     client: TestClient, db_session
 ) -> None:
     # Arrange
-    dummy_warehouse = mock_warehouse()
+    dummy_warehouse = mock_warehouse_db()
     db_session.add(dummy_warehouse)
-    db_session.flush()
+    db_session.commit()
     db_session.refresh(dummy_warehouse)
 
     dummy_stock = mock_stock_dict(dummy_warehouse)
@@ -127,16 +150,42 @@ def test_upload_inventory_failed_warehouse_not_exist(
     )
 
     # Assert
-    assert response.status_code == 400
+    assert response.status_code == 404
+
+
+def test_upload_inventory_failed_product_not_exist(
+    client: TestClient, db_session, mock_suppliers_client
+) -> None:
+    # Arrange
+    dummy_warehouse = mock_warehouse_db()
+    db_session.add(dummy_warehouse)
+    db_session.commit()
+    db_session.refresh(dummy_warehouse)
+
+    dummy_stock = mock_stock_dict(dummy_warehouse)
+    dummy_stock["product_id"] = str(fake.uuid4())
+
+    client.app.dependency_overrides[SuppliersClient] = (
+        lambda: mock_suppliers_client
+    )
+
+    # Act
+    response = client.post(
+        "/inventory/stock",
+        json=dummy_stock,
+    )
+
+    # Assert
+    assert response.status_code == 404
 
 
 def test_upload_inventory_failed_quantity_negative(
     client: TestClient, db_session
 ) -> None:
     # Arrange
-    dummy_warehouse = mock_warehouse()
+    dummy_warehouse = mock_warehouse_db()
     db_session.add(dummy_warehouse)
-    db_session.flush()
+    db_session.commit()
     db_session.refresh(dummy_warehouse)
 
     dummy_stock = mock_stock_dict(dummy_warehouse)
@@ -152,13 +201,35 @@ def test_upload_inventory_failed_quantity_negative(
     assert response.status_code == 400
 
 
+def test_upload_inventory_failed_warehouse_invalid_format(
+    client: TestClient, db_session
+) -> None:
+    # Arrange
+    dummy_warehouse = mock_warehouse_db()
+    db_session.add(dummy_warehouse)
+    db_session.commit()
+    db_session.refresh(dummy_warehouse)
+
+    dummy_stock = mock_stock_dict(dummy_warehouse)
+    dummy_stock["warehouse_id"] = fake.iana_id()
+
+    # Act
+    response = client.post(
+        "/inventory/stock",
+        json=dummy_stock,
+    )
+
+    # Assert
+    assert response.status_code == 422
+
+
 def test_upload_inventory_failed_product_invalid_format(
     client: TestClient, db_session
 ) -> None:
     # Arrange
-    dummy_warehouse = mock_warehouse()
+    dummy_warehouse = mock_warehouse_db()
     db_session.add(dummy_warehouse)
-    db_session.flush()
+    db_session.commit()
     db_session.refresh(dummy_warehouse)
 
     dummy_stock = mock_stock_dict(dummy_warehouse)
@@ -171,20 +242,30 @@ def test_upload_inventory_failed_product_invalid_format(
     )
 
     # Assert
-    assert response.status_code == 400
+    assert response.status_code == 422
 
 
 def test_upload_inventory_csv_success(
-    client: TestClient, csv_dummy_file: bytes, db_session
+    client: TestClient,
+    csv_dummy_file: bytes,
+    db_session,
+    mock_suppliers_client,
 ) -> None:
     """
     Test uploading a CSV file with inventory data.
     """
     # Arrange
-    dummy_warehouse = mock_warehouse()
+    dummy_warehouse = mock_warehouse_db()
     db_session.add(dummy_warehouse)
     db_session.commit()
     db_session.refresh(dummy_warehouse)
+
+    mock_suppliers_client.get_products.return_value = [
+        {"id": str(fake.uuid4), "name": "Test Product"}
+    ]
+    client.app.dependency_overrides[SuppliersClient] = (
+        lambda: mock_suppliers_client
+    )
 
     files = {
         "inventory_upload": (
@@ -208,7 +289,7 @@ def test_upload_inventory_csv_success(
     assert response_data["warehouse_id"] == str(dummy_warehouse.id)
 
 
-def test_upload_inventory_csv_failed_invalid_warehouse_id_format(
+def test_upload_inventory_csv_failed_warehouse_invalid_format(
     client: TestClient, csv_dummy_file: bytes
 ) -> None:
     """
@@ -232,7 +313,7 @@ def test_upload_inventory_csv_failed_invalid_warehouse_id_format(
     )
 
     # Assert
-    assert response.status_code == 400
+    assert response.status_code == 422
 
 
 def test_upload_inventory_csv_failed_warehouse_not_exist(
@@ -259,7 +340,7 @@ def test_upload_inventory_csv_failed_warehouse_not_exist(
     )
 
     # Assert
-    assert response.status_code == 400
+    assert response.status_code == 404
 
 
 def test_upload_inventory_csv_failed_invalid_file_format(
@@ -269,7 +350,7 @@ def test_upload_inventory_csv_failed_invalid_file_format(
     Test uploading a CSV file with invalid file format.
     """
     # Arrange
-    dummy_warehouse = mock_warehouse()
+    dummy_warehouse = mock_warehouse_db()
     db_session.add(dummy_warehouse)
     db_session.commit()
     db_session.refresh(dummy_warehouse)
@@ -294,6 +375,48 @@ def test_upload_inventory_csv_failed_invalid_file_format(
     assert response.status_code == 400
 
 
+def test_upload_inventory_csv_failed_product_not_exist(
+    client: TestClient,
+    csv_dummy_file: bytes,
+    db_session,
+    mock_suppliers_client,
+) -> None:
+    """
+    Test uploading a CSV file with inventory data.
+    """
+    # Arrange
+    dummy_warehouse = mock_warehouse_db()
+    db_session.add(dummy_warehouse)
+    db_session.commit()
+    db_session.refresh(dummy_warehouse)
+
+    client.app.dependency_overrides[SuppliersClient] = (
+        lambda: mock_suppliers_client
+    )
+
+    files = {
+        "inventory_upload": (
+            "test.csv",
+            csv_dummy_file,
+            "application/octet-stream",
+        )
+    }
+    data = {"warehouse_id": str(dummy_warehouse.id)}
+
+    # Act
+    response = client.post(
+        "/inventory/stock/csv",
+        files=files,
+        data=data,
+    )
+
+    # Assert
+    assert response.status_code == 201
+    response_data = response.json()
+    assert response_data["warehouse_id"] == str(dummy_warehouse.id)
+    assert response_data["failed_records"] > 0
+
+
 def test_get_stock_success_with_filters(
     client: TestClient, db_session
 ) -> None:
@@ -301,7 +424,7 @@ def test_get_stock_success_with_filters(
     Test getting stock with valid filters.
     """
     # Arrange
-    dummy_warehouse = mock_warehouse()
+    dummy_warehouse = mock_warehouse_db()
     db_session.add(dummy_warehouse)
     db_session.flush()
     db_session.refresh(dummy_warehouse)
@@ -336,33 +459,23 @@ def test_get_stock_success_with_filters(
 
 
 def test_get_stock_success_without_filters(
-    client: TestClient, csv_dummy_file: bytes, db_session
+    client: TestClient, db_session
 ) -> None:
     """
     Test getting stock without filters.
     """
     # Arrange
-    dummy_warehouse = mock_warehouse()
+    dummy_warehouse = mock_warehouse_db()
     db_session.add(dummy_warehouse)
     db_session.commit()
     db_session.refresh(dummy_warehouse)
 
-    files = {
-        "inventory_upload": (
-            "test.csv",
-            csv_dummy_file,
-            "application/octet-stream",
-        )
-    }
-    data = {"warehouse_id": str(dummy_warehouse.id)}
+    dummy_stock = mock_stock_db(dummy_warehouse)
+    db_session.add(dummy_stock)
+    db_session.commit()
+    db_session.refresh(dummy_stock)
 
     # Act
-    client.post(
-        "/inventory/stock/csv",
-        files=files,
-        data=data,
-    )
-
     response = client.get("/inventory/stock")
 
     # Assert
@@ -387,7 +500,7 @@ def test_get_stock_failed_with_invalid_warehouse_format(
     )
 
     # Assert
-    assert response.status_code == 400
+    assert response.status_code == 422
 
 
 def test_get_stock_failed_with_invalid_product_format(
@@ -406,4 +519,4 @@ def test_get_stock_failed_with_invalid_product_format(
     )
 
     # Assert
-    assert response.status_code == 400
+    assert response.status_code == 422

@@ -1,5 +1,6 @@
 # Mock database
-from typing import Any, Dict, Generator, List
+import uuid
+from typing import Any, Generator, List
 from unittest import mock
 
 import pytest
@@ -98,7 +99,7 @@ def client(
         yield client
 
 
-def generate_fake_sellers(seller_ids) -> List[Dict]:
+def generate_fake_sellers(seller_ids) -> List[SellerSchema]:
     """
     Generate fake sellers for testing.
     """
@@ -122,7 +123,7 @@ def generate_fake_sellers(seller_ids) -> List[Dict]:
     ]
 
 
-def generate_fake_products(product_ids) -> List[Dict]:
+def generate_fake_products(product_ids) -> List[ProductSchema]:
     """
     Generate fake products for testing.
     """
@@ -150,6 +151,8 @@ def mock_users_rpc_client(request):
         return
 
     def get_sellers(_self, seller_ids):
+        if seller_ids is None:
+            seller_ids = [uuid.uuid4() for _ in range(5)]
         return generate_fake_sellers(seller_ids)
 
     with mock.patch(
@@ -170,6 +173,8 @@ def mock_suppliers_rpc_client(request):
         return
 
     def get_products(_self, product_ids):
+        if product_ids is None:
+            product_ids = [uuid.uuid4() for _ in range(5)]
         return generate_fake_products(product_ids)
 
     with mock.patch(

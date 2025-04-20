@@ -7,9 +7,11 @@ from sqlalchemy.orm import Session
 
 import config
 import schemas
-from database import Base, engine
+from database import Base, SessionLocal, engine
 from db_dependency import get_db
 from plans.api import plans_router
+from sales.api import sales_router
+from sales.seed_data import seed_sales
 
 app = FastAPI()
 
@@ -25,11 +27,21 @@ app.add_middleware(
 prefix_router = APIRouter(prefix="/api/v1/sales")
 # Include the users router
 prefix_router.include_router(plans_router)
+prefix_router.include_router(sales_router)
+
+
+def seed_database(db: Session = None):
+    db = db or SessionLocal()
+    try:
+        seed_sales(db)
+    finally:
+        db.close()
 
 
 if "pytest" not in sys.modules:
     Base.metadata.create_all(bind=engine)
     # Seeding the database with initial data
+    seed_database()
 
 
 # Reset the database
@@ -38,6 +50,7 @@ def reset(db: Session = Depends(get_db)):
     Base.metadata.drop_all(bind=db.get_bind())
     Base.metadata.create_all(bind=db.get_bind())
     db.commit()
+    seed_database(db)
     return schemas.DeleteResponse()
 
 

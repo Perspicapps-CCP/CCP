@@ -81,11 +81,11 @@ class TestSuppliersClient:
         for index, product in enumerate(result):
             assert isinstance(product, ProductSchema)
             response_product = products_response[index]
-            assert str(product.id) == response_product['id']
-            assert product.product_code == response_product['product_code']
-            assert product.name == response_product['name']
-            assert product.price == response_product['price']
-            assert product.images == response_product['images']
+            assert str(product.id) == response_product["id"]
+            assert product.product_code == response_product["product_code"]
+            assert product.name == response_product["name"]
+            assert product.price == response_product["price"]
+            assert product.images == response_product["images"]
 
     def test_get_product_calls_get_products(
         self, suppliers_client: SuppliersClient, mock_call_broker: MagicMock
@@ -110,9 +110,9 @@ class TestSuppliersClient:
         # Assert the result is a ProductSchema object
         assert isinstance(result, ProductSchema)
         assert result.id == product_id
-        assert result.product_code == product_reponse['product_code']
-        assert result.name == product_reponse['name']
-        assert result.price == product_reponse['price']
+        assert result.product_code == product_reponse["product_code"]
+        assert result.name == product_reponse["name"]
+        assert result.price == product_reponse["price"]
 
     def test_get_product_raises_value_error_if_product_not_found(
         self, suppliers_client: SuppliersClient, mock_call_broker: MagicMock
@@ -127,6 +127,22 @@ class TestSuppliersClient:
 
         with pytest.raises(ValueError, match="Product not found."):
             suppliers_client.get_product(product_id)
+
+    def test_get_all_products_calls_broker_with_correct_routing_key(
+        self, suppliers_client: SuppliersClient, mock_call_broker: MagicMock
+    ):
+        """
+        Test that get_all_products calls call_broker with the
+          correct routing key and payload.
+        """
+        suppliers_client.get_all_products()
+
+        # Assert call_broker was called with the
+        #  correct routing key and payload
+        mock_call_broker.assert_called_once_with(
+            "suppliers.get_products",
+            {"product_ids": None},
+        )
 
 
 @pytest.mark.skip_mock_users
@@ -233,3 +249,19 @@ class TestUsersClient:
 
         # Assert the result is an empty list
         assert result == []
+
+    def test_get_all_sellers_calls_broker_with_correct_routing_key(
+        self, users_client: UsersClient, mock_call_broker: MagicMock
+    ):
+        """
+        Test that get_all_sellers calls call_broker with the
+          correct routing key and payload.
+        """
+        users_client.get_all_sellers()
+
+        # Assert call_broker was called with the
+        #  correct routing key and payload
+        mock_call_broker.assert_called_once_with(
+            "users.get_sellers",
+            {"seller_ids": None},
+        )

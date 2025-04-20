@@ -26,6 +26,7 @@ def product_to_schema(
         name=product.name,
         price=product.price,
         images=[image.url for image in product.images],
+        manufacturer=manufacturer_to_schema(product.manufacturer),
     )
 
 

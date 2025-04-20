@@ -109,6 +109,7 @@ class ProductCreateSchema(BaseModel):
 class ResponseProductDetailSchema(ProductCreateSchema):
     id: uuid.UUID
     images: List[str]
+    manufacturer: ManufacturerDetailSchema
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -121,7 +122,7 @@ class ResetResponse(BaseModel):
 
 
 class GetProductsSchema(BaseModel):
-    product_ids: List[uuid.UUID]
+    product_ids: Optional[List[uuid.UUID]]
 
 
 class GetProductsResponseSchema(BaseModel):
