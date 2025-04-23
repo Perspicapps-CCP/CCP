@@ -12,6 +12,7 @@ psycopg2-binary = "*"
 uvicorn = {extras = ["standard"], version = "*"}
 gunicorn = "*"
 pika = "*"
+keyboard = "*"
 
 [dev-packages]
 black = "*"

@@ -12,18 +12,20 @@ class BaseConsumer(threading.Thread, ABC):
     def __init__(self, queue):
         threading.Thread.__init__(self)
         self.queue = queue
+        self.connection = None
+        self.channel = None
 
     def run(self):
-        connection = pika.BlockingConnection(
+        self.connection = pika.BlockingConnection(
             pika.ConnectionParameters(host=BROKER_HOST)
         )
-        channel = connection.channel()
-        channel.queue_declare(queue=self.queue)
-        channel.basic_qos(prefetch_count=1)
-        channel.basic_consume(
+        self.channel = self.connection.channel()
+        self.channel.queue_declare(queue=self.queue)
+        self.channel.basic_qos(prefetch_count=1)
+        self.channel.basic_consume(
             queue=self.queue, on_message_callback=self.callback
         )
-        channel.start_consuming()
+        self.channel.start_consuming()
 
     @abstractmethod
     def process_payload(self, payload: Dict) -> Dict: ...
@@ -45,3 +47,9 @@ class BaseConsumer(threading.Thread, ABC):
             ),
         )
         ch.basic_ack(delivery_tag=method.delivery_tag)
+
+    def stop(self):
+        if self.channel and self.channel.is_open:
+            self.channel.close()
+        if self.connection and self.connection.is_open:
+            self.connection.close()

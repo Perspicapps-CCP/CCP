@@ -37,4 +37,3 @@ def test_list_all_deliveries(client: TestClient) -> None:
     response = client.get("/logistic/delivery/")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
-

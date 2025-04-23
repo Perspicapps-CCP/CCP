@@ -40,7 +40,25 @@ services:
       timeout: 1s
       retries: 2
     restart: on-failure
-
+  inventory_broker_consumer:
+    build: ./inventory
+    command: python -u start_broker_consumer.py
+    container_name: inventory_broker_consumer
+    environment:
+      DB_USER: inventory
+      DB_PASSWORD: postgres
+      DB_HOST: inventory_db
+      DB_PORT: 5432
+      DB_NAME: inventory_db
+      BROKER_HOST: rabbitmq
+    depends_on:
+      suppliers_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - general
+      - inventory_net
   inventory_db:
     image: postgres:latest
     container_name: inventory_db
