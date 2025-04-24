@@ -310,7 +310,7 @@ Authorization: Bearer <access_token>
 | `currency`     | string                 | Currency code (e.g., USD, COP)                   |
 | `created_at`   | datetime (ISO 8601)    | Timestamp when the sale was created              |
 | `updated_at`   | datetime (ISO 8601)    | Timestamp when the sale was last updated         |
-| `seller`       | `SellerSchema`         | Seller information                               |
+| `seller`       | `UserSchema`         | Seller information                               |
 | `items`        | List[`SaleItemSchema`] | List of items in the sale                        |
 
 ---
@@ -327,7 +327,7 @@ Authorization: Bearer <access_token>
 
 ---
 
-### Seller Fields (`SellerSchema`)
+### Seller Fields (`UserSchema`)
 
 | Field            | Type     | Description                          |
 |------------------|----------|--------------------------------------|
@@ -422,11 +422,244 @@ Sale ID,Order Number,Seller ID,Seller Name,Total Value,Currency,Sale At
 
 ### ❌ Error Responses
 
+#### 401 Unauthorized
+
+```json
+{
+  "detail": "Not authenticated"
+}
+```
+
+## 📍 List Routes API
+
+### `GET /api/v1/sales/routes/`
+
+Retrieve all sales routes. Each route includes multiple client stops with full client and address info.
+
+---
+
+### 🔐 Authentication
+
+Requires Bearer Token (JWT) in the `Authorization` header:
+
+```
+Authorization: Bearer <access_token>
+```
+
+---
+
+### 📥 Query Parameters (Optional)
+
+| Param      | Type   | Description                                         |
+| ---------- | ------ | --------------------------------------------------- |
+| client_id  | UUID   | Filter routes that include this client              |
+| address    | string | Filter by address line or reference (partial match) |
+| start_date | string | Filter from date (`YYYY-MM-DD`)                     |
+| end_date   | string | Filter to date (`YYYY-MM-DD`)                       |
+
+---
+
+### 📤 Response (200 OK)
+
+```json
+[
+  {
+    "id": "f8e9a492-9bd1-40c6-9a6a-fc4f56eaeaf1",
+    "date": "2025-02-20",
+    "stops": [
+      {
+        "client": {
+          "id": "3f9c962a-6b71-41d2-a9e0-b98c0c245e4a",
+          "full_name": "Cosme Fulanito",
+          "email": "cosme@ccp.com.co",
+          "username": "cosmef",
+          "phone": "+57 3000000000",
+          "id_type": "CC",
+          "identification": "101000000000",
+          "role": "BUYER"
+        },
+        "address": {
+          "line": "Av Siempre Viva 123",
+          "neighborhood": "Centro",
+          "city": "Bogota",
+          "state": "Cundinamarca",
+          "country": "Colombia",
+          "latitude": 4.711,
+          "longitude": -74.0721
+        }
+      }
+    ]
+  },
+  {
+    "id": "2d59c857-2d2b-4a4b-9b16-2a4377d11e3a",
+    "date": "2025-02-21",
+    "stops": [
+      {
+        "client": {
+          "id": "0e86f3d2-1b8a-4a25-a2c6-7842d1ec421f",
+          "full_name": "Jumbo Market",
+          "email": "jumbo@market.co",
+          "username": "jumbo",
+          "phone": "+57 3201234567",
+          "id_type": "NIT",
+          "identification": "900123456",
+          "role": "BUYER"
+        },
+        "address": {
+          "line": "Cra 50 #42-10",
+          "neighborhood": "Chapinero",
+          "city": "Bogota",
+          "state": "Cundinamarca",
+          "country": "Colombia",
+          "latitude": 4.6584,
+          "longitude": -74.0935
+        }
+      }
+    ]
+  }
+]
+```
+
+---
+
+### ❌ Error Responses
 
 #### 401 Unauthorized
 
 ```json
 {
   "detail": "Not authenticated"
+}
+```
+
+#### 422 Validation Error
+
+```json
+{
+  "detail": [
+    {
+      "loc": ["query", "start_date"],
+      "msg": "Invalid date format",
+      "type": "value_error.date"
+    }
+  ]
+}
+```
+
+## 🔎 Get Route Detail API
+
+### `GET /api/v1/sales/routes/{route_id}`
+
+Retrieve the full detail of a specific route, including all client stops.
+
+---
+
+### 🔐 Authentication
+
+Requires Bearer Token (JWT) in the `Authorization` header:
+
+```
+Authorization: Bearer <access_token>
+```
+
+---
+
+### 📥 Path Parameter
+
+| Param    | Type                              | Required | Description                                        |
+| -------- | --------------------------------- | -------- | -------------------------------------------------- |
+| route_id | UUID or date in formar YYYY-MM-DD | ✅       | Unique ID of the route or unique date of the route |
+
+---
+
+### 📤 Response (200 OK)
+
+```json
+{
+  "id": "f8e9a492-9bd1-40c6-9a6a-fc4f56eaeaf1",
+  "date": "2025-02-20",
+  "stops": [
+    {
+      "client": {
+        "id": "3f9c962a-6b71-41d2-a9e0-b98c0c245e4a",
+        "full_name": "Cosme Fulanito",
+        "email": "cosme@ccp.com.co",
+        "username": "cosmef",
+        "phone": "+57 3000000000",
+        "id_type": "CC",
+        "identification": "101000000000",
+        "role": "BUYER"
+      },
+      "address": {
+        "line": "Av Siempre Viva 123",
+        "neighborhood": "Centro",
+        "city": "Bogota",
+        "state": "Cundinamarca",
+        "country": "Colombia",
+        "latitude": 4.711,
+        "longitude": -74.0721
+      }
+    },
+    {
+      "client": {
+        "id": "0e86f3d2-1b8a-4a25-a2c6-7842d1ec421f",
+        "full_name": "Jumbo Market",
+        "email": "jumbo@market.co",
+        "username": "jumbo",
+        "phone": "+57 3201234567",
+        "id_type": "NIT",
+        "identification": "900123456",
+        "role": "BUYER"
+      },
+      "address": {
+        "line": "Cra 50 #42-10",
+        "neighborhood": "Chapinero",
+        "city": "Bogota",
+        "state": "Cundinamarca",
+        "country": "Colombia",
+        "latitude": 4.6584,
+        "longitude": -74.0935
+      }
+    }
+  ]
+}
+```
+
+---
+
+### 📦 Stops Array
+
+Each item in `stops` contains:
+
+| Field   | Type   | Description             |
+| ------- | ------ | ----------------------- |
+| client  | object | Buyer user object       |
+| address | object | Full structured address |
+
+---
+
+### ❌ Error Responses
+
+#### 404 Not Found
+
+```json
+{
+  "detail": "Route not found"
+}
+```
+
+#### 401 Unauthorized
+
+```json
+{
+  "detail": "Not authenticated"
+}
+```
+
+#### 403 Forbidden
+
+```json
+{
+  "detail": "You do not have access to this route"
 }
 ```

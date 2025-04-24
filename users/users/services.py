@@ -99,3 +99,20 @@ def get_sellers_with_ids(
     return crud.get_users_by_ids(
         db, ids=seller_ids, role=models.RoleEnum.SELLER
     )
+
+
+def get_clients_with_ids(
+    db: Session, client_ids: Optional[List[uuid.UUID]]
+) -> list[models.User]:
+    """
+    Get clients by their IDs.
+    Args:
+        db (Session): The database session to use for the query.
+        client_ids (list[schemas.UUIDSchema]): A list of client IDs
+          to retrieve.
+    Returns:
+        list[models.User]: A list of client user objects.
+    """
+    return crud.get_users_by_ids(
+        db, ids=client_ids, role=models.RoleEnum.CLIENT
+    )
