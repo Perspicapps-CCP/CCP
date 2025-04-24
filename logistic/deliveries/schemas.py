@@ -91,6 +91,7 @@ class PayloadSaleSchema(BaseModel):
     sales_id: uuid.UUID
     order_number: int
     address_id: uuid.UUID
+    address: str
     sales_items: List[PayloadSaleItemSchema]
 
 

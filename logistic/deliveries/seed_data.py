@@ -5,8 +5,14 @@ from sqlalchemy.orm import Session
 from faker import Faker
 
 from deliveries.schemas import DriverCreateSchema
-from deliveries.services import create_delivery_items, create_driver, create_delivery_transaction, get_driver_available, update_driver_on_delivery
-from deliveries import models, schemas
+from deliveries.services import (
+    create_delivery_stops_transaction,
+    create_driver,
+    create_delivery_transaction,
+    get_driver_available,
+    update_driver_on_delivery,
+)
+from deliveries import schemas
 from rpc_clients.inventory_client import InventoryClient
 from rpc_clients.suppliers_client import SuppliersClient
 
@@ -15,7 +21,6 @@ fake.seed_instance(123)
 
 
 def seed_drivers(db: Session):
-        
     # create a fake driver
     for i in range(10):
         driver = DriverCreateSchema(
@@ -27,13 +32,14 @@ def seed_drivers(db: Session):
         )
         create_driver(db, driver)
 
-    #make 3 deliveries for each warehouse (each delivery has 3 items)
+    # make 3 deliveries for each warehouse (each delivery has 3 items)
     warehouses = InventoryClient().get_warehouses()[:3]
     products = SuppliersClient().get_all_products()[:3]
-    
+
+    # create a fake list of deliveries
     list_deliveries: List[schemas.PayloadSaleSchema] = []
     for warehouse in warehouses:
-        for index in range(3):
+        for index in range(5):
             list_delivery_items = []
             for product in products:
                 delivery_item = schemas.PayloadSaleItemSchema(
@@ -45,11 +51,12 @@ def seed_drivers(db: Session):
 
             delivery = schemas.PayloadSaleSchema(
                 sales_id=fake.uuid4(),
-                order_number=index+1,
+                order_number=index + 1,
                 address_id=fake.uuid4(),
+                address=f"Calle {random.randint(1, 150)} #{random.randint(1, 120)}-{random.randint(1, 99)}, Bogotá D.C., Colombia",
                 sales_items=list_delivery_items,
-            )            
-            create_delivery_items(db, delivery)
+            )
+            create_delivery_stops_transaction(db, delivery)
             list_deliveries.append(delivery)
 
     # get all pending deliveries
@@ -60,17 +67,5 @@ def seed_drivers(db: Session):
         driver = get_driver_available(db, datetime.now().date())
         if driver:
             update_driver_on_delivery(
-                db, delivery.id, driver.id,
-                datetime.now().date()
+                db, delivery.id, driver.id, datetime.now().date()
             )
-
-    for delivery in list_deliveries:
-        bogota_address = f"Calle {random.randint(1, 150)} #{random.randint(1, 120)}-{random.randint(1, 99)}, Bogotá D.C., Colombia"
-        
-        address = models.AddressGeocoded(
-            address_id=delivery.address_id,
-            address=bogota_address,
-            )
-        db.add(address)
-        db.commit()
-    

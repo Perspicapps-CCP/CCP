@@ -1,6 +1,5 @@
 import enum
 import uuid
-
 from sqlalchemy import (
     UUID,
     Boolean,
@@ -35,16 +34,39 @@ class Delivery(Base):
             name="uix_driver_delivery_date",
         ),
     )
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    driver_id = Column(UUID(as_uuid=True), ForeignKey("drivers.id"), nullable=True)
+    driver_id = Column(
+        UUID(as_uuid=True), ForeignKey("drivers.id"), nullable=True
+    )
     warehouse_id = Column(UUID(as_uuid=True), nullable=False)
     delivery_date = Column(DateTime(timezone=True), nullable=True)
     status = Column(Enum(DeliverStatus), default=DeliverStatus.CREATED)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    items = relationship("DeliveryItem", back_populates="delivery")
     driver = relationship("Driver", back_populates="deliveries")
+    stops = relationship("DeliveryStop", back_populates="delivery")
+
+
+class DeliveryStop(Base):
+    __tablename__ = "delivery_stops"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    sales_id = Column(UUID(as_uuid=True), nullable=False)
+    order_number = Column(Integer, nullable=False)
+    address_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("delivery_address.address_id"),
+        nullable=False,
+    )
+    delivery_id = Column(
+        UUID(as_uuid=True), ForeignKey("deliveries.id"), nullable=True
+    )
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    delivery = relationship("Delivery", back_populates="stops")
+    items = relationship("DeliveryItem", back_populates="delivery_stop")
+    address = relationship("DeliveryAddress", back_populates="delivery_stops")
 
 
 class DeliveryItem(Base):
@@ -61,13 +83,13 @@ class DeliveryItem(Base):
     order_number = Column(Integer, primary_key=True, nullable=False)
     product_id = Column(UUID(as_uuid=True), primary_key=True, nullable=False)
     warehouse_id = Column(UUID(as_uuid=True), nullable=False)
-    address_id = Column(UUID(as_uuid=True), nullable=False)
-    delivery_id = Column(
-        UUID(as_uuid=True), ForeignKey("deliveries.id"), nullable=True
+    delivery_stop_id = Column(
+        UUID(as_uuid=True), ForeignKey("delivery_stops.id"), nullable=False
     )
+    quantity = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    delivery = relationship("Delivery", back_populates="items")
+    delivery_stop = relationship("DeliveryStop", back_populates="items")
 
 
 class Driver(Base):
@@ -81,8 +103,8 @@ class Driver(Base):
     deliveries = relationship("Delivery", back_populates="driver")
 
 
-class AddressGeocoded(Base):
-    __tablename__ = "address_geocoded"
+class DeliveryAddress(Base):
+    __tablename__ = "delivery_address"
 
     address_id = Column(UUID(as_uuid=True), primary_key=True, nullable=False)
     address = Column(String(255), nullable=False)
@@ -90,3 +112,4 @@ class AddressGeocoded(Base):
     longitude = Column(String(20), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    delivery_stops = relationship("DeliveryStop", back_populates="address")

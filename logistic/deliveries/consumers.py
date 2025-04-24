@@ -7,7 +7,7 @@ from deliveries.schemas import (
     DeliverySaleStatus,
     PayloadSaleSchema,
 )
-from deliveries.services import create_delivery_items
+from deliveries.services import create_delivery_stops_transaction
 from seedwork.base_consumer import BaseConsumer
 
 
@@ -38,7 +38,7 @@ class GetProductsConsumer(BaseConsumer):
         try:
             logger.info(f"Processing payload: {payload}")
             sale_payload = PayloadSaleSchema.model_validate_json(payload)
-            result = create_delivery_items(db, sale_payload)
+            result = create_delivery_stops_transaction(db, sale_payload)
 
             if result:
                 logger.info("Delivery items created successfully")
