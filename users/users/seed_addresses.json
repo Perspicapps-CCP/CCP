@@ -1,0 +1,92 @@
+[
+  {
+      "line": "Av Siempre Viva 123",
+      "neighborhood": "Centro",
+      "city": "Bogota",
+      "state": "Cundinamarca",
+      "country": "Colombia",
+      "latitude": 4.7110,
+      "longitude": -74.0721
+  },
+  {
+      "line": "Calle 26 #13-15",
+      "neighborhood": "Santa Fe",
+      "city": "Bogota",
+      "state": "Cundinamarca",
+      "country": "Colombia",
+      "latitude": 4.6097,
+      "longitude": -74.0817
+  },
+  {
+      "line": "Carrera 7 #72-35",
+      "neighborhood": "Chapinero",
+      "city": "Bogota",
+      "state": "Cundinamarca",
+      "country": "Colombia",
+      "latitude": 4.6584,
+      "longitude": -74.0596
+  },
+  {
+      "line": "Calle 100 #8A-55",
+      "neighborhood": "Usaquén",
+      "city": "Bogota",
+      "state": "Cundinamarca",
+      "country": "Colombia",
+      "latitude": 4.6796,
+      "longitude": -74.0447
+  },
+  {
+      "line": "Av Suba #123-45",
+      "neighborhood": "Suba",
+      "city": "Bogota",
+      "state": "Cundinamarca",
+      "country": "Colombia",
+      "latitude": 4.7450,
+      "longitude": -74.1041
+  },
+  {
+      "line": "Calle 80 #69-90",
+      "neighborhood": "Engativá",
+      "city": "Bogota",
+      "state": "Cundinamarca",
+      "country": "Colombia",
+      "latitude": 4.6974,
+      "longitude": -74.1087
+  },
+  {
+      "line": "Carrera 30 #10-20",
+      "neighborhood": "Teusaquillo",
+      "city": "Bogota",
+      "state": "Cundinamarca",
+      "country": "Colombia",
+      "latitude": 4.6394,
+      "longitude": -74.0880
+  },
+  {
+      "line": "Av Caracas #45-50",
+      "neighborhood": "La Candelaria",
+      "city": "Bogota",
+      "state": "Cundinamarca",
+      "country": "Colombia",
+      "latitude": 4.5981,
+      "longitude": -74.0758
+  },
+  {
+      "line": "Calle 170 #20-30",
+      "neighborhood": "Usaquén",
+      "city": "Bogota",
+      "state": "Cundinamarca",
+      "country": "Colombia",
+      "latitude": 4.7612,
+      "longitude": -74.0300
+  },
+  {
+      "line": "Av Ciudad de Cali #90-20",
+      "neighborhood": "Kennedy",
+      "city": "Bogota",
+      "state": "Cundinamarca",
+      "country": "Colombia",
+      "latitude": 4.6303,
+      "longitude": -74.1573
+  }
+]

@@ -2,7 +2,6 @@ import pytest
 from faker import Faker
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-
 from users.auth import get_password_hash
 from users.models import RoleEnum, User
 
@@ -37,7 +36,7 @@ def non_staff_user(db_session: Session) -> User:
         email=fake.email(),
         hashed_password=get_password_hash("non_staff_password"),
         full_name=fake.name(),
-        role=RoleEnum.BUYER,
+        role=RoleEnum.CLIENT,
         is_active=True,
     )
     db_session.add(user)

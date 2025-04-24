@@ -17,6 +17,23 @@ from . import crud
 from .models import IdTypeEnum
 
 
+class AddressSchema(BaseModel):
+    """
+    Schema for the address associated with a stop.
+    """
+
+    id: uuid.UUID
+    line: str
+    neighborhood: str
+    city: str
+    state: str
+    country: str
+    latitude: float
+    longitude: float
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class ErrorResponseSchema(BaseModel):
     detail: str
 
@@ -36,6 +53,7 @@ class UserDetailSchema(UserBaseSchema):
     created_at: datetime.datetime
     updated_at: datetime.datetime | None
     is_active: bool
+    address: Optional[AddressSchema]
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -122,3 +140,31 @@ class GetSellersSchema(BaseModel):
 
 class GetSellersResponseSchema(BaseModel):
     sellers: List[UserDetailSchema]
+
+
+class GetClientsSchema(BaseModel):
+    client_ids: Optional[List[uuid.UUID]]
+
+
+class GetClientsResponseSchema(BaseModel):
+    clients: List[UserDetailSchema]
+
+
+class AuthSchema(BaseModel):
+    """
+    Schema for authentication data.
+    """
+
+    bearer_token: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AuthResponseSchema(BaseModel):
+    """
+    Schema for authentication response data.
+    """
+
+    user: Optional[UserDetailSchema]
+
+    model_config = ConfigDict(from_attributes=True)

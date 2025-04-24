@@ -15,7 +15,7 @@ from sqlalchemy.pool import StaticPool
 from database import Base
 from db_dependency import get_db
 from main import app as init_app
-from rpc_clients.schemas import ProductSchema, SellerSchema
+from rpc_clients.schemas import ProductSchema, UserSchema
 
 SQLALCHEMY_DATABASE_URL = "sqlite://"
 
@@ -99,13 +99,15 @@ def client(
         yield client
 
 
-def generate_fake_sellers(seller_ids) -> List[SellerSchema]:
+def generate_fake_sellers(
+    seller_ids, with_address: bool = False
+) -> List[UserSchema]:
     """
     Generate fake sellers for testing.
     """
     return [
-        SellerSchema(
-            **{
+        UserSchema.model_validate(
+            {
                 "id": id,
                 "full_name": fake.name(),
                 "email": fake.email(),
@@ -117,6 +119,20 @@ def generate_fake_sellers(seller_ids) -> List[SellerSchema]:
                 ),
                 "created_at": fake.date_time().isoformat(),
                 "updated_at": fake.date_time().isoformat(),
+                "address": (
+                    {
+                        "id": str(fake.uuid4()),
+                        "line": fake.street_address(),
+                        "neighborhood": fake.city(),
+                        "city": fake.city(),
+                        "state": fake.state(),
+                        "country": fake.country(),
+                        "latitude": float(fake.latitude()),
+                        "longitude": float(fake.longitude()),
+                    }
+                    if with_address
+                    else None
+                ),
             }
         )
         for id in seller_ids
@@ -150,15 +166,34 @@ def mock_users_rpc_client(request):
         yield  # Skip the fixture
         return
 
-    def get_sellers(_self, seller_ids):
+    def get_sellers(seller_ids=None):
+        """
+        Mock the get_sellers method to return fake sellers.
+        """
         if seller_ids is None:
             seller_ids = [uuid.uuid4() for _ in range(5)]
         return generate_fake_sellers(seller_ids)
 
-    with mock.patch(
-        "rpc_clients.users_client.UsersClient.get_sellers",
-        side_effect=get_sellers,
-        autospec=True,
+    def get_clients(client_ids=None):
+        """
+        Mock the get_clients method to return fake clients.
+        """
+        if client_ids is None:
+            client_ids = [uuid.uuid4() for _ in range(5)]
+        return generate_fake_sellers(client_ids, with_address=True)
+
+    def auth_user(bearer: str):
+        if bearer == "invalid_token":
+            return None
+        return generate_fake_sellers([uuid.UUID(bearer)], with_address=True)[
+            0
+        ]
+
+    with mock.patch.multiple(
+        "rpc_clients.users_client.UsersClient",
+        get_sellers=mock.Mock(side_effect=get_sellers),
+        get_clients=mock.Mock(side_effect=get_clients),
+        auth_user=mock.Mock(side_effect=auth_user),
     ):
         yield
 

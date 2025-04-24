@@ -2,7 +2,7 @@
 
 ### `POST /api/v1/users/login`
 
-Authenticate a user using their username and password. Available for all roles: `STAFF`, `SELLER`, and `BUYER`.
+Authenticate a user using their username and password. Available for all roles: `STAFF`, `SELLER`, and `CLIENT`.
 
 ---
 
@@ -41,7 +41,7 @@ Authenticate a user using their username and password. Available for all roles: 
 | access_token  | string | JWT token for authenticated use          |
 | user          | object | Basic user information                   |
 | user.id       | UUID   | Unique identifier (UUID format)          |
-| user.role     | string | One of: `STAFF`, `SELLER`, `BUYER`       |
+| user.role     | string | One of: `STAFF`, `SELLER`, `CLIENT`       |
 
 ---
 
@@ -81,7 +81,7 @@ Authorization: Bearer <access_token>
   "id": "550e8400-e29b-41d4-a716-446655440000",
   "username": "johndoe",
   "email": "john@example.com",
-  "role": "BUYER"
+  "role": "CLIENT"
 }
 ```
 
@@ -90,7 +90,7 @@ Authorization: Bearer <access_token>
 | id        | UUID   | User's unique identifier             |
 | username  | string | User's username                      |
 | email     | string | User's email address                 |
-| role      | string | One of: `STAFF`, `SELLER`, `BUYER`   |
+| role      | string | One of: `STAFF`, `SELLER`, `CLIENT`   |
 
 ---
 
