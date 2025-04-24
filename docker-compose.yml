@@ -289,7 +289,7 @@ services:
       - general
       - logistic_net
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:9004/api/v1/logistic/health || exit 1" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:9005/api/v1/logistic/health || exit 1" ]
       interval: 5s
       timeout: 1s
       retries: 2
