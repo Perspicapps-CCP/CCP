@@ -1,10 +1,8 @@
 import logging
 import threading
 import time
-
 import keyboard
-
-from warehouse.consumers import GetWarehousesConsumer
+from deliveries.consumers import GetProductsConsumer
 
 logging.basicConfig(
     level=logging.INFO,
@@ -32,7 +30,7 @@ def start_threads(threaded_classes: list):
         run_thread(threaded_class)
 
 
-start_threads([GetWarehousesConsumer])
+start_threads([GetProductsConsumer])
 
 
 try:
