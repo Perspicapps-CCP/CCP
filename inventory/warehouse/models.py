@@ -6,6 +6,7 @@ from sqlalchemy.sql import func
 from database import Base
 from stock.models import Stock, Operation
 
+
 class Warehouse(Base):
     __tablename__ = "warehouses"
 

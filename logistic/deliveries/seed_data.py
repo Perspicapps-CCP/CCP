@@ -20,7 +20,7 @@ fake = Faker(['es_CO'])
 fake.seed_instance(123)
 
 
-def seed_drivers(db: Session):
+def seed_delivery_data(db: Session):
     # create a fake driver
     for i in range(10):
         driver = DriverCreateSchema(

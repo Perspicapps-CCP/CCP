@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict
 
 from warehouse import schemas as warehouse_schemas
 
+
 class ManufacturerSchema(BaseModel):
     id: uuid.UUID
     manufacturer_name: str

@@ -7,7 +7,7 @@ import schemas
 from database import Base, engine
 from db_dependency import get_db
 from deliveries.api import deliveries_router
-from deliveries.seed_data import seed_drivers
+from deliveries.seed_data import seed_delivery_data
 
 app = FastAPI()
 
@@ -25,7 +25,8 @@ def reset(db: Session = Depends(get_db)):
     Base.metadata.drop_all(bind=db.get_bind())
     Base.metadata.create_all(bind=db.get_bind())
     db.commit()
-    seed_drivers(db)
+    if "pytest" not in sys.modules:
+        seed_delivery_data(db)
     return schemas.DeleteResponse()
 
 
