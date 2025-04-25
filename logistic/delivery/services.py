@@ -1,440 +1,182 @@
 from datetime import datetime
-from typing import Dict, List, Generator, Tuple
+from typing import Dict, List, Generator, Tuple, Optional
 from uuid import UUID
-from sqlalchemy import and_, func, update
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from psycopg2.errors import UniqueViolation
 
 from delivery import models, schemas
+from .unit_of_work import unit_of_work
+from .helpers import group_items_by_warehouse, group_stops_by_warehouse
 
 
+# Read-only services (no transactions needed)
 def get_deliveries(db: Session) -> Generator[models.Delivery, None, None]:
-    query = (
-        db.query(models.Delivery)
-        .options(joinedload(models.Delivery.driver))
-        .join(models.Driver, models.Driver.id == models.Delivery.driver_id)
-        .yield_per(100)
-    )
-    for delivery in query:
-        yield delivery
+    """Get all deliveries with their associated drivers."""
+    with unit_of_work(db) as uow:
+        for delivery in uow.delivery.get_all():
+            yield delivery
 
 
 def get_delivery_items(
     db: Session, delivery_id: UUID
 ) -> Generator[Tuple, None, None]:
-    query = (
-        db.query(
-            models.DeliveryItem,
-            func.concat_ws(
-                ", ",
-                models.DeliveryAddress.street,
-                models.DeliveryAddress.city,
-                models.DeliveryAddress.state,
-                models.DeliveryAddress.country,
-            ).label("delivery_address"),
-        )
-        .join(
-            models.DeliveryStop,
-            models.DeliveryStop.id == models.DeliveryItem.delivery_stop_id,
-        )
-        .join(
-            models.DeliveryAddress,
-            models.DeliveryAddress.id == models.DeliveryStop.address_id,
-        )
-        .filter(models.DeliveryStop.delivery_id == delivery_id)
-        .yield_per(100)
-    )
-    for delivery_item in query:
-        yield delivery_item
+    """Get all items for a specific delivery."""
+    with unit_of_work(db) as uow:
+        for delivery_item in uow.delivery_item.get_by_delivery_id(delivery_id):
+            yield delivery_item
+
+
+def get_delivery(db: Session, delivery_id: UUID) -> Optional[models.Delivery]:
+    """Get a specific delivery by ID."""
+    with unit_of_work(db) as uow:
+        return uow.delivery.get_by_id(delivery_id)
 
 
 def get_stops_pending_to_delivery(db: Session) -> List[Tuple]:
-    query = (
-        db.query(
-            models.DeliveryStop.id,
-            models.DeliveryItem.sales_id,
-            models.DeliveryItem.warehouse_id,
-        )
-        .join(
-            models.DeliveryItem,
-            models.DeliveryItem.delivery_stop_id == models.DeliveryStop.id,
-        )
-        .distinct()
-        .filter(models.DeliveryStop.delivery_id.is_(None))
-    )
-    return query.all()
+    """Get stops pending assignment to deliveries."""
+    with unit_of_work(db) as uow:
+        return uow.delivery_stop.get_pending_stops()
 
 
 def get_driver_available(
     db: Session, delivery_date: datetime
-) -> models.Driver:
-    """
-    Get the first available driver in specific day from the database.
-    This function queries the database for drivers who are not currently assigned to any deliveries
-    on the specified delivery date.
-
-    Args:
-        db (Session): The database session.
-
-    Returns:
-        List[models.Driver]: List of available driver objects.
-    """
-    return (
-        db.query(models.Driver)
-        .outerjoin(
-            models.Delivery,
-            and_(
-                models.Delivery.driver_id == models.Driver.id,
-                models.Delivery.delivery_date == delivery_date,
-            ),
-        )
-        .filter(models.Delivery.id == None)
-        .first()
-    )
-
-
-def create_driver(
-    db: Session, driver: schemas.DriverCreateSchema
-) -> models.Driver:
-    """
-    Create a new driver in the database.
-    This function takes a driver schema object, creates a new driver instance,
-    and adds it to the database session. It then commits the session and refreshes
-
-    Args:
-        db (Session): The database session.
-        driver (schemas.DriverCreateSchema): The driver schema object containing driver details.
-
-    Returns:
-        models.Driver: The created driver object.
-    """
-    db_driver = models.Driver(
-        name=driver.driver_name,
-        license_plate=driver.license_plate,
-        phone_number=driver.phone_number,
-    )
-    db.add(db_driver)
-    db.commit()
-    db.refresh(db_driver)
-    return db_driver
-
-
-def add_delivery_stop(
-    db: Session, sales_id: UUID, order_number: int, address_id: UUID
-) -> models.DeliveryStop:
-    db_delivery_stop = models.DeliveryStop(
-        sales_id=sales_id,
-        order_number=order_number,
-        address_id=address_id,
-    )
-    db.add(db_delivery_stop)
-    db.flush()
-    db.refresh(db_delivery_stop)
-    return db_delivery_stop
-
-
-def add_delivery_address(
-    db: Session, delivery_address: schemas.PayloadAddressSchema
-) -> models.DeliveryAddress:
-    db_delivery_address = models.DeliveryAddress(
-        id=delivery_address.id,
-        street=delivery_address.street,
-        city=delivery_address.city,
-        state=delivery_address.state,
-        postal_code=delivery_address.postal_code,
-        country=delivery_address.country,
-    )
-    db.add(db_delivery_address)
-    db.flush()
-    db.refresh(db_delivery_address)
-    return db_delivery_address
-
-
-def add_delivery_item(
-    db: Session,
-    sales_id: UUID,
-    order_number: int,
-    product_id: UUID,
-    warehouse_id: UUID,
-    delivery_stop_id: UUID,
-) -> models.DeliveryItem:
-    db_delivery_item = models.DeliveryItem(
-        sales_id=sales_id,
-        order_number=order_number,
-        product_id=product_id,
-        warehouse_id=warehouse_id,
-        delivery_stop_id=delivery_stop_id,
-    )
-    db.add(db_delivery_item)
-    db.flush()
-    db.refresh(db_delivery_item)
-    return db_delivery_item
-
-
-def group_items_by_warehouse(
-    sale: schemas.PayloadSaleSchema,
-) -> Dict[UUID, List[schemas.PayloadSaleItemSchema]]:
-    items_by_warehouse = {}
-    for item in sale.sales_items:
-        if item.warehouse_id not in items_by_warehouse:
-            items_by_warehouse[item.warehouse_id] = []
-        items_by_warehouse[item.warehouse_id].append(item)
-    return items_by_warehouse
-
-
-def group_stops_by_warehouse(pending_delivery_stops) -> Dict[UUID, List[UUID]]:
-    stops_by_warehouse = {}
-    for stop_id, _, warehouse_id in pending_delivery_stops:
-        if warehouse_id not in stops_by_warehouse:
-            stops_by_warehouse[warehouse_id] = []
-        stops_by_warehouse[warehouse_id].append(stop_id)
-    return stops_by_warehouse
-
-
-def create_order_delivery(db: Session, warehouse_id: UUID) -> models.Delivery:
-    db_delivery = models.Delivery(
-        warehouse_id=warehouse_id,
-    )
-    db.add(db_delivery)
-    db.flush()
-    db.refresh(db_delivery)
-    return db_delivery
-
-
-def update_delivery_stops(
-    db: Session, delivery_id: UUID, delivery_stops: List[UUID]
-) -> int:
-    update_query = (
-        update(models.DeliveryStop)
-        .values(
-            delivery_id=delivery_id,
-        )
-        .where(
-            and_(
-                models.DeliveryStop.id.in_(delivery_stops),
-                models.DeliveryStop.delivery_id == None,
-            )
-        )
-    )
-
-    result = db.execute(update_query)
-    return result.rowcount
-
-
-def update_driver_on_delivery(
-    db: Session, delivery_id: UUID, driver_id: UUID, delivery_date: datetime
-) -> bool:
-    """
-    Update the driver assigned to a delivery in the database.
-    This function takes a delivery ID and a driver ID,
-    and updates the delivery record with the new driver ID.
-    """
-    try:
-        update_query = (
-            update(models.Delivery)
-            .values(
-                driver_id=driver_id,
-                delivery_date=delivery_date,
-                status=models.DeliverStatus.SCHEDULED,
-            )
-            .where(
-                models.Delivery.id == delivery_id,
-            )
-        )
-
-        result = db.execute(update_query)
-        if result.rowcount == 0:
-            db.rollback()
-            return False
-
-        db.commit()
-        return True
-    except Exception as e:
-        db.rollback()
-        print(f"Error updating driver on delivery: {e}")
-        return False
-
-
-def create_delivery_stops_transaction(
-    db: Session, sale: schemas.PayloadSaleSchema
-) -> bool:
-    """
-    Create a delivery transaction in the database.
-    This function takes a sale schema object, creates delivery stops and items,
-    and adds them to the database session. It then commits the session.
-    If any integrity error occurs, it rolls back the session and returns False.
-
-    Args:
-        db (Session): The database session.
-        sale (schemas.PayloadSaleSchema): The sale schema object containing sales items.
-
-    Returns:
-        bool: True if delivery items were created successfully, False otherwise.
-    """
-    try:
-
-        items_by_warehouse = group_items_by_warehouse(sale)
-
-        db_delivery_address = add_delivery_address(db, sale.address)
-
-        for warehouse_id, warehouse_items in items_by_warehouse.items():
-            db_delivery_stop = add_delivery_stop(
-                db,
-                sales_id=sale.sales_id,
-                order_number=sale.order_number,
-                address_id=db_delivery_address.id,
-            )
-
-            for item in warehouse_items:
-                add_delivery_item(
-                    db,
-                    sales_id=sale.sales_id,
-                    order_number=sale.order_number,
-                    product_id=item.product_id,
-                    warehouse_id=item.warehouse_id,
-                    delivery_stop_id=db_delivery_stop.id,
-                )
-            db.commit()
-        return True
-    except IntegrityError as e:
-        db.rollback()
-        if isinstance(e.orig, UniqueViolation):
-            print(f"Duplicate entry found: {e.orig.diag.message_detail}")
-            return True
-        else:
-            print(f"Integrity error: {e.orig}")
-            return False
-    except Exception as e:
-        db.rollback()
-        print(f"Error creating delivery items: {e}")
-        return False
-
-
-def create_delivery_transaction(db: Session) -> List[models.Delivery]:
-    """
-    Create delivery transactions based on sales orders pending to delivery.
-    This function retrieves pending delivery orders from the database,
-    creates deliveries for each warehouse, and updates the delivery items.
-    It commits the changes to the database and returns a list of created deliveries.
-
-    Args:
-        db (Session): The database session.
-
-    Returns:
-        List[models.Delivery]: List of created delivery objects or None if no pending items.
-    """
-    try:
-        pending_delivery_stops = get_stops_pending_to_delivery(db)
-
-        if not pending_delivery_stops:
-            return []
-
-        stops_by_warehouse = group_stops_by_warehouse(pending_delivery_stops)
-
-        created_deliveries = []
-        for warehouse_id, stop_ids in stops_by_warehouse.items():
-            # Divide stops into chunks of 10
-            stop_chunks = [
-                stop_ids[i : i + 10] for i in range(0, len(stop_ids), 10)
-            ]
-
-            # Create a delivery for each chunk
-            for chunk in stop_chunks:
-                db_delivery = create_order_delivery(db, warehouse_id)
-
-                result = update_delivery_stops(
-                    db,
-                    db_delivery.id,
-                    chunk,
-                )
-                if result == 0:
-                    db.rollback()
-                    return []
-
-                created_deliveries.append(db_delivery)
-
-        db.commit()
-        return created_deliveries
-    except Exception as e:
-        db.rollback()
-        print(f"Error creating deliveries: {e}")
-        return []
-
-
-def get_delivery_address_without_geocoding(
-    db: Session,
-) -> List[models.DeliveryAddress]:
-    query = (
-        db.query(models.DeliveryAddress)
-        .filter(
-            (models.DeliveryAddress.latitude.is_(None))
-            | (models.DeliveryAddress.longitude.is_(None))
-        )
-        .limit(100)
-    )
-
-    return query.all()
-
-
-def get_delivery(db: Session, delivery_id: UUID) -> models.Delivery:
-    query = db.query(models.Delivery).filter(models.Delivery.id == delivery_id)
-    return query.first()
+) -> Optional[models.Driver]:
+    """Get the first available driver on a specific date."""
+    with unit_of_work(db) as uow:
+        return uow.driver.get_available(delivery_date)
 
 
 def get_deliveries_without_stops_ordered(db: Session) -> List[models.Delivery]:
-    query = (
-        db.query(models.Delivery)
-        .options(
-            joinedload(models.Delivery.stops).joinedload(
-                models.DeliveryStop.address
-            )
-        )
-        .join(
-            models.DeliveryStop,
-            models.Delivery.id == models.DeliveryStop.delivery_id,
-        )
-        .filter(models.DeliveryStop.order_stop == 0)
-    )
-    return query.all()
+    """Get deliveries without ordered stops."""
+    with unit_of_work(db) as uow:
+        return uow.delivery.get_without_stops_ordered()
 
 
 def get_delivery_route(
     db: Session, delivery_id: UUID
 ) -> List[Tuple[models.Delivery, models.DeliveryStop, models.DeliveryAddress]]:
-    query = (
-        db.query(models.Delivery, models.DeliveryStop, models.DeliveryAddress)
-        .join(
-            models.DeliveryStop,
-            models.Delivery.id == models.DeliveryStop.delivery_id,
-        )
-        .join(
-            models.DeliveryAddress,
-            models.DeliveryStop.address_id == models.DeliveryAddress.id,
-        )
-        .filter(models.Delivery.id == delivery_id)
-        .order_by(models.DeliveryStop.order_stop)
-    )
-    return query.all()
+    """Get the route for a specific delivery."""
+    with unit_of_work(db) as uow:
+        return uow.delivery.get_route(delivery_id)
 
 
-def update_order_delivery_stops(db: Session, list_stop_id: List) -> bool:
-    try:
-        for index, stop_id in enumerate(list_stop_id):
-            update_query = (
-                update(models.DeliveryStop)
-                .values(order_stop=index + 1)
-                .where(models.DeliveryStop.id == stop_id['stop'])
-            )
+def get_delivery_address_without_geocoding(
+    db: Session,
+) -> List[models.DeliveryAddress]:
+    """Get addresses without geocoding information."""
+    with unit_of_work(db) as uow:
+        return uow.delivery_address.get_without_geocoding()
 
-            result = db.execute(update_query)
-            if result.rowcount == 0:
-                db.rollback()
-                return False
 
-        db.commit()
+# Write services (transactions needed)
+def create_driver(
+    db: Session, driver: schemas.DriverCreateSchema
+) -> models.Driver:
+    """Create a new driver in the database."""
+    with unit_of_work(db) as uow:
+        db_driver = uow.driver.create(driver)
+        uow.commit()
+        return db_driver
+
+
+def update_driver_on_delivery(
+    db: Session, delivery_id: UUID, driver_id: UUID, delivery_date: datetime
+) -> bool:
+    """Update the driver assigned to a delivery."""
+    with unit_of_work(db) as uow:
+        success = uow.delivery.update_driver(delivery_id, driver_id, delivery_date)
+        if not success:
+            return False
+        uow.commit()
         return True
-    except Exception as e:
-        db.rollback()
-        print(f"Error updating delivery stop: {e}")
-        return False
+
+
+def update_order_delivery_stops(db: Session, list_stop_id: List[Dict]) -> bool:
+    """Update the order of delivery stops."""
+    with unit_of_work(db) as uow:
+        success = uow.delivery_stop.update_stop_order(list_stop_id)
+        if not success:
+            return False
+        uow.commit()
+        return True
+
+
+def create_delivery_stops_transaction(
+    db: Session, sale: schemas.PayloadSaleSchema
+) -> bool:
+    """Create delivery stops and items for a sale."""
+    with unit_of_work(db) as uow:
+        try:
+            items_by_warehouse = group_items_by_warehouse(sale)
+            db_delivery_address = uow.delivery_address.create(sale.address)
+
+            for warehouse_id, warehouse_items in items_by_warehouse.items():
+                db_delivery_stop = uow.delivery_stop.create(
+                    sales_id=sale.sales_id,
+                    order_number=sale.order_number,
+                    address_id=db_delivery_address.id,
+                )
+
+                for item in warehouse_items:
+                    uow.delivery_item.create(
+                        sales_id=sale.sales_id,
+                        order_number=sale.order_number,
+                        product_id=item.product_id,
+                        warehouse_id=item.warehouse_id,
+                        delivery_stop_id=db_delivery_stop.id,
+                    )
+            uow.commit()
+            return True
+        except IntegrityError as e:
+            uow.rollback()
+            if isinstance(e.orig, UniqueViolation):
+                print(f"Duplicate entry found: {e.orig.diag.message_detail}")
+                return True
+            else:
+                print(f"Integrity error: {e.orig}")
+                return False
+        except Exception as e:
+            uow.rollback()
+            print(f"Error creating delivery items: {e}")
+            return False
+
+
+def create_delivery_transaction(db: Session) -> List[models.Delivery]:
+    """Create delivery transactions based on sales orders pending delivery."""
+    with unit_of_work(db) as uow:
+        try:
+            pending_delivery_stops = uow.delivery_stop.get_pending_stops()
+
+            if not pending_delivery_stops:
+                return []
+
+            stops_by_warehouse = group_stops_by_warehouse(pending_delivery_stops)
+
+            created_deliveries = []
+            for warehouse_id, stop_ids in stops_by_warehouse.items():
+                # Divide stops into chunks of 10
+                stop_chunks = [
+                    stop_ids[i : i + 10] for i in range(0, len(stop_ids), 10)
+                ]
+
+                # Create a delivery for each chunk
+                for chunk in stop_chunks:
+                    db_delivery = uow.delivery.create(warehouse_id)
+
+                    result = uow.delivery_stop.update_delivery_assignment(
+                        db_delivery.id,
+                        chunk,
+                    )
+                    if result == 0:
+                        uow.rollback()
+                        return []
+
+                    created_deliveries.append(db_delivery)
+
+            uow.commit()
+            return created_deliveries
+        except Exception as e:
+            uow.rollback()
+            print(f"Error creating deliveries: {e}")
+            return []
