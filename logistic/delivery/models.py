@@ -8,6 +8,7 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Integer,
+    Numeric,
     String,
     UniqueConstraint,
 )
@@ -50,18 +51,27 @@ class Delivery(Base):
 
 class DeliveryStop(Base):
     __tablename__ = "delivery_stops"
+    __table_args__ = (
+        UniqueConstraint(
+            "sales_id",
+            "address_id",
+            "delivery_id",
+            name="uix_delivery_stop",
+        ),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     sales_id = Column(UUID(as_uuid=True), nullable=False)
     order_number = Column(Integer, nullable=False)
     address_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("delivery_address.address_id"),
+        ForeignKey("delivery_address.id"),
         nullable=False,
     )
     delivery_id = Column(
         UUID(as_uuid=True), ForeignKey("deliveries.id"), nullable=True
     )
+    order_stop = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     delivery = relationship("Delivery", back_populates="stops")
@@ -106,10 +116,15 @@ class Driver(Base):
 class DeliveryAddress(Base):
     __tablename__ = "delivery_address"
 
-    address_id = Column(UUID(as_uuid=True), primary_key=True, nullable=False)
-    address = Column(String(255), nullable=False)
-    latitude = Column(String(20), nullable=True)
-    longitude = Column(String(20), nullable=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, nullable=False)
+    street = Column(String(255), nullable=False)
+    city = Column(String(100), nullable=False)
+    state = Column(String(100), nullable=False)
+    postal_code = Column(String(20), nullable=False)
+    country = Column(String(100), nullable=False)
+    latitude = Column(Numeric(precision=10, scale=7), nullable=True)
+    longitude = Column(Numeric(precision=10, scale=7), nullable=True)
+    geocoding_attempts = Column(Integer, nullable=True, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     delivery_stops = relationship("DeliveryStop", back_populates="address")

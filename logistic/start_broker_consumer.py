@@ -2,7 +2,7 @@ import logging
 import threading
 import time
 import keyboard
-from deliveries.consumers import GetProductsConsumer
+from delivery.consumers import GetProductsConsumer
 
 logging.basicConfig(
     level=logging.INFO,

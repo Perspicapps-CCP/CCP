@@ -1,24 +1,41 @@
 import datetime
 import uuid
 from uuid import UUID
-from deliveries import models, services
-from deliveries.schemas import (
+from faker import Faker
+from delivery import models, services
+from delivery.schemas import (
     DriverCreateSchema,
+    PayloadAddressSchema,
     PayloadSaleSchema,
     PayloadSaleItemSchema,
 )
+
+fake = Faker()
+fake.seed_instance(123)
+
+
+def fake_address():
+    return PayloadAddressSchema(
+        id=uuid.uuid4(),
+        street=fake.address(),
+        city=fake.city(),
+        state=fake.state(),
+        postal_code=fake.postcode(),
+        country=fake.country(),
+    )
 
 
 def test_group_items_by_warehouse_empty_list():
     """
     Test grouping items when there are no items.
     """
+    dummy_address = fake_address()
+
     # Create a sale with no items
     sale = PayloadSaleSchema(
         sales_id=UUID("12345678-1234-5678-1234-567812345678"),
         order_number=1,
-        address_id=UUID("12345678-1234-5678-1234-567812345678"),
-        address="123 Main St",
+        address=dummy_address,
         sales_items=[],
     )
 
@@ -33,13 +50,13 @@ def test_group_items_by_warehouse_single_warehouse():
     """
     Test grouping items when all items are from the same warehouse.
     """
-    # Create a sale with items from a single warehouse
+    dummy_address = fake_address()
+
     warehouse_id = UUID("11111111-1234-5678-1234-567812345678")
     sale = PayloadSaleSchema(
         sales_id=UUID("12345678-1234-5678-1234-567812345678"),
         order_number=1,
-        address_id=UUID("12345678-1234-5678-1234-567812345678"),
-        address="123 Main St",
+        address=dummy_address,
         sales_items=[
             PayloadSaleItemSchema(
                 sales_item_id=UUID(int=0),
@@ -73,6 +90,7 @@ def test_group_items_by_warehouse_multiple_warehouses():
     """
     Test grouping items when items are from multiple warehouses.
     """
+    dummy_address = fake_address()
     # Create a sale with items from multiple warehouses
     warehouse_id1 = UUID("11111111-1234-5678-1234-567812345678")
     warehouse_id2 = UUID("22222222-1234-5678-1234-567812345678")
@@ -80,8 +98,7 @@ def test_group_items_by_warehouse_multiple_warehouses():
     sale = PayloadSaleSchema(
         sales_id=UUID("12345678-1234-5678-1234-567812345678"),
         order_number=1,
-        address_id=UUID("12345678-1234-5678-1234-567812345678"),
-        address="123 Main St",
+        address=dummy_address,
         sales_items=[
             PayloadSaleItemSchema(
                 sales_item_id=UUID(int=0),

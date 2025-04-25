@@ -81,6 +81,15 @@ class DriverCreateSchema(BaseModel):
         return phone_str
 
 
+class PayloadAddressSchema(BaseModel):
+    id: uuid.UUID
+    street: str
+    city: str
+    state: str
+    postal_code: str
+    country: str
+
+
 class PayloadSaleItemSchema(BaseModel):
     sales_item_id: uuid.UUID
     product_id: uuid.UUID
@@ -90,8 +99,7 @@ class PayloadSaleItemSchema(BaseModel):
 class PayloadSaleSchema(BaseModel):
     sales_id: uuid.UUID
     order_number: int
-    address_id: uuid.UUID
-    address: str
+    address: PayloadAddressSchema
     sales_items: List[PayloadSaleItemSchema]
 
 
@@ -104,3 +112,13 @@ class DeliverySaleResponseSchema(BaseModel):
     sale_id: uuid.UUID
     status: DeliverySaleStatus
     message: str
+
+
+class DeliveryGetRouteSchema(BaseModel):
+    shipping_number: uuid.UUID
+    order_number: int
+    order_address: str
+    order_customer_name: str = "Jhon Doe"
+    order_customer_phone_number: str = "01234456789"
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None

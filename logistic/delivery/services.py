@@ -1,12 +1,12 @@
 from datetime import datetime
-from typing import Dict, List, Generator
+from typing import Dict, List, Generator, Tuple
 from uuid import UUID
-from sqlalchemy import Tuple, and_, update
+from sqlalchemy import and_, func, update
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import IntegrityError
 from psycopg2.errors import UniqueViolation
 
-from deliveries import models, schemas
+from delivery import models, schemas
 
 
 def get_deliveries(db: Session) -> Generator[models.Delivery, None, None]:
@@ -26,7 +26,13 @@ def get_delivery_items(
     query = (
         db.query(
             models.DeliveryItem,
-            models.DeliveryAddress.address.label('delivery_address'),
+            func.concat_ws(
+                ", ",
+                models.DeliveryAddress.street,
+                models.DeliveryAddress.city,
+                models.DeliveryAddress.state,
+                models.DeliveryAddress.country,
+            ).label("delivery_address"),
         )
         .join(
             models.DeliveryStop,
@@ -34,8 +40,7 @@ def get_delivery_items(
         )
         .join(
             models.DeliveryAddress,
-            models.DeliveryAddress.address_id
-            == models.DeliveryStop.address_id,
+            models.DeliveryAddress.id == models.DeliveryStop.address_id,
         )
         .filter(models.DeliveryStop.delivery_id == delivery_id)
         .yield_per(100)
@@ -130,11 +135,15 @@ def add_delivery_stop(
 
 
 def add_delivery_address(
-    db: Session, address_id: UUID, address: str
+    db: Session, delivery_address: schemas.PayloadAddressSchema
 ) -> models.DeliveryAddress:
     db_delivery_address = models.DeliveryAddress(
-        address_id=address_id,
-        address=address,
+        id=delivery_address.id,
+        street=delivery_address.street,
+        city=delivery_address.city,
+        state=delivery_address.state,
+        postal_code=delivery_address.postal_code,
+        country=delivery_address.country,
     )
     db.add(db_delivery_address)
     db.flush()
@@ -267,18 +276,14 @@ def create_delivery_stops_transaction(
 
         items_by_warehouse = group_items_by_warehouse(sale)
 
-        db_delivery_address = add_delivery_address(
-            db,
-            address_id=sale.address_id,
-            address=sale.address,
-        )
+        db_delivery_address = add_delivery_address(db, sale.address)
 
         for warehouse_id, warehouse_items in items_by_warehouse.items():
             db_delivery_stop = add_delivery_stop(
                 db,
                 sales_id=sale.sales_id,
                 order_number=sale.order_number,
-                address_id=db_delivery_address.address_id,
+                address_id=db_delivery_address.id,
             )
 
             for item in warehouse_items:
@@ -323,7 +328,7 @@ def create_delivery_transaction(db: Session) -> List[models.Delivery]:
         pending_delivery_stops = get_stops_pending_to_delivery(db)
 
         if not pending_delivery_stops:
-            return None
+            return []
 
         stops_by_warehouse = group_stops_by_warehouse(pending_delivery_stops)
 
@@ -345,7 +350,7 @@ def create_delivery_transaction(db: Session) -> List[models.Delivery]:
                 )
                 if result == 0:
                     db.rollback()
-                    return None
+                    return []
 
                 created_deliveries.append(db_delivery)
 
@@ -354,4 +359,82 @@ def create_delivery_transaction(db: Session) -> List[models.Delivery]:
     except Exception as e:
         db.rollback()
         print(f"Error creating deliveries: {e}")
-        return None
+        return []
+
+
+def get_delivery_address_without_geocoding(
+    db: Session,
+) -> List[models.DeliveryAddress]:
+    query = (
+        db.query(models.DeliveryAddress)
+        .filter(
+            (models.DeliveryAddress.latitude.is_(None))
+            | (models.DeliveryAddress.longitude.is_(None))
+        )
+        .limit(100)
+    )
+
+    return query.all()
+
+
+def get_delivery(db: Session, delivery_id: UUID) -> models.Delivery:
+    query = db.query(models.Delivery).filter(models.Delivery.id == delivery_id)
+    return query.first()
+
+
+def get_deliveries_without_stops_ordered(db: Session) -> List[models.Delivery]:
+    query = (
+        db.query(models.Delivery)
+        .options(
+            joinedload(models.Delivery.stops).joinedload(
+                models.DeliveryStop.address
+            )
+        )
+        .join(
+            models.DeliveryStop,
+            models.Delivery.id == models.DeliveryStop.delivery_id,
+        )
+        .filter(models.DeliveryStop.order_stop == 0)
+    )
+    return query.all()
+
+
+def get_delivery_route(
+    db: Session, delivery_id: UUID
+) -> List[Tuple[models.Delivery, models.DeliveryStop, models.DeliveryAddress]]:
+    query = (
+        db.query(models.Delivery, models.DeliveryStop, models.DeliveryAddress)
+        .join(
+            models.DeliveryStop,
+            models.Delivery.id == models.DeliveryStop.delivery_id,
+        )
+        .join(
+            models.DeliveryAddress,
+            models.DeliveryStop.address_id == models.DeliveryAddress.id,
+        )
+        .filter(models.Delivery.id == delivery_id)
+        .order_by(models.DeliveryStop.order_stop)
+    )
+    return query.all()
+
+
+def update_order_delivery_stops(db: Session, list_stop_id: List) -> bool:
+    try:
+        for index, stop_id in enumerate(list_stop_id):
+            update_query = (
+                update(models.DeliveryStop)
+                .values(order_stop=index + 1)
+                .where(models.DeliveryStop.id == stop_id['stop'])
+            )
+
+            result = db.execute(update_query)
+            if result.rowcount == 0:
+                db.rollback()
+                return False
+
+        db.commit()
+        return True
+    except Exception as e:
+        db.rollback()
+        print(f"Error updating delivery stop: {e}")
+        return False

@@ -5,19 +5,28 @@ from typing import Dict
 from faker import Faker
 from fastapi.testclient import TestClient
 
-from warehouse.models import Warehouse
+from warehouse import schemas
+from warehouse.models import Address, Warehouse
 
 fake = Faker()
 fake.seed_instance(0)
 
 
-def mock_warehouse_db():
+def mock_address_db():
+    return Address(
+        street="Test Street",
+        city="Test City",
+        state="Test State",
+        country="Test Country",
+        postal_code="12345",
+    )
+
+
+def mock_warehouse_db(mock_address_db: Address):
     return Warehouse(
         name="Test Warehouse",
-        country="Test Country",
-        city="Test City",
-        address="Test Address",
         phone="1234567890",
+        address_id=mock_address_db.id,
     )
 
 
@@ -31,13 +40,14 @@ def fake_warehouse() -> Dict:
     )
     phone = int(phone_digits) if random.choice([True, False]) else phone_digits
 
-    return {
-        "warehouse_name": re.sub(r'[^a-zA-Z0-9_ñÑ]', ' ', fake.company()),
-        "country": fake.country(),
-        "city": fake.city(),
-        "address": fake.address().replace("\n", ", "),
-        "phone": phone,
-    }
+    return schemas.WarehouseSchema(
+        warehouse_name=re.sub(r'[^a-zA-Z0-9_ñÑ]', ' ', fake.company()),
+        country=fake.country(),
+        state=fake.state(),
+        city=fake.city(),
+        street=fake.address().replace("\n", ", "),
+        phone=phone,
+    ).model_dump()
 
 
 def test_create_warehouse_success(
@@ -88,7 +98,11 @@ def test_create_warehouse_failed_with_oversized_phone_number(
 def test_list_warehouses(client: TestClient, db_session):
     """Test listing warehouses with filters"""
     # Act
-    dummy_warehouse = mock_warehouse_db()
+    dummy_address = mock_address_db()
+    db_session.add(dummy_address)
+    db_session.flush()
+    db_session.refresh(dummy_address)
+    dummy_warehouse = mock_warehouse_db(dummy_address)
     db_session.add(dummy_warehouse)
     db_session.commit()
     db_session.refresh(dummy_warehouse)
@@ -115,7 +129,11 @@ def test_list_warehouses(client: TestClient, db_session):
 def test_get_single_warehouse(client: TestClient, db_session):
     """Test getting a single warehouse by ID"""
     # Act
-    dummy_warehouse = mock_warehouse_db()
+    dummy_address = mock_address_db()
+    db_session.add(dummy_address)
+    db_session.flush()
+    db_session.refresh(dummy_address)
+    dummy_warehouse = mock_warehouse_db(dummy_address)
     db_session.add(dummy_warehouse)
     db_session.commit()
     db_session.refresh(dummy_warehouse)

@@ -4,12 +4,12 @@ from unittest.mock import MagicMock
 from faker import Faker
 from fastapi.testclient import TestClient
 
-from deliveries import models
+from delivery import models
 from rpc_clients.inventory_client import InventoryClient
 from rpc_clients.suppliers_client import SuppliersClient
 
 fake = Faker()
-fake.seed_instance(0)
+fake.seed_instance(123)
 
 
 @pytest.fixture
@@ -36,8 +36,12 @@ def dummy_driver():
 
 def dummy_address():
     return models.DeliveryAddress(
-        address_id=uuid.uuid4(),
-        address=fake.address(),
+        id=uuid.uuid4(),
+        street=fake.address(),
+        city=fake.city(),
+        state=fake.state(),
+        postal_code=fake.postcode(),
+        country=fake.country(),
     )
 
 
@@ -111,7 +115,7 @@ def test_list_all_deliveries_with_product_and_warehouse_exist(
 
     delivery_stop.sales_id = delivery_item.sales_id
     delivery_stop.order_number = delivery_item.order_number
-    delivery_stop.address_id = address.address_id
+    delivery_stop.address_id = address.id
     delivery_stop.delivery_id = delivery.id
     db_session.add(delivery_stop)
     db_session.flush()

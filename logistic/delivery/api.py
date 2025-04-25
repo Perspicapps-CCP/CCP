@@ -1,8 +1,10 @@
 from typing import List
+from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from db_dependency import get_db
+from delivery.mappers import delivery_route_to_schema
 from rpc_clients.inventory_client import InventoryClient
 from rpc_clients.suppliers_client import SuppliersClient
 from . import schemas, services
@@ -23,8 +25,7 @@ def list_all_deliveries(
 ):
 
     warehouses_dict = {
-        w.warehouse_id: w.warehouse_name
-        for w in inventory_client.get_warehouses()
+        w.warehouse_id: w for w in inventory_client.get_warehouses()
     }
     products_dict = {p.id: p for p in suppliers_client.get_all_products()}
 
@@ -36,8 +37,10 @@ def list_all_deliveries(
             diver_name=delivery.driver.name,
             warehouse=schemas.WarehouseSchema(
                 warehouse_id=delivery.warehouse_id,
-                warehouse_name=warehouses_dict.get(
-                    delivery.warehouse_id, "Unknown Warehouse"
+                warehouse_name=getattr(
+                    warehouses_dict.get(delivery.warehouse_id, object()),
+                    "warehouse_name",
+                    "Unknown Warehouse",
                 ),
             ),
             delivery_status=delivery.status,
@@ -80,3 +83,33 @@ def create_delivery(
     # delivery = services.create_delivery(db=db, delivery=delivery)
     # return mappers.delivery_to_schema(delivery)
     pass
+
+
+routes_router = APIRouter(prefix="/route")
+
+
+@routes_router.get(
+    "/{delivery_id}",
+    response_model=List[schemas.DeliveryGetRouteSchema],
+)
+@routes_router.get(
+    "/{delivery_id}/",
+    response_model=List[schemas.DeliveryGetRouteSchema],
+)
+def get_delivery_route(
+    delivery_id: UUID,
+    db: Session = Depends(get_db),
+    inventory_client: InventoryClient = Depends(InventoryClient),
+):
+    warehouses_dict = {
+        w.warehouse_id: w for w in inventory_client.get_warehouses()
+    }
+
+    delivery = services.get_delivery(db, delivery_id)
+    if not delivery:
+        return []
+
+    warehouse = warehouses_dict.get(delivery.warehouse_id, object())
+
+    delivery_route = services.get_delivery_route(db, delivery_id)
+    return delivery_route_to_schema(delivery, warehouse, delivery_route)
