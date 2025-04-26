@@ -663,3 +663,197 @@ Each item in `stops` contains:
   "detail": "You do not have access to this route"
 }
 ```
+
+## 📋 Manage Client-Seller Associations
+
+### `POST /api/v1/sales/sellers/clients/`
+
+Associate a client with a seller.
+
+---
+
+### 🔐 Authentication
+
+Requires Bearer Token (JWT) in the `Authorization` header:
+
+```
+Authorization: Bearer <access_token>
+```
+
+---
+
+### 📥 Request Body
+
+```json
+{
+  "client_id": "3e80cca2-f993-4d29-a51b-833737f5e853"
+}
+```
+
+| Field      | Type | Required | Description                  |
+| ---------- | ---- | -------- | ---------------------------- |
+| client_id  | UUID | ✅       | ID of the client to associate |
+
+---
+
+### 📤 Response (201 Created)
+
+```json
+{
+  "id": "37635f8d-6ebe-4b39-869c-22c52caf518e",
+  "client": {
+    "id": "3e80cca2-f993-4d29-a51b-833737f5e853",
+    "full_name": "client User",
+    "email": "client_user@test.com",
+    "username": "client_user",
+    "phone": "3456789012",
+    "id_type": null,
+    "identification": null,
+    "created_at": "2025-04-24T05:04:30.921007Z",
+    "updated_at": null,
+    "address": {
+      "id": "f2712b7d-e53c-4da5-a01c-b76a43c83ce2",
+      "line": "Av Siempre Viva 123",
+      "neighborhood": "Centro",
+      "city": "Bogota",
+      "state": "Cundinamarca",
+      "country": "Colombia",
+      "latitude": 4.711,
+      "longitude": -74.0721
+    }
+  },
+  "last_visited": "2019-04-25T00:00:00",
+  "was_visited_recently": false,
+  "client_thumbnail": "https://picsum.photos/128/128",
+  "created_at": "2025-04-25T22:49:03.958536",
+  "updated_at": "2025-04-25T22:49:03.958536"
+}
+```
+
+| Field               | Type     | Description                                      |
+| ------------------- | -------- | ------------------------------------------------ |
+| id                  | UUID     | Unique ID of the client-seller association       |
+| client              | object   | Full client details                              |
+| last_visited        | datetime | Last time the client was visited (if available) |
+| was_visited_recently| boolean  | Whether the client was visited in the last 24 hours |
+| client_thumbnail    | string   | URL of the client's thumbnail image             |
+| created_at          | datetime | Timestamp when the association was created      |
+| updated_at          | datetime | Timestamp when the association was last updated |
+
+---
+
+### ❌ Error Responses
+
+#### 401 Unauthorized
+
+```json
+{
+  "detail": "Not authenticated"
+}
+```
+
+#### 403 Forbidden
+
+```json
+{
+  "detail": "You do not have permission to perform this action"
+}
+```
+
+#### 422 Validation Error
+
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "client_id"],
+      "msg": "Invalid client ID",
+      "type": "value_error"
+    }
+  ]
+}
+```
+
+---
+
+### `GET /api/v1/sales/sellers/clients/`
+
+Retrieve all client-seller associations for the authenticated seller.
+
+---
+
+### 🔐 Authentication
+
+Requires Bearer Token (JWT) in the `Authorization` header:
+
+```
+Authorization: Bearer <access_token>
+```
+
+---
+
+### 📤 Response (200 OK)
+
+```json
+[
+  {
+    "id": "37635f8d-6ebe-4b39-869c-22c52caf518e",
+    "client": {
+      "id": "3e80cca2-f993-4d29-a51b-833737f5e853",
+      "full_name": "client User",
+      "email": "client_user@test.com",
+      "username": "client_user",
+      "phone": "3456789012",
+      "id_type": null,
+      "identification": null,
+      "created_at": "2025-04-24T05:04:30.921007Z",
+      "updated_at": null,
+      "address": {
+        "id": "f2712b7d-e53c-4da5-a01c-b76a43c83ce2",
+        "line": "Av Siempre Viva 123",
+        "neighborhood": "Centro",
+        "city": "Bogota",
+        "state": "Cundinamarca",
+        "country": "Colombia",
+        "latitude": 4.711,
+        "longitude": -74.0721
+      }
+    },
+    "last_visited": "2019-04-25T00:00:00",
+    "was_visited_recently": false,
+    "client_thumbnail": "https://picsum.photos/128/128",
+    "created_at": "2025-04-25T22:49:03.958536",
+    "updated_at": "2025-04-25T22:49:03.958536"
+  }
+]
+```
+
+| Field               | Type     | Description                                      |
+| ------------------- | -------- | ------------------------------------------------ |
+| id                  | UUID     | Unique ID of the client-seller association       |
+| client              | object   | Full client details                              |
+| last_visited        | datetime | Last time the client was visited (if available) |
+| was_visited_recently| boolean  | Whether the client was visited in the last 24 hours |
+| client_thumbnail    | string   | URL of the client's thumbnail image             |
+| created_at          | datetime | Timestamp when the association was created      |
+| updated_at          | datetime | Timestamp when the association was last updated |
+
+---
+
+### ❌ Error Responses
+
+#### 401 Unauthorized
+
+```json
+{
+  "detail": "Not authenticated"
+}
+```
+
+#### 403 Forbidden
+
+```json
+{
+  "detail": "You do not have permission to perform this action"
+}
+```

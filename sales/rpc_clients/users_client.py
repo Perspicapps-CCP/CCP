@@ -3,7 +3,7 @@ from uuid import UUID as UUUID
 
 from seedwork.base_rpc_client import BaseRPCClient
 
-from .schemas import UserSchema
+from .schemas import UserAuthSchema, UserSchema
 
 
 class UsersClient(BaseRPCClient):
@@ -57,7 +57,7 @@ class UsersClient(BaseRPCClient):
         """
         return self.get_clients(None)
 
-    def auth_user(self, bearer_token: str) -> Optional[UserSchema]:
+    def auth_user(self, bearer_token: str) -> Optional[UserAuthSchema]:
         """
         Authenticate user.
         """
@@ -66,4 +66,4 @@ class UsersClient(BaseRPCClient):
         )
         if not response.get("user"):
             return None
-        return UserSchema.model_validate(response["user"])
+        return UserAuthSchema.model_validate(response["user"])

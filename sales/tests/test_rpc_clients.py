@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 from faker import Faker
 
-from rpc_clients.schemas import ProductSchema, UserSchema
+from rpc_clients.schemas import ProductSchema, UserAuthSchema, UserSchema
 from rpc_clients.suppliers_client import SuppliersClient
 from rpc_clients.users_client import UsersClient
 
@@ -434,6 +434,9 @@ class TestUsersClientAuthUser(UsersClientMixin):
             "created_at": fake.date_time().isoformat(),
             "updated_at": fake.date_time().isoformat(),
             "address": None,
+            "is_active": True,
+            "is_seller": True,
+            "is_client": False,
         }
         mock_response = {"user": user_response}
         mock_call_broker.return_value = mock_response
@@ -441,7 +444,7 @@ class TestUsersClientAuthUser(UsersClientMixin):
         result = users_client.auth_user(bearer_token)
 
         # Assert the result is a UserSchema object
-        assert isinstance(result, UserSchema)
+        assert isinstance(result, UserAuthSchema)
         assert str(result.id) == user_response["id"]
         assert result.full_name == user_response["full_name"]
         assert result.email == user_response["email"]
@@ -449,6 +452,9 @@ class TestUsersClientAuthUser(UsersClientMixin):
         assert result.phone == user_response["phone"]
         assert result.id_type == user_response["id_type"]
         assert result.identification == user_response["identification"]
+        assert result.is_active == user_response["is_active"]
+        assert result.is_seller == user_response["is_seller"]
+        assert result.is_client == user_response["is_client"]
 
     def test_auth_user_returns_none_if_user_not_found(
         self, users_client: UsersClient, mock_call_broker: MagicMock

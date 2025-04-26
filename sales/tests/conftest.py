@@ -15,7 +15,7 @@ from sqlalchemy.pool import StaticPool
 from database import Base
 from db_dependency import get_db
 from main import app as init_app
-from rpc_clients.schemas import ProductSchema, UserSchema
+from rpc_clients.schemas import ProductSchema, UserAuthSchema, UserSchema
 
 SQLALCHEMY_DATABASE_URL = "sqlite://"
 
@@ -185,9 +185,15 @@ def mock_users_rpc_client(request):
     def auth_user(bearer: str):
         if bearer == "invalid_token":
             return None
-        return generate_fake_sellers([uuid.UUID(bearer)], with_address=True)[
-            0
-        ]
+        seller = generate_fake_sellers(
+            [uuid.UUID(bearer)], with_address=True
+        )[0]
+        return UserAuthSchema(
+            **seller.model_dump(),
+            is_active=True,
+            is_seller=True,
+            is_client=False,
+        )
 
     with mock.patch.multiple(
         "rpc_clients.users_client.UsersClient",
