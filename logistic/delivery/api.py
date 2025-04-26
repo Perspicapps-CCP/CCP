@@ -111,4 +111,6 @@ def get_delivery_route(
     warehouse = warehouses_dict.get(delivery.warehouse_id, object())
 
     delivery_route = services.get_delivery_route(db, delivery_id)
-    return mappers.delivery_route_to_schema(delivery, warehouse, delivery_route)
+    return mappers.delivery_route_to_schema(
+        delivery, warehouse, delivery_route
+    )

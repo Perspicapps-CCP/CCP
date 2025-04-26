@@ -327,4 +327,3 @@ def test_create_delivery_transaction_success(db_session):
     assert delivery.delivery_date.date() == request.delivery_date
     assert delivery.status == models.DeliverStatus.SCHEDULED
     assert len(delivery.stops) == 1
-
