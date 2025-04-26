@@ -1,6 +1,5 @@
 import uuid
 from datetime import datetime, timedelta
-from typing import List
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session

@@ -25,15 +25,17 @@ class ClientForSeller(Base):
     )
 
     __table_args__ = (
-        UniqueConstraint("client_id", "seller_id", name="client_sellet"),
+        UniqueConstraint("client_id", "seller_id", name="client_seller"),
     )
 
     @property
     def was_visited_recently(self) -> bool:
         """
-        Determines if the client was visited recently based on the last visited timestamp.
+        Determines if the client was visited recently based on the last
+          visited timestamp.
         Returns:
-            bool: True if the client was visited within the time frame defined by
+            bool: True if the client was visited within the
+            time frame defined by
                   VISITED_RECENTLY_HOURS, False otherwise.
         """
 

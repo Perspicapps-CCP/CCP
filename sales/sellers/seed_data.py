@@ -9,7 +9,7 @@ from .models import ClientForSeller
 fake = faker.Faker()
 
 
-def seed_selle_clients(db: Session):
+def seed_seller_clients(db: Session):
     """
     Create sales with users.
 
