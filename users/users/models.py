@@ -1,7 +1,18 @@
 import enum
 import uuid
 
-from sqlalchemy import UUID, Boolean, Column, DateTime, Enum, String
+from sqlalchemy import (
+    UUID,
+    Boolean,
+    Column,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    String,
+    UniqueConstraint,
+)
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from database import Base
@@ -14,12 +25,12 @@ class RoleEnum(str, enum.Enum):
     Attributes:
         STAFF (str): Represents a staff member role.
         SELLER (str): Represents a seller role.
-        BUYER (str): Represents a buyer role.
+        CLIENT (str): Represents a buyer role.
     """
 
     STAFF = "STAFF"
     SELLER = "SELLER"
-    BUYER = "BUYER"
+    CLIENT = "CLIENT"
 
 
 class IdTypeEnum(str, enum.Enum):
@@ -72,3 +83,30 @@ class User(Base):
     phone = Column(String(256), unique=True, nullable=True)
     id_type = Column(Enum(IdTypeEnum), nullable=True)
     identification = Column(String(256), nullable=True)
+    address = relationship("Address", backref="user", uselist=False)
+
+
+class Address(Base):
+    """
+    Represents an address associated with an User.
+    """
+
+    __tablename__ = "addresses"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    line = Column(String, nullable=False)
+    neighborhood = Column(String, nullable=False)
+    city = Column(String, nullable=False)
+    state = Column(String, nullable=False)
+    country = Column(String, nullable=False)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )
+    __table_args__ = (UniqueConstraint("user_id"),)

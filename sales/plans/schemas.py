@@ -11,7 +11,7 @@ from pydantic import (
     field_validator,
 )
 
-from rpc_clients.schemas import ProductSchema, SellerSchema
+from rpc_clients.schemas import ProductSchema, UserSchema
 from rpc_clients.suppliers_client import SuppliersClient
 from rpc_clients.users_client import UsersClient
 
@@ -66,5 +66,5 @@ class SalesPlanDetailSchema(SalesPlanBaseSchema):
     id: uuid.UUID
     created_at: datetime
     updated_at: datetime
-    sellers: List[SellerSchema]
+    sellers: List[UserSchema]
     product: ProductSchema | None

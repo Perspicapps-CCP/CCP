@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 from faker import Faker
 
-from rpc_clients.schemas import ProductSchema, SellerSchema
+from rpc_clients.schemas import ProductSchema, UserAuthSchema, UserSchema
 from rpc_clients.suppliers_client import SuppliersClient
 from rpc_clients.users_client import UsersClient
 
@@ -146,7 +146,7 @@ class TestSuppliersClient:
 
 
 @pytest.mark.skip_mock_users
-class TestUsersClient:
+class UsersClientMixin:
     @pytest.fixture
     def mock_call_broker(self):
         """
@@ -162,6 +162,9 @@ class TestUsersClient:
         client = UsersClient()
         client.call_broker = mock_call_broker
         return client
+
+
+class TestUsersClientGetSellers(UsersClientMixin):
 
     def test_get_sellers_calls_broker_with_correct_routing_key(
         self, users_client: UsersClient, mock_call_broker: MagicMock
@@ -201,6 +204,7 @@ class TestUsersClient:
                 ),
                 "created_at": fake.date_time().isoformat(),
                 "updated_at": fake.date_time().isoformat(),
+                "address": None,
             },
             {
                 "id": str(seller_ids[1]),
@@ -214,6 +218,16 @@ class TestUsersClient:
                 ),
                 "created_at": fake.date_time().isoformat(),
                 "updated_at": fake.date_time().isoformat(),
+                "address": {
+                    "id": "6e5eb867-db5c-437f-9137-fba893c03068",
+                    "line": "Calle 26 #13-15",
+                    "neighborhood": "Santa Fe",
+                    "city": "Bogota",
+                    "state": "Cundinamarca",
+                    "country": "Colombia",
+                    "latitude": 4.6097,
+                    "longitude": -74.0817,
+                },
             },
         ]
         mock_response = {"sellers": sellers_response}
@@ -221,10 +235,10 @@ class TestUsersClient:
 
         result = users_client.get_sellers(seller_ids)
 
-        # Assert the result is a list of SellerSchema objects
+        # Assert the result is a list of UserSchema objects
         assert len(result) == 2
         for index, seller in enumerate(result):
-            assert isinstance(seller, SellerSchema)
+            assert isinstance(seller, UserSchema)
             response_seller = sellers_response[index]
             assert str(seller.id) == response_seller["id"]
             assert seller.full_name == response_seller["full_name"]
@@ -265,3 +279,191 @@ class TestUsersClient:
             "users.get_sellers",
             {"seller_ids": None},
         )
+
+
+class TestUsersClientGetClients(UsersClientMixin):
+    def test_get_clients_calls_broker_with_correct_routing_key(
+        self, users_client: UsersClient, mock_call_broker: MagicMock
+    ):
+        """
+        Test that get_clients calls call_broker with the
+          correct routing key and payload.
+        """
+        client_ids = [uuid4(), uuid4()]
+        users_client.get_clients(client_ids)
+
+        # Assert call_broker was called with the
+        #  correct routing key and payload
+        mock_call_broker.assert_called_once_with(
+            "users.get_clients",
+            {"client_ids": [str(client_id) for client_id in client_ids]},
+        )
+
+    def test_get_clients_returns_correct_data(
+        self, users_client: UsersClient, mock_call_broker: MagicMock
+    ):
+        """
+        Test that get_clients returns the correct
+          data when call_broker is mocked.
+        """
+        client_ids = [uuid4(), uuid4()]
+        clients_response = [
+            {
+                "id": str(client_ids[0]),
+                "full_name": fake.name(),
+                "email": fake.email(),
+                "username": fake.user_name(),
+                "phone": fake.phone_number(),
+                "id_type": fake.random_element(elements=("ID", "Passport")),
+                "identification": str(
+                    fake.random_int(min=100000, max=999999)
+                ),
+                "created_at": fake.date_time().isoformat(),
+                "updated_at": fake.date_time().isoformat(),
+                "address": None,
+            },
+            {
+                "id": str(client_ids[1]),
+                "full_name": fake.name(),
+                "email": fake.email(),
+                "username": fake.user_name(),
+                "phone": fake.phone_number(),
+                "id_type": fake.random_element(elements=("ID", "Passport")),
+                "identification": str(
+                    fake.random_int(min=100000, max=999999)
+                ),
+                "created_at": fake.date_time().isoformat(),
+                "updated_at": fake.date_time().isoformat(),
+                "address": {
+                    "id": "6e5eb867-db5c-437f-9137-fba893c03068",
+                    "line": "Calle 26 #13-15",
+                    "neighborhood": "Santa Fe",
+                    "city": "Bogota",
+                    "state": "Cundinamarca",
+                    "country": "Colombia",
+                    "latitude": 4.6097,
+                    "longitude": -74.0817,
+                },
+            },
+        ]
+        mock_response = {"clients": clients_response}
+        mock_call_broker.return_value = mock_response
+
+        result = users_client.get_clients(client_ids)
+
+        # Assert the result is a list of UserSchema objects
+        assert len(result) == 2
+        for index, client in enumerate(result):
+            assert isinstance(client, UserSchema)
+            response_client = clients_response[index]
+            assert str(client.id) == response_client["id"]
+            assert client.full_name == response_client["full_name"]
+            assert client.email == response_client["email"]
+            assert client.username == response_client["username"]
+            assert client.phone == response_client["phone"]
+            assert client.id_type == response_client["id_type"]
+            assert client.identification == response_client["identification"]
+
+    def test_get_clients_returns_empty_list_if_no_clients_found(
+        self, users_client: UsersClient, mock_call_broker: MagicMock
+    ):
+        """
+        Test that get_clients returns an empty list if no clients are found.
+        """
+        client_ids = [uuid4(), uuid4()]
+        mock_call_broker.return_value = {
+            "clients": []
+        }  # Simulate no clients found
+
+        result = users_client.get_clients(client_ids)
+
+        # Assert the result is an empty list
+        assert result == []
+
+    def test_get_all_clients_calls_broker_with_correct_routing_key(
+        self, users_client: UsersClient, mock_call_broker: MagicMock
+    ):
+        """
+        Test that get_all_clients calls call_broker with the
+          correct routing key and payload.
+        """
+        users_client.get_all_clients()
+
+        # Assert call_broker was called with the
+        #  correct routing key and payload
+        mock_call_broker.assert_called_once_with(
+            "users.get_clients",
+            {"client_ids": None},
+        )
+
+
+class TestUsersClientAuthUser(UsersClientMixin):
+    def test_auth_user_calls_broker_with_correct_routing_key(
+        self, users_client: UsersClient, mock_call_broker: MagicMock
+    ):
+        """
+        Test that auth_user calls call_broker with the
+          correct routing key and payload.
+        """
+        bearer_token = "test_token"
+        mock_call_broker.return_value = {"user": None}
+        users_client.auth_user(bearer_token)
+
+        # Assert call_broker was called with the
+        #  correct routing key and payload
+        mock_call_broker.assert_called_once_with(
+            "users.auth_user", {"bearer_token": bearer_token}
+        )
+
+    def test_auth_user_returns_correct_data(
+        self, users_client: UsersClient, mock_call_broker: MagicMock
+    ):
+        """
+        Test that auth_user returns the correct data when
+          call_broker is mocked.
+        """
+        bearer_token = "test_token"
+        user_response = {
+            "id": str(uuid4()),
+            "full_name": fake.name(),
+            "email": fake.email(),
+            "username": fake.user_name(),
+            "phone": fake.phone_number(),
+            "id_type": fake.random_element(elements=("ID", "Passport")),
+            "identification": str(fake.random_int(min=100000, max=999999)),
+            "created_at": fake.date_time().isoformat(),
+            "updated_at": fake.date_time().isoformat(),
+            "address": None,
+            "is_active": True,
+            "is_seller": True,
+            "is_client": False,
+        }
+        mock_response = {"user": user_response}
+        mock_call_broker.return_value = mock_response
+
+        result = users_client.auth_user(bearer_token)
+
+        # Assert the result is a UserSchema object
+        assert isinstance(result, UserAuthSchema)
+        assert str(result.id) == user_response["id"]
+        assert result.full_name == user_response["full_name"]
+        assert result.email == user_response["email"]
+        assert result.username == user_response["username"]
+        assert result.phone == user_response["phone"]
+        assert result.id_type == user_response["id_type"]
+        assert result.identification == user_response["identification"]
+        assert result.is_active == user_response["is_active"]
+        assert result.is_seller == user_response["is_seller"]
+        assert result.is_client == user_response["is_client"]
+
+    def test_auth_user_returns_none_if_user_not_found(
+        self, users_client: UsersClient, mock_call_broker: MagicMock
+    ):
+        """
+        Test that auth_user returns None if the user is not found.
+        """
+        bearer_token = "test_token"
+        mock_call_broker.return_value = {"user": None}
+        result = users_client.auth_user(bearer_token)
+        # Assert the result is None
+        assert result is None

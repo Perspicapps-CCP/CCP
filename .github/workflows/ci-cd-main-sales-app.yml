@@ -59,6 +59,7 @@ jobs:
           -Dsonar.organization=perspicapps-ccp
           -Dsonar.exclusions=**/__pycache__/**,**/*.pyc,**/htmlcov/**
           -Dsonar.verbose=true
+          -Dsonar.python.coverage.reportPaths=coverage.xml
 
   build:
     needs: test

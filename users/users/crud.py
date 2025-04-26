@@ -1,9 +1,13 @@
 import uuid
 from typing import List, Optional
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Query, Session, joinedload
 
 from . import models
+
+
+def _base_users_qury(db: Session) -> Query:
+    return db.query(models.User).options(joinedload(models.User.address))
 
 
 def get_user(db: Session, username: str) -> Optional[models.User]:
@@ -17,7 +21,7 @@ def get_user(db: Session, username: str) -> Optional[models.User]:
     """
 
     return (
-        db.query(models.User).filter(models.User.username == username).first()
+        _base_users_qury(db).filter(models.User.username == username).first()
     )
 
 
@@ -98,7 +102,7 @@ def get_all_users(
     Returns:
         list[models.User]: A list of user objects.
     """
-    query = db.query(models.User)
+    query = _base_users_qury(db)
     if role:
         query = query.filter(models.User.role == role)
     if skip:
@@ -119,7 +123,7 @@ def get_users_by_ids(
     Returns:
         list[models.User]: A list of user objects.
     """
-    query = db.query(models.User)
+    query = _base_users_qury(db)
     if role:
         query = query.filter(models.User.role == role)
     if ids is not None:

@@ -10,8 +10,12 @@ import schemas
 from database import Base, SessionLocal, engine
 from db_dependency import get_db
 from plans.api import plans_router
+from routes.api import routes_router
+from routes.seed_data import seed_routes
 from sales.api import sales_router
 from sales.seed_data import seed_sales
+from sellers.api import sellers_router
+from sellers.seed_data import seed_seller_clients
 
 app = FastAPI()
 
@@ -28,12 +32,16 @@ prefix_router = APIRouter(prefix="/api/v1/sales")
 # Include the users router
 prefix_router.include_router(plans_router)
 prefix_router.include_router(sales_router)
+prefix_router.include_router(routes_router)
+prefix_router.include_router(sellers_router)
 
 
 def seed_database(db: Session = None):
     db = db or SessionLocal()
     try:
+        seed_seller_clients(db)
         seed_sales(db)
+        seed_routes(db)
     finally:
         db.close()
 
