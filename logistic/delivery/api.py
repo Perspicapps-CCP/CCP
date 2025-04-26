@@ -4,10 +4,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from db_dependency import get_db
-from delivery.mappers import delivery_route_to_schema
 from rpc_clients.inventory_client import InventoryClient
 from rpc_clients.suppliers_client import SuppliersClient
-from . import schemas, services
+from . import mappers, schemas, services
 
 deliveries_router = APIRouter(prefix="/delivery")
 
@@ -74,15 +73,15 @@ def list_all_deliveries(
 
 
 @deliveries_router.post(
-    "/", response_model=schemas.DeliveryCreateResponseSchema
+    "/", response_model=List[schemas.DeliveryCreateResponseSchema]
 )
 def create_delivery(
     delivery: schemas.DeliveryCreateRequestSchema,
     db: Session = Depends(get_db),
 ):
-    # delivery = services.create_delivery(db=db, delivery=delivery)
-    # return mappers.delivery_to_schema(delivery)
-    pass
+
+    delivery = services.create_delivery_transaction(db, delivery)
+    return mappers.deliery_to_schema(delivery)
 
 
 routes_router = APIRouter(prefix="/route")
@@ -112,4 +111,4 @@ def get_delivery_route(
     warehouse = warehouses_dict.get(delivery.warehouse_id, object())
 
     delivery_route = services.get_delivery_route(db, delivery_id)
-    return delivery_route_to_schema(delivery, warehouse, delivery_route)
+    return mappers.delivery_route_to_schema(delivery, warehouse, delivery_route)

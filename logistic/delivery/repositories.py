@@ -26,7 +26,9 @@ class DeliveryRepository:
 
     def get_by_id(self, delivery_id: UUID) -> Optional[models.Delivery]:
         """Get a specific delivery by ID."""
-        query = self.session.query(models.Delivery).filter(models.Delivery.id == delivery_id)
+        query = self.session.query(models.Delivery).filter(
+            models.Delivery.id == delivery_id
+        )
         return query.first()
 
     def get_without_stops_ordered(self) -> List[models.Delivery]:
@@ -46,10 +48,16 @@ class DeliveryRepository:
         )
         return query.all()
 
-    def get_route(self, delivery_id: UUID) -> List[Tuple[models.Delivery, models.DeliveryStop, models.DeliveryAddress]]:
+    def get_route(
+        self, delivery_id: UUID
+    ) -> List[
+        Tuple[models.Delivery, models.DeliveryStop, models.DeliveryAddress]
+    ]:
         """Get the route for a specific delivery."""
         query = (
-            self.session.query(models.Delivery, models.DeliveryStop, models.DeliveryAddress)
+            self.session.query(
+                models.Delivery, models.DeliveryStop, models.DeliveryAddress
+            )
             .join(
                 models.DeliveryStop,
                 models.Delivery.id == models.DeliveryStop.delivery_id,
@@ -73,7 +81,9 @@ class DeliveryRepository:
         self.session.refresh(db_delivery)
         return db_delivery
 
-    def update_driver(self, delivery_id: UUID, driver_id: UUID, delivery_date: datetime) -> bool:
+    def update_driver(
+        self, delivery_id: UUID, driver_id: UUID, delivery_date: datetime
+    ) -> bool:
         """Update driver and date for a delivery."""
         update_query = (
             update(models.Delivery)
@@ -94,7 +104,9 @@ class DeliveryItemRepository:
     def __init__(self, session: Session):
         self.session = session
 
-    def get_by_delivery_id(self, delivery_id: UUID) -> Generator[Tuple, None, None]:
+    def get_by_delivery_id(
+        self, delivery_id: UUID
+    ) -> Generator[Tuple, None, None]:
         """Get all items for a specific delivery."""
         query = (
             self.session.query(
@@ -149,7 +161,9 @@ class DeliveryStopRepository:
     def __init__(self, session: Session):
         self.session = session
 
-    def get_pending_stops(self) -> List[Tuple[UUID, UUID, UUID]]:
+    def get_pending_stops(
+        self, warehouse_id: UUID
+    ) -> List[Tuple[UUID, UUID, UUID]]:
         """Get stops pending assignment to deliveries."""
         query = (
             self.session.query(
@@ -162,11 +176,19 @@ class DeliveryStopRepository:
                 models.DeliveryItem.delivery_stop_id == models.DeliveryStop.id,
             )
             .distinct()
-            .filter(models.DeliveryStop.delivery_id.is_(None))
+            .filter(
+                and_(
+                    models.DeliveryStop.delivery_id.is_(None),
+                    models.DeliveryItem.warehouse_id == warehouse_id,
+                )
+            )
         )
+
         return query.all()
 
-    def create(self, sales_id: UUID, order_number: int, address_id: UUID) -> models.DeliveryStop:
+    def create(
+        self, sales_id: UUID, order_number: int, address_id: UUID
+    ) -> models.DeliveryStop:
         """Create a new delivery stop."""
         db_delivery_stop = models.DeliveryStop(
             sales_id=sales_id,
@@ -178,7 +200,9 @@ class DeliveryStopRepository:
         self.session.refresh(db_delivery_stop)
         return db_delivery_stop
 
-    def update_delivery_assignment(self, delivery_id: UUID, stop_ids: List[UUID]) -> int:
+    def update_delivery_assignment(
+        self, delivery_id: UUID, stop_ids: List[UUID]
+    ) -> int:
         """Update delivery assignment for specified stops."""
         update_query = (
             update(models.DeliveryStop)
@@ -225,7 +249,9 @@ class DeliveryAddressRepository:
         )
         return query.all()
 
-    def create(self, delivery_address: schemas.PayloadAddressSchema) -> models.DeliveryAddress:
+    def create(
+        self, delivery_address: schemas.PayloadAddressSchema
+    ) -> models.DeliveryAddress:
         """Create a new delivery address."""
         db_delivery_address = models.DeliveryAddress(
             id=delivery_address.id,
@@ -247,7 +273,9 @@ class DriverRepository:
     def __init__(self, session: Session):
         self.session = session
 
-    def get_available(self, delivery_date: datetime) -> Optional[models.Driver]:
+    def get_available(
+        self, delivery_date: datetime
+    ) -> Optional[models.Driver]:
         """Get the first available driver on a specific date."""
         return (
             self.session.query(models.Driver)

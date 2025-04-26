@@ -8,8 +8,6 @@ from delivery.services import (
     create_delivery_stops_transaction,
     create_driver,
     create_delivery_transaction,
-    get_driver_available,
-    update_driver_on_delivery,
 )
 from delivery import schemas
 from rpc_clients.inventory_client import InventoryClient
@@ -65,13 +63,12 @@ def seed_delivery_data(db: Session):
             create_delivery_stops_transaction(db, delivery)
             list_deliveries.append(delivery)
 
-    # get all pending deliveries
-    pending_deliveries = create_delivery_transaction(db)
+    # create a fake delivery transaction for each warehouse
+    # with a available driver and delivery date
+    for warehouse in warehouses:
+        request = schemas.DeliveryCreateRequestSchema(
+            warehouse_id=warehouse.warehouse_id,
+            delivery_date=datetime.now().date(),
+        )
 
-    # if deliveries exist, then assign a driver to each delivery
-    for delivery in pending_deliveries:
-        driver = get_driver_available(db, datetime.now().date())
-        if driver:
-            update_driver_on_delivery(
-                db, delivery.id, driver.id, datetime.now().date()
-            )
+        create_delivery_transaction(db, request)

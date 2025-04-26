@@ -34,3 +34,28 @@ def delivery_route_to_schema(
             )
         )
     return route_stops
+
+
+def deliery_to_schema(
+    deliveries: List[models.Delivery],
+) -> List[schemas.DeliveryCreateResponseSchema]:
+    """Convert a delivery to a schema."""
+
+    deliveries_aggregated = []
+    for delivery in deliveries:
+        deliveries_aggregated.append(
+            schemas.DeliveryCreateResponseSchema(
+                shipping_number=str(delivery.id),
+                diver_name=delivery.driver.name,
+                license_plate=delivery.driver.license_plate,
+                warehouse=schemas.WarehouseSchema(
+                    warehouse_id=delivery.warehouse_id,
+                    warehouse_name="Unknown Warehouse",
+                ),
+                delivery_status=delivery.status,
+                created_at=delivery.created_at,
+                updated_at=delivery.updated_at,
+            )
+        )
+
+    return deliveries_aggregated

@@ -1,9 +1,9 @@
 from datetime import datetime
+import re
 from typing import Dict, List, Generator, Tuple, Optional
 from uuid import UUID
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from psycopg2.errors import UniqueViolation
 
 from delivery import models, schemas
 from .unit_of_work import unit_of_work
@@ -33,10 +33,12 @@ def get_delivery(db: Session, delivery_id: UUID) -> Optional[models.Delivery]:
         return uow.delivery.get_by_id(delivery_id)
 
 
-def get_stops_pending_to_delivery(db: Session) -> List[Tuple]:
+def get_stops_pending_to_delivery(
+    db: Session, warehouse_id: UUID
+) -> List[Tuple]:
     """Get stops pending assignment to deliveries."""
     with unit_of_work(db) as uow:
-        return uow.delivery_stop.get_pending_stops()
+        return uow.delivery_stop.get_pending_stops(warehouse_id)
 
 
 def get_driver_available(
@@ -85,7 +87,9 @@ def update_driver_on_delivery(
 ) -> bool:
     """Update the driver assigned to a delivery."""
     with unit_of_work(db) as uow:
-        success = uow.delivery.update_driver(delivery_id, driver_id, delivery_date)
+        success = uow.delivery.update_driver(
+            delivery_id, driver_id, delivery_date
+        )
         if not success:
             return False
         uow.commit()
@@ -130,30 +134,31 @@ def create_delivery_stops_transaction(
             return True
         except IntegrityError as e:
             uow.rollback()
-            if isinstance(e.orig, UniqueViolation):
-                print(f"Duplicate entry found: {e.orig.diag.message_detail}")
-                return True
-            else:
-                print(f"Integrity error: {e.orig}")
-                return False
+            print(f"Duplicate entry found: {e.orig}")
+            return True
         except Exception as e:
             uow.rollback()
             print(f"Error creating delivery items: {e}")
             return False
 
 
-def create_delivery_transaction(db: Session) -> List[models.Delivery]:
+def create_delivery_transaction(
+    db: Session, request: schemas.DeliveryCreateRequestSchema
+) -> List[models.Delivery]:
     """Create delivery transactions based on sales orders pending delivery."""
+    pending_delivery_stops = get_stops_pending_to_delivery(
+        db, request.warehouse_id
+    )
+    if not pending_delivery_stops:
+        return []
+
     with unit_of_work(db) as uow:
         try:
-            pending_delivery_stops = uow.delivery_stop.get_pending_stops()
-
-            if not pending_delivery_stops:
-                return []
-
-            stops_by_warehouse = group_stops_by_warehouse(pending_delivery_stops)
 
             created_deliveries = []
+            stops_by_warehouse = group_stops_by_warehouse(
+                pending_delivery_stops
+            )
             for warehouse_id, stop_ids in stops_by_warehouse.items():
                 # Divide stops into chunks of 10
                 stop_chunks = [
@@ -170,11 +175,25 @@ def create_delivery_transaction(db: Session) -> List[models.Delivery]:
                     )
                     if result == 0:
                         uow.rollback()
-                        return []
+                        return created_deliveries
 
+                    driver = get_driver_available(db, request.delivery_date)
+                    if driver:
+                        update_driver_on_delivery(
+                            db,
+                            db_delivery.id,
+                            driver.id,
+                            request.delivery_date,
+                        )
+                    else:
+                        print(
+                            f"No available driver for delivery {db_delivery.id}"
+                        )
+                        uow.rollback()
+                        return created_deliveries
+                    uow.commit()
                     created_deliveries.append(db_delivery)
 
-            uow.commit()
             return created_deliveries
         except Exception as e:
             uow.rollback()
