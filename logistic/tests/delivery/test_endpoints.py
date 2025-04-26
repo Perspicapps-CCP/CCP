@@ -5,6 +5,7 @@ from faker import Faker
 from fastapi.testclient import TestClient
 
 from delivery import models
+from rpc_clients import schemas
 from rpc_clients.inventory_client import InventoryClient
 from rpc_clients.suppliers_client import SuppliersClient
 
@@ -42,6 +43,8 @@ def dummy_address():
         state=fake.state(),
         postal_code=fake.postcode(),
         country=fake.country(),
+        latitude=fake.latitude(),
+        longitude=fake.longitude(),
     )
 
 
@@ -135,3 +138,61 @@ def test_list_all_deliveries_with_product_and_warehouse_exist(
     response = client.get("/logistic/delivery/")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
+
+
+def test_get_delivery_route(
+    client: TestClient,
+    db_session,
+    mock_inventory_client,
+) -> None:
+    """
+    Test getting a delivery route.
+    """
+    address_1 = dummy_address()
+    address_2 = dummy_address()
+    driver = dummy_driver()
+    db_session.add(address_1)
+    db_session.add(address_2)
+    db_session.add(driver)
+    db_session.flush()
+
+    delivery = dummy_delivery()
+    delivery.driver_id = driver.id
+    delivery.warehouse_id = uuid.uuid4()
+    db_session.add(delivery)
+    db_session.flush()
+
+    delivery_stop_1 = dummy_delivery_stop()
+    delivery_stop_1.sales_id = uuid.uuid4()
+    delivery_stop_1.order_number = fake.random_int()
+    delivery_stop_1.address_id = address_1.id
+    delivery_stop_1.delivery_id = delivery.id
+    db_session.add(delivery_stop_1)
+
+    delivery_stop_2 = dummy_delivery_stop()
+    delivery_stop_2.sales_id = uuid.uuid4()
+    delivery_stop_2.order_number = fake.random_int()
+    delivery_stop_2.address_id = address_2.id
+    delivery_stop_2.delivery_id = delivery.id
+    db_session.add(delivery_stop_2)
+    db_session.commit()
+
+    mock_inventory_client.get_warehouses.return_value = [
+        schemas.WarehouseSchema(
+            warehouse_id=delivery.warehouse_id,
+            warehouse_name=fake.company(),
+            address=fake.address(),
+            phone=fake.phone_number(),
+            latitude=fake.latitude(),
+            longitude=fake.longitude(),
+        )
+    ]
+
+    client.app.dependency_overrides[InventoryClient] = (
+        lambda: mock_inventory_client
+    )
+
+    response = client.get(f"/logistic/route/{delivery.id}")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+    assert len(response.json()) > 0

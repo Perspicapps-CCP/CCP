@@ -2,10 +2,15 @@ import uuid
 
 from faker import Faker
 from delivery import helpers
-from delivery.schemas import PayloadAddressSchema, PayloadSaleItemSchema, PayloadSaleSchema
+from delivery.schemas import (
+    PayloadAddressSchema,
+    PayloadSaleItemSchema,
+    PayloadSaleSchema,
+)
 
 fake = Faker()
 fake.seed_instance(123)
+
 
 def fake_address():
     return PayloadAddressSchema(
@@ -235,4 +240,3 @@ def test_group_stops_by_warehouse_preserve_order():
 
     # Verify the order is preserved
     assert result[warehouse_id] == [stop_id1, stop_id2, stop_id3]
-

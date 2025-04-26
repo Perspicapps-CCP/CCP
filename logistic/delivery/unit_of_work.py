@@ -14,11 +14,12 @@ from .repositories import (
 
 class AbstractUnitOfWork(ABC):
     """Abstract base class defining the Unit of Work interface."""
-    delivery:DeliveryRepository = None
-    delivery_item:DeliveryItemRepository = None
-    delivery_stop:DeliveryStopRepository = None
-    delivery_address:DeliveryAddressRepository = None
-    driver:DriverRepository = None
+
+    delivery: DeliveryRepository = None
+    delivery_item: DeliveryItemRepository = None
+    delivery_stop: DeliveryStopRepository = None
+    delivery_address: DeliveryAddressRepository = None
+    driver: DriverRepository = None
 
     @abstractmethod
     def commit(self):
@@ -57,8 +58,10 @@ def create_unit_of_work(session: Session) -> AbstractUnitOfWork:
 
 
 @contextmanager
-def unit_of_work(session: Session, uow_class: Optional[Type[AbstractUnitOfWork]] = None) -> Generator[AbstractUnitOfWork, None, None]:
-    """Context manager for the Unit of Work pattern.""" 
+def unit_of_work(
+    session: Session, uow_class: Optional[Type[AbstractUnitOfWork]] = None
+) -> Generator[AbstractUnitOfWork, None, None]:
+    """Context manager for the Unit of Work pattern."""
     if uow_class:
         uow = uow_class(session)
     else:
