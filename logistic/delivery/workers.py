@@ -201,3 +201,4 @@ def calculate_ordered_route_stops():
 
     except Exception as e:
         logger.error(f"Error in calculate_ordered_route_stops task: {str(e)}")
+    return {"message": "Calculate ordered route task completed"}
