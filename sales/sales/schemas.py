@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-from rpc_clients.schemas import ProductSchema, SellerSchema
+from rpc_clients.schemas import ProductSchema, UserSchema
 
 
 class AddressSchema(BaseModel):
@@ -33,7 +33,7 @@ class SaleItemSchema(BaseModel):
 
 class SaleDetailSchema(BaseModel):
     id: UUID
-    seller: SellerSchema
+    seller: UserSchema
     order_number: int
     address: AddressSchema
     total_value: Decimal

@@ -1,8 +1,9 @@
 import uuid
 from decimal import Decimal
 from typing import List
-
 from pydantic import BaseModel, ConfigDict
+
+from warehouse import schemas as warehouse_schemas
 
 
 class ManufacturerSchema(BaseModel):
@@ -18,4 +19,9 @@ class ProductSchema(BaseModel):
     name: str
     price: Decimal
     manufacturer: ManufacturerSchema
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GetWarehousesResponseSchema(BaseModel):
+    warehouses: list[warehouse_schemas.WarehouseGetResponseSchema]
     model_config = ConfigDict(from_attributes=True)

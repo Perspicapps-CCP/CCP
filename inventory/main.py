@@ -7,10 +7,11 @@ from sqlalchemy.orm import Session
 
 import config
 import schemas
-from database import Base, engine
+from database import Base, SessionLocal, engine
 from db_dependency import get_db
 from stock.api import stock_router
 from warehouse.api import warehouse_router
+from warehouse.seed_data import seed_warehouses
 
 app = FastAPI()
 
@@ -26,6 +27,21 @@ inventory_router = APIRouter(prefix="/inventory")
 inventory_router.include_router(stock_router)
 inventory_router.include_router(warehouse_router)
 
+
+def seed_database(db: Session = None):
+    db = db or SessionLocal()
+    try:
+        seed_warehouses(db)
+    finally:
+        db.close()
+
+
+if "pytest" not in sys.modules:
+    Base.metadata.create_all(bind=engine)
+    # Seeding the database with initial data
+    seed_database()
+
+
 if "pytest" not in sys.modules:
     Base.metadata.create_all(bind=engine)
 
@@ -36,6 +52,7 @@ def reset(db: Session = Depends(get_db)):
     Base.metadata.drop_all(bind=db.get_bind())
     Base.metadata.create_all(bind=db.get_bind())
     db.commit()
+    seed_warehouses(db)
     return schemas.DeleteResponse()
 
 

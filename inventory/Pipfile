@@ -9,11 +9,12 @@ sqlalchemy = "*"
 python-dotenv = "*"
 pydantic = "*"
 psycopg2-binary = "*"
-uvicorn = {extras = ["standard"], version = "*"}
+uvicorn = "*"
 gunicorn = "*"
 pika = "*"
 pandas = "*"
 python-multipart = "*"
+keyboard = "*"
 
 [dev-packages]
 black = "*"

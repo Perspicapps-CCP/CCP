@@ -12,8 +12,9 @@ only_strings = r'^[a-zA-Z0-9_ñÑ ]+$'
 class WarehouseSchema(BaseModel):
     warehouse_name: str
     country: str
+    state: str
     city: str
-    address: str
+    street: str
     phone: Union[str, int] = Field(
         description="Phone number as string or integer"
     )
@@ -36,11 +37,21 @@ class WarehouseSchema(BaseModel):
 
 class WarehouseCreateResponseSchema(WarehouseSchema):
     warehouse_id: UUID
+    address: Optional[str] = None
     created_at: datetime
 
 
-class WarehouseGetResponseSchema(WarehouseSchema):
+class WarehouseGetResponseSchema(BaseModel):
     warehouse_id: UUID
+    warehouse_name: str
+    country: str
+    state: str
+    city: str
+    street: str
+    address: Optional[str] = None
+    phone: Union[str, int]
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     last_update: datetime
 
     @model_validator(mode='before')

@@ -1,6 +1,10 @@
 import threading
 
-from users.consumers import GetSellersConsumer
+from users.consumers import (
+    AuthUserConsumer,
+    GetClientsConsumer,
+    GetSellersConsumer,
+)
 
 
 def run_thread(threaded_class: type[threading.Thread], num_errors=0):
@@ -17,4 +21,4 @@ def start_threads(threaded_classes: list):
         run_thread(threaded_class)
 
 
-start_threads([GetSellersConsumer])
+start_threads([GetSellersConsumer, GetClientsConsumer, AuthUserConsumer])

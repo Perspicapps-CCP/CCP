@@ -48,6 +48,18 @@ jobs:
           ./suppliers/coverage.xml
           ./suppliers/htmlcov
         retention-days: 14
+    - name: Analyze with SonarCloud
+      uses: SonarSource/sonarqube-scan-action@v5.1.0
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        projectBaseDir: ./suppliers
+        args: >
+          -Dsonar.projectKey=ccp-suppliers
+          -Dsonar.organization=perspicapps-ccp
+          -Dsonar.exclusions=**/__pycache__/**,**/*.pyc,**/htmlcov/**
+          -Dsonar.verbose=true
+          -Dsonar.python.coverage.reportPaths=coverage.xml
 
   build:
     needs: test

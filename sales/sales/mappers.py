@@ -3,7 +3,7 @@ from uuid import UUID
 
 import faker
 
-from rpc_clients.schemas import ProductSchema, SellerSchema
+from rpc_clients.schemas import ProductSchema, UserSchema
 from rpc_clients.suppliers_client import SuppliersClient
 from rpc_clients.users_client import UsersClient
 
@@ -15,7 +15,7 @@ fake = faker.Faker()
 
 def _sale_to_schema(
     sale: Sale,
-    sellers: Dict[UUID, SellerSchema],
+    sellers: Dict[UUID, UserSchema],
     products: Dict[UUID, ProductSchema],
 ) -> SaleDetailSchema:
     """

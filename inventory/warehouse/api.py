@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from db_dependency import get_db
@@ -15,6 +15,8 @@ warehouse_router = APIRouter(prefix="/warehouse")
 def create_warehouse(
     request: schemas.WarehouseSchema, db: Session = Depends(get_db)
 ):
+    if services.get_warehouses(db=db, warehouse_name=request.warehouse_name):
+        raise HTTPException(status_code=409, detail="Warehouse already exists")
     response = services.create_warehouse(db=db, warehouse=request)
     return mappers.warehouse_created_to_schema(response)
 
