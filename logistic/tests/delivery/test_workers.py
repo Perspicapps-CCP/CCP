@@ -7,32 +7,39 @@ def mock_env_and_gmaps(monkeypatch):
     monkeypatch.setenv("GMAPS_API_KEY", "fake-key")
 
     mock_client = MagicMock()
-    mock_client.geocode.return_value = [{
-        'geometry': {'location': {'lat': 1.23, 'lng': 4.56}}
-    }]
+    mock_client.geocode.return_value = [
+        {'geometry': {'location': {'lat': 1.23, 'lng': 4.56}}}
+    ]
 
     with patch("googlemaps.Client", return_value=mock_client):
         yield
 
+
 def test_geocode_address_success():
     from delivery import workers
+
     result = workers.geocode_address("Fake Address")
     assert result == {"latitude": 1.23, "longitude": 4.56}
 
 
 def test_geocode_address_failure():
     from delivery import workers
+
     with patch.object(workers.gmaps, 'geocode', side_effect=Exception("Boom")):
         result = workers.geocode_address("Bad Address", attempts=1)
         assert result is None
 
+
 def test_haversine_distance():
     from delivery import workers
+
     dist = workers.haversine(-73.9857, 40.7484, -0.1278, 51.5074)
     assert round(dist) in range(5540, 5600)
 
+
 def test_nearest_neighbor_route():
     from delivery import workers
+
     start = (0.0, 0.0)
     addresses = [
         {'address': 'A', 'coords': (0.0, 1.0)},
@@ -46,7 +53,9 @@ def test_nearest_neighbor_route():
 @patch("delivery.workers.get_db")
 @patch("delivery.workers.get_delivery_address_without_geocoding")
 @patch("delivery.workers.geocode_address")
-def test_geocode_pending_addresses_success(mock_geocode, mock_get_addresses, mock_get_db):
+def test_geocode_pending_addresses_success(
+    mock_geocode, mock_get_addresses, mock_get_db
+):
     from delivery import workers
 
     mock_db = MagicMock()
@@ -70,15 +79,13 @@ def test_geocode_pending_addresses_success(mock_geocode, mock_get_addresses, moc
     assert mock_address.longitude == 20.0
     assert mock_db.commit.called
 
+
 @patch("delivery.workers.get_db")
 @patch("delivery.workers.InventoryClient")
 @patch("delivery.workers.services.get_deliveries_without_stops_ordered")
 @patch("delivery.workers.services.update_order_delivery_stops")
 def test_calculate_ordered_route_stops_success(
-    mock_update,
-    mock_get_deliveries,
-    mock_inventory_client,
-    mock_get_db
+    mock_update, mock_get_deliveries, mock_inventory_client, mock_get_db
 ):
     from delivery import workers
 
@@ -89,7 +96,9 @@ def test_calculate_ordered_route_stops_success(
     mock_warehouse.warehouse_id = 1
     mock_warehouse.latitude = 0.0
     mock_warehouse.longitude = 0.0
-    mock_inventory_client.return_value.get_warehouses.return_value = [mock_warehouse]
+    mock_inventory_client.return_value.get_warehouses.return_value = [
+        mock_warehouse
+    ]
 
     mock_stop = MagicMock()
     mock_stop.id = 1
@@ -108,10 +117,13 @@ def test_calculate_ordered_route_stops_success(
 
     mock_update.assert_called_once()
 
+
 @patch("delivery.workers.get_db")
 @patch("delivery.workers.get_delivery_address_without_geocoding")
 @patch("delivery.workers.geocode_address")
-def test_geocode_pending_addresses_db_error(mock_geocode, mock_get_addresses, mock_get_db):
+def test_geocode_pending_addresses_db_error(
+    mock_geocode, mock_get_addresses, mock_get_db
+):
     from delivery import workers
 
     mock_db = MagicMock()
@@ -135,10 +147,7 @@ def test_geocode_pending_addresses_db_error(mock_geocode, mock_get_addresses, mo
 @patch("delivery.workers.services.get_deliveries_without_stops_ordered")
 @patch("delivery.workers.services.update_order_delivery_stops")
 def test_calculate_ordered_route_stops_service_error(
-    mock_update,
-    mock_get_deliveries,
-    mock_inventory_client,
-    mock_get_db
+    mock_update, mock_get_deliveries, mock_inventory_client, mock_get_db
 ):
     from delivery import workers
 
@@ -149,7 +158,9 @@ def test_calculate_ordered_route_stops_service_error(
     mock_warehouse.warehouse_id = 1
     mock_warehouse.latitude = 0.0
     mock_warehouse.longitude = 0.0
-    mock_inventory_client.return_value.get_warehouses.return_value = [mock_warehouse]
+    mock_inventory_client.return_value.get_warehouses.return_value = [
+        mock_warehouse
+    ]
 
     mock_stop = MagicMock()
     mock_stop.id = 1
@@ -175,10 +186,7 @@ def test_calculate_ordered_route_stops_service_error(
 @patch("delivery.workers.services.get_deliveries_without_stops_ordered")
 @patch("delivery.workers.services.update_order_delivery_stops")
 def test_calculate_ordered_route_stops_full_interaction(
-    mock_update,
-    mock_get_deliveries,
-    mock_inventory_client,
-    mock_get_db
+    mock_update, mock_get_deliveries, mock_inventory_client, mock_get_db
 ):
     from delivery import workers
 
@@ -189,7 +197,9 @@ def test_calculate_ordered_route_stops_full_interaction(
     mock_warehouse.warehouse_id = 1
     mock_warehouse.latitude = 0.0
     mock_warehouse.longitude = 0.0
-    mock_inventory_client.return_value.get_warehouses.return_value = [mock_warehouse]
+    mock_inventory_client.return_value.get_warehouses.return_value = [
+        mock_warehouse
+    ]
 
     mock_stop = MagicMock()
     mock_stop.id = 1
@@ -207,7 +217,3 @@ def test_calculate_ordered_route_stops_full_interaction(
     workers.calculate_ordered_route_stops()
 
     mock_update.assert_called_once()
-
-
-
-
