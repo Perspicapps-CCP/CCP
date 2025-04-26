@@ -64,7 +64,7 @@ To run the tests, use the following command:
 
 
 
-pytest --cov=. -v -s --cov-fail-under=70
+pytest --cov=. -v -s --cov-fail-under=80
 
 
 Pre commit

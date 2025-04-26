@@ -331,14 +331,21 @@ class TestAuthUserConsumer:
         assert response["error"][0]["loc"] == ("bearer_token",)
         assert response["error"][0]["msg"] == "Field required"
 
+    @pytest.mark.parametrize(
+        "user_role",
+        [RoleEnum.SELLER, RoleEnum.CLIENT],
+    )
     def test_valid_payload(
-        self, db_session: Session, sellers_in_db: list[User]
+        self, db_session: Session, sellers_in_db: list[User], user_role: str
     ):
         """
         Test AuthUserConsumer with a valid payload and verify the data.
         """
         consumer = AuthUserConsumer()
         seller = sellers_in_db[0]  # Select first seller
+        seller.role = user_role
+        db_session.add(seller)
+        db_session.commit()
         token, _expires = create_access_token(seller)
 
         valid_payload = {"bearer_token": token}
@@ -358,6 +365,9 @@ class TestAuthUserConsumer:
         assert seller.phone == user_data["phone"]
         assert seller.role == user_data["role"]
         assert user_data["address"] is None
+        assert user_data["is_active"] is True
+        assert user_data["is_seller"] is (user_role == RoleEnum.SELLER)
+        assert user_data["is_client"] is (user_role == RoleEnum.CLIENT)
 
     @pytest.mark.usefixtures("sellers_in_db")
     def test_invalid_token(self, db_session: Session):

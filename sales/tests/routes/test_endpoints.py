@@ -98,7 +98,7 @@ def test_no_auth_header(
 
     # Check the response data
     data = response.json()
-    assert data["detail"] == "Unauthorized"
+    assert data["detail"] == "Not authenticated"
 
 
 def test_invalid_auth_header(
@@ -115,7 +115,7 @@ def test_invalid_auth_header(
 
     # Check the response data
     data = response.json()
-    assert data["detail"] == "Unauthorized"
+    assert data["detail"] == "Not authenticated"
 
 
 def test_malformed_auth_header(
@@ -130,7 +130,7 @@ def test_malformed_auth_header(
     assert response.status_code == 401
     # Check the response data
     data = response.json()
-    assert data["detail"] == "Unauthorized"
+    assert data["detail"] == "Not authenticated"
 
 
 def test_list_routes_for_seller(

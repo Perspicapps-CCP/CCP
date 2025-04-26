@@ -9,12 +9,13 @@ from pydantic import (
     EmailStr,
     Field,
     ValidationInfo,
+    computed_field,
     field_validator,
 )
 from sqlalchemy.orm import Session
 
 from . import crud
-from .models import IdTypeEnum
+from .models import IdTypeEnum, RoleEnum
 
 
 class AddressSchema(BaseModel):
@@ -160,11 +161,37 @@ class AuthSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class UserAuthDetailSchema(UserDetailSchema):
+    is_active: bool
+
+    @computed_field
+    @property
+    def is_seller(self) -> bool:
+        """
+        Check if the user is a seller.
+
+        Returns:
+            bool: True if the user is a seller, False otherwise.
+        """
+        return self.role == RoleEnum.SELLER
+
+    @computed_field
+    @property
+    def is_client(self) -> bool:
+        """
+        Check if the user is a client.
+
+        Returns:
+            bool: True if the user is a client, False otherwise.
+        """
+        return self.role == RoleEnum.CLIENT
+
+
 class AuthResponseSchema(BaseModel):
     """
     Schema for authentication response data.
     """
 
-    user: Optional[UserDetailSchema]
+    user: Optional[UserAuthDetailSchema]
 
     model_config = ConfigDict(from_attributes=True)

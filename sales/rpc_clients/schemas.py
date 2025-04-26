@@ -45,3 +45,15 @@ class ProductSchema(BaseModel):
     name: str
     price: Decimal
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserAuthSchema(UserSchema):
+    """
+    Schema for the user authentication response.
+    """
+
+    is_active: bool
+    is_seller: bool
+    is_client: bool
+
+    model_config = ConfigDict(from_attributes=True)

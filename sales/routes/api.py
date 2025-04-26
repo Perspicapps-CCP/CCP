@@ -26,7 +26,7 @@ routes_router = APIRouter(prefix="/routes", tags=["Routes"])
 def list_routes(
     filter_query: Annotated[schemas.ListRoutesFilterSchema, Query()],
     db: Session = Depends(get_db),
-    user=Depends(get_auth_user),  # Replace with actual user dependency
+    user=Depends(get_auth_user),
 ) -> List[schemas.RouteDetailSchema]:
     """
     List all routes.
@@ -52,7 +52,7 @@ def list_routes(
 def get_route(
     route_id: uuid.UUID | date,
     db: Session = Depends(get_db),
-    user=Depends(get_auth_user),  # Replace with actual user dependency
+    user=Depends(get_auth_user),
 ) -> schemas.RouteDetailSchema:
     """
     Get route details.
