@@ -7,7 +7,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from .auth import get_password_hash
-from .models import Address, RoleEnum, User
+from .models import Address, RoleEnum, User, IdTypeEnum
 
 
 def seed_other_clients(db: Session, total=10):
@@ -28,6 +28,8 @@ def seed_other_clients(db: Session, total=10):
             role=RoleEnum.CLIENT,
             email=fake.email(),
             phone=fake.phone_number(),
+            identification=fake.ssn(),
+            id_type=IdTypeEnum.NIT,
         )
         users.append(user)
     db.add_all(users)
@@ -89,6 +91,8 @@ def create_users(db: Session):
             role=RoleEnum.CLIENT,
             email="client_user@test.com",
             phone="3456789012",
+            identification="123456789",
+            id_type=IdTypeEnum.NIT,
         ),
     ]
 

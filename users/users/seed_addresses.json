@@ -1,92 +1,182 @@
 [
   {
-      "line": "Av Siempre Viva 123",
-      "neighborhood": "Centro",
-      "city": "Bogota",
-      "state": "Cundinamarca",
-      "country": "Colombia",
-      "latitude": 4.7110,
-      "longitude": -74.0721
+    "line": "Av Siempre Viva 123",
+    "neighborhood": "Centro",
+    "city": "Bogota",
+    "state": "Cundinamarca",
+    "country": "Colombia",
+    "latitude": 4.711,
+    "longitude": -74.0721
   },
   {
-      "line": "Calle 26 #13-15",
-      "neighborhood": "Santa Fe",
-      "city": "Bogota",
-      "state": "Cundinamarca",
-      "country": "Colombia",
-      "latitude": 4.6097,
-      "longitude": -74.0817
+    "line": "Calle 26 #13-15",
+    "neighborhood": "Santa Fe",
+    "city": "Bogota",
+    "state": "Cundinamarca",
+    "country": "Colombia",
+    "latitude": 4.6097,
+    "longitude": -74.0817
   },
   {
-      "line": "Carrera 7 #72-35",
-      "neighborhood": "Chapinero",
-      "city": "Bogota",
-      "state": "Cundinamarca",
-      "country": "Colombia",
-      "latitude": 4.6584,
-      "longitude": -74.0596
+    "line": "Carrera 7 #72-35",
+    "neighborhood": "Chapinero",
+    "city": "Bogota",
+    "state": "Cundinamarca",
+    "country": "Colombia",
+    "latitude": 4.6584,
+    "longitude": -74.0596
   },
   {
-      "line": "Calle 100 #8A-55",
-      "neighborhood": "Usaquén",
-      "city": "Bogota",
-      "state": "Cundinamarca",
-      "country": "Colombia",
-      "latitude": 4.6796,
-      "longitude": -74.0447
+    "line": "Calle 100 #8A-55",
+    "neighborhood": "Usaquén",
+    "city": "Bogota",
+    "state": "Cundinamarca",
+    "country": "Colombia",
+    "latitude": 4.6796,
+    "longitude": -74.0447
   },
   {
-      "line": "Av Suba #123-45",
-      "neighborhood": "Suba",
-      "city": "Bogota",
-      "state": "Cundinamarca",
-      "country": "Colombia",
-      "latitude": 4.7450,
-      "longitude": -74.1041
+    "line": "Av Suba #123-45",
+    "neighborhood": "Suba",
+    "city": "Bogota",
+    "state": "Cundinamarca",
+    "country": "Colombia",
+    "latitude": 4.745,
+    "longitude": -74.1041
   },
   {
-      "line": "Calle 80 #69-90",
-      "neighborhood": "Engativá",
-      "city": "Bogota",
-      "state": "Cundinamarca",
-      "country": "Colombia",
-      "latitude": 4.6974,
-      "longitude": -74.1087
+    "line": "Calle 80 #69-90",
+    "neighborhood": "Engativá",
+    "city": "Bogota",
+    "state": "Cundinamarca",
+    "country": "Colombia",
+    "latitude": 4.6974,
+    "longitude": -74.1087
   },
   {
-      "line": "Carrera 30 #10-20",
-      "neighborhood": "Teusaquillo",
-      "city": "Bogota",
-      "state": "Cundinamarca",
-      "country": "Colombia",
-      "latitude": 4.6394,
-      "longitude": -74.0880
+    "line": "Carrera 30 #10-20",
+    "neighborhood": "Teusaquillo",
+    "city": "Bogota",
+    "state": "Cundinamarca",
+    "country": "Colombia",
+    "latitude": 4.6394,
+    "longitude": -74.088
   },
   {
-      "line": "Av Caracas #45-50",
-      "neighborhood": "La Candelaria",
-      "city": "Bogota",
-      "state": "Cundinamarca",
-      "country": "Colombia",
-      "latitude": 4.5981,
-      "longitude": -74.0758
+    "line": "Av Caracas #45-50",
+    "neighborhood": "La Candelaria",
+    "city": "Bogota",
+    "state": "Cundinamarca",
+    "country": "Colombia",
+    "latitude": 4.5981,
+    "longitude": -74.0758
   },
   {
-      "line": "Calle 170 #20-30",
-      "neighborhood": "Usaquén",
-      "city": "Bogota",
-      "state": "Cundinamarca",
-      "country": "Colombia",
-      "latitude": 4.7612,
-      "longitude": -74.0300
+    "line": "Calle 170 #20-30",
+    "neighborhood": "Usaquén",
+    "city": "Bogota",
+    "state": "Cundinamarca",
+    "country": "Colombia",
+    "latitude": 4.7612,
+    "longitude": -74.03
   },
   {
-      "line": "Av Ciudad de Cali #90-20",
-      "neighborhood": "Kennedy",
-      "city": "Bogota",
-      "state": "Cundinamarca",
-      "country": "Colombia",
-      "latitude": 4.6303,
-      "longitude": -74.1573
+    "line": "Av Ciudad de Cali #90-20",
+    "neighborhood": "Kennedy",
+    "city": "Bogota",
+    "state": "Cundinamarca",
+    "country": "Colombia",
+    "latitude": 4.6303,
+    "longitude": -74.1573
+  },
+  {
+    "line": "Carrera 15 #93-60",
+    "neighborhood": "Chicó",
+    "city": "Bogota",
+    "state": "Cundinamarca",
+    "country": "Colombia",
+    "latitude": 4.6761,
+    "longitude": -74.0485
+  },
+  {
+    "line": "Calle 19 #4-14",
+    "neighborhood": "La Candelaria",
+    "city": "Bogota",
+    "state": "Cundinamarca",
+    "country": "Colombia",
+    "latitude": 4.6013,
+    "longitude": -74.066
+  },
+  {
+    "line": "Carrera 68D #24-43",
+    "neighborhood": "Salitre",
+    "city": "Bogota",
+    "state": "Cundinamarca",
+    "country": "Colombia",
+    "latitude": 4.6579,
+    "longitude": -74.1115
+  },
+  {
+    "line": "Calle 53 #27-15",
+    "neighborhood": "Galerías",
+    "city": "Bogota",
+    "state": "Cundinamarca",
+    "country": "Colombia",
+    "latitude": 4.6453,
+    "longitude": -74.0785
+  },
+  {
+    "line": "Carrera 10 #27-51",
+    "neighborhood": "San Diego",
+    "city": "Bogota",
+    "state": "Cundinamarca",
+    "country": "Colombia",
+    "latitude": 4.6138,
+    "longitude": -74.0703
+  },
+  {
+    "line": "Calle 116 #7-15",
+    "neighborhood": "Santa Bárbara",
+    "city": "Bogota",
+    "state": "Cundinamarca",
+    "country": "Colombia",
+    "latitude": 4.6934,
+    "longitude": -74.0306
+  },
+  {
+    "line": "Carrera 50 #26-20",
+    "neighborhood": "Puente Aranda",
+    "city": "Bogota",
+    "state": "Cundinamarca",
+    "country": "Colombia",
+    "latitude": 4.6305,
+    "longitude": -74.0943
+  },
+  {
+    "line": "Calle 72 #10-34",
+    "neighborhood": "Rosales",
+    "city": "Bogota",
+    "state": "Cundinamarca",
+    "country": "Colombia",
+    "latitude": 4.6588,
+    "longitude": -74.0574
+  },
+  {
+    "line": "Carrera 11 #82-71",
+    "neighborhood": "Zona Rosa",
+    "city": "Bogota",
+    "state": "Cundinamarca",
+    "country": "Colombia",
+    "latitude": 4.6683,
+    "longitude": -74.0537
+  },
+  {
+    "line": "Calle 13 #32-20",
+    "neighborhood": "Ciudad Salitre",
+    "city": "Bogota",
+    "state": "Cundinamarca",
+    "country": "Colombia",
+    "latitude": 4.6392,
+    "longitude": -74.0912
   }
 ]
