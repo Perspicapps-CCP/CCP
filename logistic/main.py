@@ -6,14 +6,15 @@ from sqlalchemy.orm import Session
 import schemas
 from database import Base, engine
 from db_dependency import get_db
-from deliveries.api import deliveries_router
-from deliveries.seed_data import seed_delivery_data
+from delivery.api import deliveries_router, routes_router
+from delivery.seed_data import seed_delivery_data
 
 app = FastAPI()
 
 prefix_router = APIRouter(prefix="/logistic")
 
 prefix_router.include_router(deliveries_router)
+prefix_router.include_router(routes_router)
 
 if "pytest" not in sys.modules:
     Base.metadata.create_all(bind=engine)

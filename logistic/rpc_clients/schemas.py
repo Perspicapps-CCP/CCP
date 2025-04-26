@@ -1,6 +1,6 @@
 import uuid
 from decimal import Decimal
-from typing import List, Union
+from typing import List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict
 
@@ -24,9 +24,9 @@ class ProductSchema(BaseModel):
 class WarehouseSchema(BaseModel):
     warehouse_id: uuid.UUID
     warehouse_name: str
-    country: str
-    city: str
     address: str
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     phone: Union[str, int]
 
 

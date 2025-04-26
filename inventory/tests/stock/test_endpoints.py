@@ -1,7 +1,7 @@
 import csv
 import io
 from unittest.mock import MagicMock
-from uuid import UUID
+import uuid
 import pytest
 from faker import Faker
 from fastapi.testclient import TestClient
@@ -16,17 +16,15 @@ fake.seed_instance(0)
 def mock_warehouse_db():
     return Warehouse(
         name="Test Warehouse",
-        country="Test Country",
-        city="Test City",
-        address="Test Address",
         phone="1234567890",
+        address_id=uuid.uuid4(),
     )
 
 
 def mock_stock_db(dummy_warehouse):
     return Stock(
         warehouse_id=dummy_warehouse.id,
-        product_id=UUID(fake.uuid4()),
+        product_id=uuid.uuid4(),
         quantity=fake.random_int(min=1, max=100),
     )
 

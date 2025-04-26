@@ -2,12 +2,12 @@ import logging
 from typing import Dict
 
 from database import SessionLocal
-from deliveries.schemas import (
+from delivery.schemas import (
     DeliverySaleResponseSchema,
     DeliverySaleStatus,
     PayloadSaleSchema,
 )
-from deliveries.services import create_delivery_stops_transaction
+from delivery.services import create_delivery_stops_transaction
 from seedwork.base_consumer import BaseConsumer
 
 

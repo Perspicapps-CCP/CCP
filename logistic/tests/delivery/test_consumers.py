@@ -3,8 +3,8 @@ import uuid
 from unittest.mock import MagicMock, patch
 from sqlalchemy.orm import Session
 
-from deliveries.consumers import GetProductsConsumer
-from deliveries.schemas import DeliverySaleStatus
+from delivery.consumers import GetProductsConsumer
+from delivery.schemas import DeliverySaleStatus
 
 
 class TestGetProductsConsumer:
@@ -16,9 +16,9 @@ class TestGetProductsConsumer:
         # Assert
         assert consumer.queue == "logistic.send_pending_sales_to_delivery"
 
-    @patch('deliveries.consumers.create_delivery_stops_transaction')
-    @patch('deliveries.consumers.PayloadSaleSchema')
-    @patch('deliveries.consumers.SessionLocal')
+    @patch('delivery.consumers.create_delivery_stops_transaction')
+    @patch('delivery.consumers.PayloadSaleSchema')
+    @patch('delivery.consumers.SessionLocal')
     def test_process_payload_success(
         self, mock_session_local, mock_payload_schema, mock_create_transaction
     ):
@@ -57,9 +57,9 @@ class TestGetProductsConsumer:
         assert result_dict["status"] == DeliverySaleStatus.SUCCESS
         assert result_dict["message"] == "Delivery items created successfully"
 
-    @patch('deliveries.consumers.create_delivery_stops_transaction')
-    @patch('deliveries.consumers.PayloadSaleSchema')
-    @patch('deliveries.consumers.SessionLocal')
+    @patch('delivery.consumers.create_delivery_stops_transaction')
+    @patch('delivery.consumers.PayloadSaleSchema')
+    @patch('delivery.consumers.SessionLocal')
     def test_process_payload_failure(
         self, mock_session_local, mock_payload_schema, mock_create_transaction
     ):
@@ -97,9 +97,9 @@ class TestGetProductsConsumer:
         assert result_dict["status"] == DeliverySaleStatus.ERROR
         assert result_dict["message"] == "Failed to create delivery items"
 
-    @patch('deliveries.consumers.create_delivery_stops_transaction')
-    @patch('deliveries.consumers.PayloadSaleSchema')
-    @patch('deliveries.consumers.SessionLocal')
+    @patch('delivery.consumers.create_delivery_stops_transaction')
+    @patch('delivery.consumers.PayloadSaleSchema')
+    @patch('delivery.consumers.SessionLocal')
     def test_process_payload_exception(
         self, mock_session_local, mock_payload_schema, mock_create_transaction
     ):

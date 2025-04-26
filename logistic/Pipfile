@@ -13,6 +13,8 @@ uvicorn = {extras = ["standard"], version = "*"}
 gunicorn = "*"
 pika = "*"
 keyboard = "*"
+celery = "*"
+googlemaps = "*"
 
 [dev-packages]
 black = "*"
