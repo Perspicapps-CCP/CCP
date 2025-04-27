@@ -40,12 +40,12 @@ def fake_warehouse() -> Dict:
     )
     phone = int(phone_digits) if random.choice([True, False]) else phone_digits
 
-    return schemas.WarehouseSchema(
+    return schemas.WarehouseRequestSchema(
         warehouse_name=re.sub(r'[^a-zA-Z0-9_ñÑ]', ' ', fake.company()),
         country=fake.country(),
         state=fake.state(),
         city=fake.city(),
-        street=fake.address().replace("\n", ", "),
+        address=fake.address().replace("\n", ", "),
         phone=phone,
     ).model_dump()
 
