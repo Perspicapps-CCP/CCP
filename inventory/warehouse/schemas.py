@@ -9,12 +9,12 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 only_strings = r'^[a-zA-Z0-9_ñÑ ]+$'
 
 
-class WarehouseSchema(BaseModel):
+class WarehouseRequestSchema(BaseModel):
     warehouse_name: str
     country: str
-    state: str
+    state: Optional[str] = ""
     city: str
-    street: str
+    address: str
     phone: Union[str, int] = Field(
         description="Phone number as string or integer"
     )
@@ -35,9 +35,15 @@ class WarehouseSchema(BaseModel):
         return phone_str
 
 
-class WarehouseCreateResponseSchema(WarehouseSchema):
+class WarehouseCreateResponseSchema(BaseModel):
     warehouse_id: UUID
+    warehouse_name: str
+    country: str
+    state: str
+    city: str
+    street: str
     address: Optional[str] = None
+    phone: Union[str, int]
     created_at: datetime
 
 
