@@ -690,9 +690,9 @@ Authorization: Bearer <access_token>
 }
 ```
 
-| Field      | Type | Required | Description                  |
-| ---------- | ---- | -------- | ---------------------------- |
-| client_id  | UUID | ✅       | ID of the client to associate |
+| Field     | Type | Required | Description                   |
+| --------- | ---- | -------- | ----------------------------- |
+| client_id | UUID | ✅       | ID of the client to associate |
 
 ---
 
@@ -730,15 +730,15 @@ Authorization: Bearer <access_token>
 }
 ```
 
-| Field               | Type     | Description                                      |
-| ------------------- | -------- | ------------------------------------------------ |
-| id                  | UUID     | Unique ID of the client-seller association       |
-| client              | object   | Full client details                              |
-| last_visited        | datetime | Last time the client was visited (if available) |
-| was_visited_recently| boolean  | Whether the client was visited in the last 24 hours |
-| client_thumbnail    | string   | URL of the client's thumbnail image             |
-| created_at          | datetime | Timestamp when the association was created      |
-| updated_at          | datetime | Timestamp when the association was last updated |
+| Field                | Type     | Description                                         |
+| -------------------- | -------- | --------------------------------------------------- |
+| id                   | UUID     | Unique ID of the client-seller association          |
+| client               | object   | Full client details                                 |
+| last_visited         | datetime | Last time the client was visited (if available)     |
+| was_visited_recently | boolean  | Whether the client was visited in the last 24 hours |
+| client_thumbnail     | string   | URL of the client's thumbnail image                 |
+| created_at           | datetime | Timestamp when the association was created          |
+| updated_at           | datetime | Timestamp when the association was last updated     |
 
 ---
 
@@ -828,15 +828,15 @@ Authorization: Bearer <access_token>
 ]
 ```
 
-| Field               | Type     | Description                                      |
-| ------------------- | -------- | ------------------------------------------------ |
-| id                  | UUID     | Unique ID of the client-seller association       |
-| client              | object   | Full client details                              |
-| last_visited        | datetime | Last time the client was visited (if available) |
-| was_visited_recently| boolean  | Whether the client was visited in the last 24 hours |
-| client_thumbnail    | string   | URL of the client's thumbnail image             |
-| created_at          | datetime | Timestamp when the association was created      |
-| updated_at          | datetime | Timestamp when the association was last updated |
+| Field                | Type     | Description                                         |
+| -------------------- | -------- | --------------------------------------------------- |
+| id                   | UUID     | Unique ID of the client-seller association          |
+| client               | object   | Full client details                                 |
+| last_visited         | datetime | Last time the client was visited (if available)     |
+| was_visited_recently | boolean  | Whether the client was visited in the last 24 hours |
+| client_thumbnail     | string   | URL of the client's thumbnail image                 |
+| created_at           | datetime | Timestamp when the association was created          |
+| updated_at           | datetime | Timestamp when the association was last updated     |
 
 ---
 
@@ -857,3 +857,285 @@ Authorization: Bearer <access_token>
   "detail": "You do not have permission to perform this action"
 }
 ```
+
+## ➕ Add to Cart API
+
+### `POST /api/v1/sales/cart/`
+
+Add a product to the sales cart with a specified amount.
+
+---
+
+### 🔐 Authentication
+
+Requires Bearer Token (JWT) in the `Authorization` header:
+
+```
+Authorization: Bearer <access_token>
+```
+
+---
+
+### 📥 Request Body
+
+```json
+{
+  "product_id": "ae3f541e-b3b5-4cb6-a018-02f58bbd0c2e",
+  "amount": 5
+}
+```
+
+| Field      | Type   | Required | Description                 |
+| ---------- | ------ | -------- | --------------------------- |
+| product_id | UUID   | ✅       | ID of the product to add    |
+| amount     | number | ✅       | Quantity to add to the cart |
+
+---
+
+### 📤 Response (200 OK)
+
+```json
+{
+  "detail": "Product added to cart"
+}
+```
+
+---
+
+### ❌ Error Responses
+
+#### 400 Bad Request
+
+```json
+{
+  "detail": "Insufficient stock available"
+}
+```
+
+#### 422 Validation Error (Pydantic)
+
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "amount"],
+      "msg": "value must be greater than 0",
+      "type": "value_error.number.not_gt"
+    }
+  ]
+}
+```
+
+---
+
+## 🛒 View Cart API
+
+### `GET /api/v1/sales/cart/`
+
+Retrieve all products currently in the cart, with full product detail (`ResponseProductDetailSchema`), amount in cart, reserved units, and actual available stock.
+
+---
+
+### 🔐 Authentication
+
+Requires Bearer Token (JWT) in the `Authorization` header:
+
+```
+Authorization: Bearer <access_token>
+```
+
+---
+
+### 📤 Response (200 OK)
+
+```json
+[
+  {
+    "product": {
+      "id": "ae3f541e-b3b5-4cb6-a018-02f58bbd0c2e",
+      "product_code": "XYZ-001",
+      "name": "Shampoo XYZ",
+      "price": 12000.0,
+      "images": [
+        "https://cdn.example.com/products/shampoo1.jpg",
+        "https://cdn.example.com/products/shampoo2.jpg"
+      ],
+      "manufacturer": {
+        "id": "b1118f0b-3bda-4d94-a823-3ddee1f7e6dc",
+        "name": "BrandX",
+        "country": "Colombia"
+      }
+    },
+    "amount": 5,
+    "available": 45
+  }
+]
+```
+
+---
+
+### 📦 Field Reference
+
+| Field     | Type                          | Description                                   |
+| --------- | ----------------------------- | --------------------------------------------- |
+| product   | `ResponseProductDetailSchema` | Full product info, including manufacturer     |
+| amount    | number                        | Quantity added to cart                        |
+| reserved  | number                        | Reserved quantity in the system for this cart |
+| available | number                        | Current stock available outside this cart     |
+
+---
+
+### ❌ Error Responses
+
+#### 401 Unauthorized
+
+```json
+{
+  "detail": "Not authenticated"
+}
+```
+
+## 🧾 Create Sale from Cart API
+
+### `POST /api/v1/sales/sale/`
+
+Finalize a sale using the current contents of the cart.
+
+- If `client_id` is provided, the sale is assigned to that client (used when a seller places the order).
+- If not provided, the sale is assigned to the authenticated user.
+
+---
+
+### 🔐 Authentication
+
+Requires Bearer Token (JWT)
+
+---
+
+### 📥 Request Body
+
+```json
+{
+  "client_id": "3f9c962a-6b71-41d2-a9e0-b98c0c245e4a"
+}
+```
+
+---
+
+### 📤 Response (201 Created)
+
+```json
+{
+  "id": "e59f2bd3-8e43-4c62-bc1b-451a2b1423df",
+  "order_number": "ORD-000124",
+  "total": 24000.0,
+  "date": "2025-04-29",
+  "status": "Preparando pedido",
+  "client": {
+    "id": "3f9c962a-6b71-41d2-a9e0-b98c0c245e4a",
+    "full_name": "Cosme Fulanito",
+    "email": "cosme@ccp.com.co",
+    "username": "cosmef",
+    "phone": "+57 3000000000",
+    "id_type": "CC",
+    "identification": "101000000000",
+    "role": "BUYER"
+  },
+  "seller": {
+    "id": "7b28fcdd-0b0c-46d4-a8cd-86c88e1e0a0e",
+    "full_name": "Wilson Ventas Quevedo",
+    "email": "wilveque@ccp.com.co",
+    "username": "wilveque",
+    "phone": "+57 2325248847",
+    "id_type": "CC",
+    "identification": "101448745887",
+    "role": "SELLER"
+  },
+  "items": [
+    {
+      "product": {
+        "id": "ae3f541e-b3b5-4cb6-a018-02f58bbd0c2e",
+        "product_code": "XYZ-001",
+        "name": "Shampoo XYZ",
+        "price": 12000.0,
+        "images": ["https://cdn.example.com/products/shampoo1.jpg"],
+        "manufacturer": {
+          "id": "b1118f0b-3bda-4d94-a823-3ddee1f7e6dc",
+          "name": "BrandX",
+          "country": "Colombia"
+        }
+      },
+      "quantity": 2,
+      "subtotal": 24000.0
+    }
+  ],
+  "deliveries": [
+    {
+      "shipping_number": "ENV-001234",
+      "license_plate": "XYZ-456",
+      "driver_name": "Carlos Gómez",
+      "warehouse": {
+        "id": "98c0e9f7-2a9e-4dcd-a9a2-c27e144ae03b",
+        "name": "Bodega Norte",
+        "location": "Bogotá, Cundinamarca"
+      },
+      "delivery_status": "Pendiente",
+      "created_at": "2025-04-29T08:00:00Z",
+      "updated_at": null
+    }
+  ]
+}
+```
+
+---
+
+## 📄 List Sales API — Final Version
+
+````markdown
+### `GET /api/v1/sales/sale/`
+
+Retrieve all sales, with optional filtering. Each sale includes optional `client` and `seller`.
+
+---
+
+### 📤 Response (200 OK)
+
+```json
+[
+  {
+    "id": "e59f2bd3-8e43-4c62-bc1b-451a2b1423df",
+    "order_number": "ORD-000124",
+    "total": 24000.00,
+    "date": "2025-04-29",
+    "status": "Preparando pedido",
+    "client": {
+      "id": "3f9c962a-6b71-41d2-a9e0-b98c0c245e4a",
+      "full_name": "Cosme Fulanito",
+      "email": "cosme@ccp.com.co",
+      "username": "cosmef",
+      "phone": "+57 3000000000",
+      "id_type": "CC",
+      "identification": "101000000000",
+      "role": "BUYER"
+    },
+    "seller": {
+      "id": "7b28fcdd-0b0c-46d4-a8cd-86c88e1e0a0e",
+      "full_name": "Wilson Ventas Quevedo",
+      "email": "wilveque@ccp.com.co",
+      "username": "wilveque",
+      "phone": "+57 2325248847",
+      "id_type": "CC",
+      "identification": "101448745887",
+      "role": "SELLER"
+    },
+    "items": [...],
+    "deliveries": [...]
+  }
+]
+```
+
+> Note: `client` and `seller` can be `null` if not set.
+
+---
+
+````

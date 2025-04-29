@@ -283,3 +283,61 @@ Authorization: Bearer <access_token>
   "detail": "You do not have permission to perform this action"
 }
 ```
+
+## 👤 Client Sign Up API
+
+### `POST /api/v1/users/clients/`
+
+Create a new client using the provided personal and contact information.
+
+---
+
+### 🔐 Authentication
+
+❌ No authentication required.
+
+---
+
+### 📥 Request Body
+
+```json
+{
+  "full_name": "Cosme Fulanito",
+  "email": "cosme@ccp.com.co",
+  "id_type": "CC",
+  "identification": "101000000000",
+  "phone": "+57 3000000000",
+  "username": "cosmef"
+}
+```
+
+| Field           | Type   | Required | Description                                |
+|------------------|--------|----------|--------------------------------------------|
+| full_name        | string | ✅       | Client’s full name                         |
+| email            | string | ✅       | Client’s email address                     |
+| id_type          | string | ✅       | Type of ID (e.g. `CC`, `CE`, `NIT`, etc.)  |
+| identification   | string | ✅       | ID number                                  |
+| phone            | string | ✅       | Phone number (e.g. with country code)      |
+| username         | string | ✅       | Username for login                         |
+
+---
+
+### 📤 Response (201 Created)
+
+```json
+{
+  "id": "83f3e840-4c9e-4c21-babc-c5aa2cb3af19",
+  "full_name": "Cosme Fulanito",
+  "email": "cosme@ccp.com.co",
+  "id_type": "CC",
+  "identification": "101000000000",
+  "phone": "+57 3000000000",
+  "username": "cosmef",
+  "role": "CLIENT"
+}
+```
+
+| Field     | Type   | Description                            |
+|-----------|--------|----------------------------------------|
+| id        | UUID   | Unique ID of the newly created client  |
+| role      | string | Always set to `CLIENT`                 |
