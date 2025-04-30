@@ -13,7 +13,7 @@ warehouse_router = APIRouter(prefix="/warehouse")
     "", response_model=schemas.WarehouseCreateResponseSchema
 )
 def create_warehouse(
-    request: schemas.WarehouseSchema, db: Session = Depends(get_db)
+    request: schemas.WarehouseRequestSchema, db: Session = Depends(get_db)
 ):
     if services.get_warehouses(db=db, warehouse_name=request.warehouse_name):
         raise HTTPException(status_code=409, detail="Warehouse already exists")

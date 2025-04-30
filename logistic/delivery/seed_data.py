@@ -1,6 +1,5 @@
 import random
 from datetime import datetime
-from typing import List
 from sqlalchemy.orm import Session
 from faker import Faker
 
@@ -17,6 +16,34 @@ fake = Faker(['es_CO'])
 fake.seed_instance(123)
 
 
+def create_pending_delivery_stops(db, products, warehouse, index):
+    list_delivery_items = []
+    for product in products:
+        delivery_item = schemas.PayloadSaleItemSchema(
+            sales_item_id=fake.uuid4(),
+            product_id=product.id,
+            warehouse_id=warehouse.warehouse_id,
+        )
+        list_delivery_items.append(delivery_item)
+
+    address = schemas.PayloadAddressSchema(
+        id=fake.uuid4(),
+        street=f"Calle {random.randint(1, 150)} #{random.randint(1, 120)}-{random.randint(1, 99)}",
+        city="Bogotá",
+        state="Bogotá D.C.",
+        postal_code="110000",
+        country="Colombia",
+    )
+    sale = schemas.PayloadSaleSchema(
+        sales_id=fake.uuid4(),
+        order_number=index + 1,
+        address=address,
+        sales_items=list_delivery_items,
+    )
+    create_delivery_stops_transaction(db, sale)
+    return sale
+
+
 def seed_delivery_data(db: Session):
     # create a fake driver
     for i in range(10):
@@ -29,46 +56,22 @@ def seed_delivery_data(db: Session):
         )
         create_driver(db, driver)
 
-    # make 3 deliveries for each warehouse (each delivery has 3 items)
-    warehouses = InventoryClient().get_warehouses()[:3]
+    warehouses = InventoryClient().get_warehouses()[:-1]
     products = SuppliersClient().get_all_products()[:3]
 
-    # create a fake list of deliveries
-    list_deliveries: List[schemas.PayloadSaleSchema] = []
+    # create a fake list of pendieng delivery stops
     for warehouse in warehouses:
         for index in range(5):
-            list_delivery_items = []
-            for product in products:
-                delivery_item = schemas.PayloadSaleItemSchema(
-                    sales_item_id=fake.uuid4(),
-                    product_id=product.id,
-                    warehouse_id=warehouse.warehouse_id,
-                )
-                list_delivery_items.append(delivery_item)
+            create_pending_delivery_stops(db, products, warehouse, index)
 
-            address = schemas.PayloadAddressSchema(
-                id=fake.uuid4(),
-                street=f"Calle {random.randint(1, 150)} #{random.randint(1, 120)}-{random.randint(1, 99)}",
-                city="Bogotá",
-                state="Bogotá D.C.",
-                postal_code="110000",
-                country="Colombia",
-            )
-            delivery = schemas.PayloadSaleSchema(
-                sales_id=fake.uuid4(),
-                order_number=index + 1,
-                address=address,
-                sales_items=list_delivery_items,
-            )
-            create_delivery_stops_transaction(db, delivery)
-            list_deliveries.append(delivery)
+    warehouse = warehouses[-1]
+    create_pending_delivery_stops(db, products, warehouse, 0)
 
-    # create a fake delivery transaction for each warehouse
+    # create a fake delivery transaction for just one warehouse
     # with a available driver and delivery date
-    for warehouse in warehouses:
-        request = schemas.DeliveryCreateRequestSchema(
-            warehouse_id=warehouse.warehouse_id,
-            delivery_date=datetime.now().date(),
-        )
+    request = schemas.DeliveryCreateRequestSchema(
+        warehouse_id=warehouse.warehouse_id,
+        delivery_date=datetime.now().date(),
+    )
 
-        create_delivery_transaction(db, request)
+    create_delivery_transaction(db, request)

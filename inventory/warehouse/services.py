@@ -6,11 +6,11 @@ from sqlalchemy import func
 
 
 def create_warehouse(
-    db: Session, warehouse: schemas.WarehouseSchema
+    db: Session, warehouse: schemas.WarehouseRequestSchema
 ) -> models.Warehouse:
     """Create a new warehouse in the database."""
     db_address = models.Address(
-        street=warehouse.street,
+        street=warehouse.address,
         city=warehouse.city,
         state=warehouse.state,
         country=warehouse.country,

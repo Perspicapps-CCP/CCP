@@ -297,7 +297,7 @@ services:
 
   logistic_broker_consumer:
     build: ./logistic
-    command: python -u start_broker_consumer.py
+    command: bash -c "./start_workers.sh"
     container_name: logistic_broker_consumer
     environment:
       DB_USER: logistic
@@ -306,6 +306,7 @@ services:
       DB_PORT: 5432
       DB_NAME: logistic_db
       BROKER_HOST: rabbitmq
+      GMAPS_API_KEY: MY_GMAPS_API_KEY
     depends_on:
       logistic_db:
         condition: service_healthy

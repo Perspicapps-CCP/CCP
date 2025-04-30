@@ -19,3 +19,10 @@ CELERY_BROKER_URL = os.getenv(
 DATABASE_URL = (
     f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
+CORS_ORIGINS = os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost,"
+    "http://localhost:4200,"
+    "https://appstaff-dot-ccp-perspicapps.uc.r.appspot.com,"
+    "*",
+).split(",")

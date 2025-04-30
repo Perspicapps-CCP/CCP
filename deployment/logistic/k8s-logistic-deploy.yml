@@ -94,7 +94,7 @@ spec:
       containers:
       - name: logistic-broker-consumer
         image: us-central1-docker.pkg.dev/ccp-perspicapps/ccp-images/logistic:latest
-        command: ["python", "-u", "start_broker_consumer.py"]
+        command: ["bash", "-c", "./start_workers.sh"]
         env:
         - name: DB_USER
           valueFrom:
@@ -131,6 +131,11 @@ spec:
             configMapKeyRef:
               name: logistic-config
               key: CREATE_DELIVERY_TOPIC
+        - name: GMAPS_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: logistic-secrets
+              key: GMAPS_API_KEY
         resources:
           requests:
             cpu: "100m"
