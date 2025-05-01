@@ -2,7 +2,8 @@ import uuid
 
 from sqlalchemy.orm import Session
 
-from .models import ClientForSeller
+from .models import ClientForSeller, ClientVisit
+from datetime import datetime
 
 
 def _basee_query(
@@ -61,3 +62,25 @@ def get_all_clients_for_seller(
     if seller_id:
         qs = qs.filter(ClientForSeller.seller_id == seller_id)
     return qs.order_by(ClientForSeller.created_at.desc()).all()
+
+
+def register_client_visit(
+    db: Session,
+    visit: ClientVisit,
+) -> ClientVisit:
+    """
+    Create a new visit for a client and update last_visited field.
+    """
+    db.add(visit)
+    db.commit()
+
+    query = _basee_query(db)
+    client_for_seller = query.filter(
+        ClientForSeller.client_id == visit.client_id
+    ).first()
+
+    if client_for_seller:
+        client_for_seller.last_visited = datetime.datetime.utcnow()
+        db.commit()
+
+    return visit

@@ -3,7 +3,8 @@ import uuid
 from sqlalchemy.orm import Session
 
 from . import crud
-from .models import ClientForSeller
+from .models import ClientForSeller, ClientVisit
+from .schemas import RegisterClientVisitSchema
 
 
 def associate_client_with_seller(
@@ -24,3 +25,15 @@ def get_all_clients_for_seller(
     Get all clients for a seller.
     """
     return crud.get_all_clients_for_seller(db, seller_id)
+
+
+def register_client_visit(
+    db: Session, client_id: uuid.UUID, visit: RegisterClientVisitSchema
+) -> ClientVisit:
+    """
+    Register a new vist for the client.
+    """
+    clientVisit = ClientVisit(
+        client_id=client_id, description=visit.description
+    )
+    return crud.register_client_visit(db, clientVisit)

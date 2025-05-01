@@ -1,7 +1,7 @@
 import datetime
 import uuid
 
-from sqlalchemy import UUID, Column, DateTime, UniqueConstraint
+from sqlalchemy import UUID, Column, DateTime, UniqueConstraint, String
 from sqlalchemy.sql import func
 
 from database import Base
@@ -47,3 +47,13 @@ class ClientForSeller(Base):
             )
             >= datetime.datetime.now()
         )
+
+
+class ClientVisit(Base):
+    __tablename__ = "client_visit"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    client_id = Column(UUID(as_uuid=True))
+    description = Column(String(500), nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())

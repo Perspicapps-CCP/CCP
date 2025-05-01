@@ -254,3 +254,39 @@ def test_was_visited_recently(
     assert data[0]["was_visited_recently"] is True
     assert data[1]["id"] == str(associations[1].id)
     assert data[1]["was_visited_recently"] is False
+
+
+def test_register_client_visit_success(
+    auth_client: TestClient, valid_payload
+):
+    payLoad = {"description": "This is a description"}
+    client_id = valid_payload["client_id"]
+    response = auth_client.post(
+        f"/api/v1/sales/sellers/clients/{client_id}/visit", json=payLoad
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert "id" in data
+    assert data["client_id"] == client_id
+    assert data["description"] == payLoad["description"]
+
+
+def test_register_client_visit_invalid_description_type(
+    auth_client: TestClient, valid_payload
+):
+    invalidPayLoad = {"description": 123}
+    client_id = valid_payload["client_id"]
+    response = auth_client.post(
+        f"/api/v1/sales/sellers/clients/{client_id}/visit",
+        json=invalidPayLoad,
+    )
+    assert response.status_code == 422
+    assert "detail" in response.json()
+
+
+def test_register_client_visit_invalid_client_id(auth_client: TestClient):
+    payLoad = {"description": "This is a description"}
+    response = auth_client.post(
+        "/api/v1/sales/sellers/clients/not-a-uuid/visit", json=payLoad
+    )
+    assert response.status_code == 422
