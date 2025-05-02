@@ -58,3 +58,16 @@ class ClientForSellerDetailSchema(BaseModel):
     updated_at: Optional[datetime]
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class RegisterClientVisitSchema(BaseModel):
+    description: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RegisterClientVisitDetailSchema(RegisterClientVisitSchema):
+    id: uuid.UUID
+    client_id: uuid.UUID
+    created_at: datetime
+    updated_at: Optional[datetime]

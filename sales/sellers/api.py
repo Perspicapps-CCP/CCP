@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from common.api import get_auth_seller
 from db_dependency import get_db
+from uuid import UUID
 
 from . import mappers, schemas, services
 
@@ -71,3 +72,40 @@ def list_clients_for_sellers(
     """
     clients_for_sellers = services.get_all_clients_for_seller(db, seller.id)
     return mappers.clients_for_sellers_to_schema(clients_for_sellers)
+
+
+@sellers_router.post(
+    "/clients/{client_id}/visit",
+    response_model=schemas.RegisterClientVisitDetailSchema,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "model": schemas.ErrorResponseSchema,
+            "description": "Bad Request",
+        }
+    },
+)
+def register_client_visit(
+    client_id: UUID,
+    payload: schemas.RegisterClientVisitSchema,
+    db: Session = Depends(get_db),
+) -> schemas.RegisterClientVisitDetailSchema:
+    """
+    Register a new client visit.
+    """
+    try:
+        visit = services.register_client_visit(
+            db=db, client_id=client_id, visit=payload
+        )
+        print(visit.client_id)
+        return mappers.visit_to_schema(visit)
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=jsonable_encoder(e.errors()),
+        )
+    except TimeoutError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Timeout error, please try again in a few minutes.",
+        )

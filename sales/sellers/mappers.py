@@ -2,8 +2,11 @@ from typing import Dict, List
 
 from rpc_clients.users_client import UsersClient
 
-from .models import ClientForSeller
-from .schemas import ClientForSellerDetailSchema
+from .models import ClientForSeller, ClientVisit
+from .schemas import (
+    ClientForSellerDetailSchema,
+    RegisterClientVisitDetailSchema,
+)
 
 
 def _client_for_seller_to_schema(
@@ -53,3 +56,15 @@ def clients_for_sellers_to_schema(
             )
         )
     return result
+
+
+def visit_to_schema(
+    visit: ClientVisit,
+) -> RegisterClientVisitDetailSchema:
+    return RegisterClientVisitDetailSchema(
+        id=visit.id,
+        client_id=visit.client_id,
+        description=visit.description,
+        created_at=visit.created_at,
+        updated_at=visit.updated_at,
+    )
