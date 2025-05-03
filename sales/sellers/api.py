@@ -108,7 +108,7 @@ async def register_client_visit(
     try:
         visit = services.register_client_visit(
             db=db, client_id=client_id, description=description
-        )        
+        )
         for attachment in attachments:
             filename = attachment.filename
             pathFile = f"client_attachments/{visit.client_id}/{filename}"

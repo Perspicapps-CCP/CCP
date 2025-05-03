@@ -15,6 +15,7 @@ import io
 
 fake = Faker()
 
+
 @pytest.fixture
 def mock_bucket():
     mock_blob = MagicMock()
@@ -22,6 +23,7 @@ def mock_bucket():
     mock_bucket.blob.return_value = mock_blob
     mock_blob.upload_from_file.return_value = None
     return mock_bucket
+
 
 @pytest.fixture
 def valid_payload():
