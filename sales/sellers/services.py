@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy.orm import Session
 
 from . import crud
-from .models import ClientForSeller, ClientVisit
+from .models import ClientForSeller, ClientVisit, ClientAttachment
 from .schemas import RegisterClientVisitSchema
 
 
@@ -28,12 +28,20 @@ def get_all_clients_for_seller(
 
 
 def register_client_visit(
-    db: Session, client_id: uuid.UUID, visit: RegisterClientVisitSchema
+    db: Session, client_id: uuid.UUID, description: str
 ) -> ClientVisit:
     """
     Register a new vist for the client.
     """
-    clientVisit = ClientVisit(
-        client_id=client_id, description=visit.description
-    )
+    clientVisit = ClientVisit(client_id=client_id, description=description)
     return crud.register_client_visit(db, clientVisit)
+
+
+def save_client_attachment(
+    db: Session, visit: uuid.UUID, pathFile: str
+) -> ClientVisit:
+    """
+    Save attached file
+    """
+    clientAttachment = ClientAttachment(visit_id=visit, path_file=pathFile)
+    return crud.save_client_attachment(db, clientAttachment)

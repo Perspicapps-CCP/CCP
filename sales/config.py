@@ -12,6 +12,7 @@ DB_PORT = os.getenv("DB_PORT", "5432")
 DB_NAME = os.getenv("DB_NAME", "sales")
 USERS_PATH = os.getenv("USERS_PATH")
 BROKER_HOST = os.getenv("BROKER_HOST", "localhost")
+GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME", "ccp-files-storage")
 CORS_ORIGINS = os.getenv(
     "CORS_ORIGINS",
     "http://localhost,"

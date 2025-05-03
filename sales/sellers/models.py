@@ -1,8 +1,16 @@
 import datetime
 import uuid
 
-from sqlalchemy import UUID, Column, DateTime, UniqueConstraint, String
+from sqlalchemy import (
+    UUID,
+    Column,
+    DateTime,
+    UniqueConstraint,
+    String,
+    ForeignKey,
+)
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 
 from database import Base
 
@@ -55,5 +63,17 @@ class ClientVisit(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     client_id = Column(UUID(as_uuid=True))
     description = Column(String(500), nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    attachments = relationship("ClientAttachment", back_populates="visit")
+
+
+class ClientAttachment(Base):
+    __tablename__ = "client_attachment"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    path_file = Column(String(500), nullable=False)
+    visit_id = Column(UUID(as_uuid=True), ForeignKey("client_visit.id"))
+    visit = relationship("ClientVisit", back_populates="attachments")
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
