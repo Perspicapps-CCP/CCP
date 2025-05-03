@@ -17,15 +17,6 @@ fake = Faker()
 
 
 @pytest.fixture
-def mock_bucket():
-    mock_blob = MagicMock()
-    mock_bucket = MagicMock()
-    mock_bucket.blob.return_value = mock_blob
-    mock_blob.upload_from_file.return_value = None
-    return mock_bucket
-
-
-@pytest.fixture
 def valid_payload():
     """
     Returns a valid payload for associating a client with a seller.
@@ -268,7 +259,7 @@ def test_was_visited_recently(
 
 
 def test_register_client_visit_success(
-    auth_client: TestClient, valid_payload
+    auth_client: TestClient, mock_storage_bucket: MagicMock, valid_payload
 ):
 
     file_content = b"test file content"
@@ -283,6 +274,7 @@ def test_register_client_visit_success(
     )
 
     assert response.status_code == 201
+    mock_storage_bucket.blob.assert_called_once()
     json_data = response.json()
     assert "id" in json_data
 
