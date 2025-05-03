@@ -45,6 +45,16 @@ spec:
               key: DB_NAME
         - name: PGDATA
           value: /var/lib/postgresql/data/pgdata
+        - name: GCS_BUCKET_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: sales-config
+              key: GCS_BUCKET_NAME
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          valueFrom:
+            configMapKeyRef:
+              name: sales-config
+              key: GOOGLE_APPLICATION_CREDENTIALS
         resources:
           requests:
             memory: "256Mi"

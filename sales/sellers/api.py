@@ -1,8 +1,17 @@
-from typing import Dict, List
+from typing import Dict, List, Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    status,
+    UploadFile,
+    File,
+    Form,
+)
 from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
+from storage_dependency import get_storage_bucket
 from sqlalchemy.orm import Session
 
 from common.api import get_auth_seller
@@ -10,6 +19,7 @@ from db_dependency import get_db
 from uuid import UUID
 
 from . import mappers, schemas, services
+from google.cloud import storage
 
 sellers_router = APIRouter(prefix="/sellers")
 
@@ -85,9 +95,11 @@ def list_clients_for_sellers(
         }
     },
 )
-def register_client_visit(
+async def register_client_visit(
     client_id: UUID,
-    payload: schemas.RegisterClientVisitSchema,
+    description: Annotated[str, Form(...)],
+    attachments: Annotated[List[UploadFile], File(...)],
+    bucket: storage.Bucket = Depends(get_storage_bucket),
     db: Session = Depends(get_db),
 ) -> schemas.RegisterClientVisitDetailSchema:
     """
@@ -95,9 +107,16 @@ def register_client_visit(
     """
     try:
         visit = services.register_client_visit(
-            db=db, client_id=client_id, visit=payload
+            db=db, client_id=client_id, description=description
         )
-        print(visit.client_id)
+        for attachment in attachments:
+            filename = attachment.filename
+            pathFile = f"client_attachments/{visit.client_id}/{filename}"
+            blob = bucket.blob(pathFile)
+            blob.upload_from_file(attachment.file)
+            services.save_client_attachment(
+                db=db, visit=visit.id, pathFile=pathFile
+            )
         return mappers.visit_to_schema(visit)
     except ValidationError as e:
         raise HTTPException(
