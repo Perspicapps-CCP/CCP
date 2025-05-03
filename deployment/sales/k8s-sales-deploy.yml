@@ -45,16 +45,6 @@ spec:
               key: DB_NAME
         - name: PGDATA
           value: /var/lib/postgresql/data/pgdata
-        - name: GCS_BUCKET_NAME
-          valueFrom:
-            configMapKeyRef:
-              name: sales-config
-              key: GCS_BUCKET_NAME
-        - name: GOOGLE_APPLICATION_CREDENTIALS
-          valueFrom:
-            configMapKeyRef:
-              name: sales-config
-              key: GOOGLE_APPLICATION_CREDENTIALS
         resources:
           requests:
             memory: "256Mi"
@@ -79,19 +69,10 @@ spec:
         volumeMounts:
         - name: sales-data
           mountPath: /var/lib/postgresql/data
-        - name: gcp-key-volume
-          mountPath: /etc/gcp
-          readOnly: true
       volumes:
       - name: sales-data
         persistentVolumeClaim:
           claimName: sales-pvc
-      - name: gcp-key-volume
-        secret:
-          secretName: gcp-bucket-sa-key
-          items:
-          - key: service-account-key.json
-            path: service-account-key.json
 ---
 # sales Broker Consumer
 apiVersion: apps/v1
@@ -222,6 +203,20 @@ spec:
             configMapKeyRef:
               name: sales-config
               key: RESERVE_ITEMS_TOPIC
+        - name: GCS_BUCKET_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: sales-config
+              key: GCS_BUCKET_NAME
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          valueFrom:
+            configMapKeyRef:
+              name: sales-config
+              key: GOOGLE_APPLICATION_CREDENTIALS
+        volumeMounts:
+        - name: gcp-key-volume
+          mountPath: /etc/gcp
+          readOnly: true
         livenessProbe:
           httpGet:
             path: /api/v1/sales/health
@@ -230,3 +225,10 @@ spec:
           periodSeconds: 5
           timeoutSeconds: 1
           failureThreshold: 2
+      volumes:
+      - name: gcp-key-volume
+        secret:
+          secretName: gcp-bucket-sa-key
+          items:
+          - key: service-account-key.json
+            path: service-account-key.json
