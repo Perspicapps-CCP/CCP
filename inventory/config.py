@@ -19,6 +19,7 @@ CORS_ORIGINS = os.getenv(
     "CORS_ORIGINS",
     "http://localhost,"
     "http://localhost:4200,"
+    "http://127.0.0.1:5500"
     "https://appstaff-dot-ccp-perspicapps.uc.r.appspot.com,"
     "*",
 ).split(",")

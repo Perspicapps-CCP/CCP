@@ -1,4 +1,6 @@
+from typing import List, Tuple
 from uuid import UUID
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from warehouse.models import Warehouse
@@ -112,3 +114,29 @@ def get_list_all_products(db: Session) -> list[models.Stock]:
     """Get stock list by filter params."""
     db_stock = db.query(models.Stock)
     return db_stock.all()
+
+
+def get_stock_aggregated(db: Session) -> List[Tuple[UUID, int]]:
+    """
+    Get a catalog of aggregated product stock across all warehouses.
+    """
+    db_stock = db.query(
+        models.Stock.product_id,
+        func.sum(models.Stock.quantity).label("quantity"),
+    ).group_by(models.Stock.product_id)
+    return db_stock.all()
+
+
+def get_product_aggregated(db: Session, product_id: UUID) -> Tuple[UUID, int]:
+    """
+    Get a product stock aggregated across all warehouses.
+    """
+    db_stock = (
+        db.query(
+            models.Stock.product_id,
+            func.sum(models.Stock.quantity).label("quantity"),
+        )
+        .filter(models.Stock.product_id == product_id)
+        .group_by(models.Stock.product_id)
+    )
+    return db_stock.first()

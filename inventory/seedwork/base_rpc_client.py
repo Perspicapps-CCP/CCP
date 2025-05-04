@@ -1,20 +1,20 @@
+import pika
 import json
 import time
 import uuid
 from typing import Dict, List
 
-import pika
-
-from config import BROKER_HOST
+from seedwork.base_publisher import BasePublisher
 
 
-class BaseRPCClient:
+class BaseRPCClient(BasePublisher):
 
     def __init__(self, timeout: int = 30):
-        self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host=BROKER_HOST)
-        )
-        self.channel = self.connection.channel()
+        super().__init__()
+        self.response = None
+        self.corr_id = None
+        self.timeout = timeout
+
         result = self.channel.queue_declare(queue="", exclusive=True)
         self.callback_queue = result.method.queue
         self.channel.basic_consume(
@@ -22,9 +22,6 @@ class BaseRPCClient:
             on_message_callback=self.on_response,
             auto_ack=True,
         )
-        self.response = None
-        self.corr_id = None
-        self.timeout = timeout
 
     def on_response(
         self,

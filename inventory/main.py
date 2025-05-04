@@ -1,4 +1,5 @@
 # Main application
+from contextlib import asynccontextmanager
 import sys
 
 from fastapi import APIRouter, Depends, FastAPI
@@ -10,11 +11,28 @@ import schemas
 from database import Base, SessionLocal, engine
 from db_dependency import get_db
 from stock.api import stock_router
+from stock.events import setup_db_events
 from warehouse.api import warehouse_router
 from warehouse.seed_data import seed_warehouses
 
-app = FastAPI()
 
+def seed_database(db: Session = None):
+    db = db or SessionLocal()
+    try:
+        seed_warehouses(db)
+    finally:
+        db.close()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Load
+    setup_db_events()
+    yield
+    # Clean up
+
+
+app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=config.CORS_ORIGINS,
@@ -28,22 +46,10 @@ inventory_router.include_router(stock_router)
 inventory_router.include_router(warehouse_router)
 
 
-def seed_database(db: Session = None):
-    db = db or SessionLocal()
-    try:
-        seed_warehouses(db)
-    finally:
-        db.close()
-
-
 if "pytest" not in sys.modules:
     Base.metadata.create_all(bind=engine)
     # Seeding the database with initial data
     seed_database()
-
-
-if "pytest" not in sys.modules:
-    Base.metadata.create_all(bind=engine)
 
 
 # Rest the database

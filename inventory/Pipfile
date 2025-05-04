@@ -15,6 +15,7 @@ pika = "*"
 pandas = "*"
 python-multipart = "*"
 keyboard = "*"
+python-socketio= "*"
 
 [dev-packages]
 black = "*"
