@@ -1,4 +1,3 @@
-
 from faker import Faker
 from sqlalchemy.orm import Session
 
