@@ -1,7 +1,6 @@
 import uuid
 
 import faker
-
 from sales import mappers
 from sales.models import Sale, SaleItem
 from sales.schemas import SaleDetailSchema
@@ -18,6 +17,7 @@ def test_sale_to_schema():
     sale = Sale(
         id=sale_id,
         seller_id=uuid.uuid4(),
+        client_id=uuid.uuid4(),
         order_number=fake.random_int(min=1000, max=9999),
         address_id=uuid.uuid4(),
         total_value=fake.pydecimal(
@@ -61,3 +61,6 @@ def test_sale_to_schema():
         assert item.quantity == sale.items[i].quantity
         assert item.unit_price == sale.items[i].unit_price
         assert item.total_value == sale.items[i].total_value
+    assert result.client.id == sale.client_id
+    assert result.seller.id == sale.seller_id
+    assert result.address.id == result.client.address.id

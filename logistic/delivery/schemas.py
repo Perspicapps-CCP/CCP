@@ -1,7 +1,7 @@
 # Fite to validate the data that is being sent and recieved to the API
 import datetime
-from enum import Enum
 import uuid
+from enum import Enum
 from typing import List, Optional, Union
 
 from pydantic import BaseModel, Field, field_validator
@@ -25,7 +25,7 @@ class DeliveryCreateRequestSchema(BaseModel):
     delivery_date: datetime.date
     warehouse_id: uuid.UUID
 
-    @field_validator('delivery_date', mode='before')
+    @field_validator("delivery_date", mode="before")
     def validate_date(cls, v):
         if isinstance(v, datetime.date):
             return v
@@ -65,7 +65,7 @@ class DriverCreateSchema(BaseModel):
         description="Phone number as string or integer"
     )
 
-    @field_validator('phone_number')
+    @field_validator("phone_number")
     def validate_phone(cls, v):
         phone_str = str(v)
         if not phone_str.isdigit():
@@ -94,6 +94,7 @@ class PayloadSaleItemSchema(BaseModel):
     sales_item_id: uuid.UUID
     product_id: uuid.UUID
     warehouse_id: uuid.UUID
+    quantity: int
 
 
 class PayloadSaleSchema(BaseModel):
@@ -109,7 +110,7 @@ class DeliverySaleStatus(str, Enum):
 
 
 class DeliverySaleResponseSchema(BaseModel):
-    sale_id: uuid.UUID
+    sale_id: Optional[uuid.UUID]
     status: DeliverySaleStatus
     message: str
 

@@ -1,6 +1,7 @@
-import pytest
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
+
+import pytest
 from faker import Faker
 
 from rpc_clients.schemas import ProductSchema
@@ -9,6 +10,7 @@ from rpc_clients.suppliers_client import SuppliersClient
 fake = Faker()
 
 
+@pytest.mark.skip_mock_suppliers
 class TestSuppliersClient:
 
     @pytest.fixture
@@ -23,7 +25,7 @@ class TestSuppliersClient:
         """
         Fixture to create a SuppliersClient instance with a mocked call_broker.
         """
-        with patch('pika.BlockingConnection') as mock_connection:
+        with patch("pika.BlockingConnection") as mock_connection:
             mock_channel = MagicMock()
             mock_connection.return_value.channel.return_value = mock_channel
             client = SuppliersClient()
@@ -89,11 +91,11 @@ class TestSuppliersClient:
         for index, product in enumerate(result):
             assert isinstance(product, ProductSchema)
             response_product = products_response[index]
-            assert str(product.id) == response_product['id']
-            assert product.product_code == response_product['product_code']
-            assert product.name == response_product['name']
-            assert product.price == response_product['price']
-            assert product.images == response_product['images']
+            assert str(product.id) == response_product["id"]
+            assert product.product_code == response_product["product_code"]
+            assert product.name == response_product["name"]
+            assert product.price == response_product["price"]
+            assert product.images == response_product["images"]
 
     def test_get_product_calls_get_products(
         self, suppliers_client: SuppliersClient, mock_call_broker: MagicMock
@@ -122,9 +124,9 @@ class TestSuppliersClient:
         # Assert the result is a ProductSchema object
         assert isinstance(result[0], ProductSchema)
         assert result[0].id == product_id
-        assert result[0].product_code == product_reponse['product_code']
-        assert result[0].name == product_reponse['name']
-        assert result[0].price == product_reponse['price']
+        assert result[0].product_code == product_reponse["product_code"]
+        assert result[0].name == product_reponse["name"]
+        assert result[0].price == product_reponse["price"]
 
     def test_get_product_raises_value_error_if_product_not_found(
         self, suppliers_client: SuppliersClient, mock_call_broker: MagicMock

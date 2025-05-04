@@ -1,9 +1,10 @@
 # Fite to validate the data that is being sent and recieved to the API
 import datetime
-from decimal import Decimal
 import uuid
-from fastapi import HTTPException
+from decimal import Decimal
 from typing import List, Optional
+
+from fastapi import HTTPException
 from pydantic import BaseModel, field_validator
 
 
@@ -44,7 +45,7 @@ class StockRequestSchema(BaseModel):
     product_id: uuid.UUID
     quantity: int
 
-    @field_validator('quantity', mode='before')
+    @field_validator("quantity", mode="before")
     def validate_quantity(cls, v):
         if v < 0:
             raise HTTPException(
@@ -85,11 +86,34 @@ class AggrStockResponseSchema(BaseModel):
     quantity: int
 
 
-class EventDataSchema(BaseModel):
+class AllocateStockItemSchema(BaseModel):
     product_id: uuid.UUID
     quantity: int
+
+
+class EventDataSchema(AllocateStockItemSchema): ...
 
 
 class EventSchema(BaseModel):
     action: str
     data: EventDataSchema
+
+
+class AllocateStockSchema(BaseModel):
+    """
+    Schema for reserving stock.
+    """
+
+    order_number: int
+    sale_id: uuid.UUID
+    items: List[AllocateStockItemSchema]
+
+
+class AllocateStockResponseSchema(BaseModel):
+    """
+    Schema for reserving stock response.
+    """
+
+    order_number: int
+    sale_id: uuid.UUID
+    items: List[StockResponseSchema]

@@ -1,14 +1,18 @@
 import random
-from sqlalchemy.orm import Session
+
 from faker import Faker
+from sqlalchemy.orm import Session
 
 from warehouse.models import Address, Warehouse
 
-fake = Faker(['es_CO'])
+fake = Faker(["es_CO"])
 fake.seed_instance(123)
 
 
 def seed_warehouses(db: Session) -> None:
+    if db.query(Warehouse).count() > 0:
+        print("Warehouses already seeded")
+        return
     try:
         warehouse_address = [
             {"addr": "Cra 116a #81-16", "lat": 4.725474, "lng": -74.121126},
@@ -34,7 +38,7 @@ def seed_warehouses(db: Session) -> None:
             db_warehouse = Warehouse(
                 name=f"CCP Bodega Numero {i+1}",
                 address_id=db_address.id,
-                phone=''.join([str(random.randint(0, 9)) for _ in range(10)]),
+                phone="".join([str(random.randint(0, 9)) for _ in range(10)]),
             )
             db.add(db_warehouse)
             db.commit()

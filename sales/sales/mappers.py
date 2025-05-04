@@ -8,7 +8,7 @@ from rpc_clients.suppliers_client import SuppliersClient
 from rpc_clients.users_client import UsersClient
 
 from .models import Sale
-from .schemas import AddressSchema, SaleDetailSchema, SaleItemSchema
+from .schemas import SaleDetailSchema, SaleItemSchema
 
 fake = faker.Faker()
 
@@ -16,24 +16,21 @@ fake = faker.Faker()
 def _sale_to_schema(
     sale: Sale,
     sellers: Dict[UUID, UserSchema],
+    clients: Dict[UUID, UserSchema],
     products: Dict[UUID, ProductSchema],
 ) -> SaleDetailSchema:
     """
     Map a Sale model to a SaleDetailSchema.
     """
 
+    client = clients.get(sale.client_id)
+
     return SaleDetailSchema(
         id=sale.id,
         seller=sellers.get(sale.seller_id),
+        client=client,
         order_number=sale.order_number,
-        address=AddressSchema(
-            id=sale.address_id,
-            street=fake.street_address(),
-            city=fake.city(),
-            state=fake.state(),
-            country=fake.country(),
-            postal_code=fake.postalcode(),
-        ),
+        address=client.address if client else None,
         total_value=sale.total_value,
         currency=sale.currency,
         created_at=sale.created_at,
@@ -50,6 +47,7 @@ def _sale_to_schema(
             )
             for item in sale.items
         ],
+        deliveries=[],
     )
 
 
@@ -57,19 +55,7 @@ def sale_to_schema(sale: Sale) -> SaleDetailSchema:
     """
     Map a Sale model to a SaleDetailSchema.
     """
-    sellers = UsersClient().get_sellers(
-        [sale.seller_id],
-    )
-    products = SuppliersClient().get_products(
-        [item.product_id for item in sale.items],
-    )
-    sellers = {seller.id: seller for seller in sellers}
-    products = {product.id: product for product in products}
-    return _sale_to_schema(
-        sale,
-        sellers,
-        products,
-    )
+    return sales_to_schema([sale])[0]
 
 
 def sales_to_schema(sales: List[Sale]) -> List[SaleDetailSchema]:
@@ -82,12 +68,17 @@ def sales_to_schema(sales: List[Sale]) -> List[SaleDetailSchema]:
     products = SuppliersClient().get_products(
         list({item.product_id for sale in sales for item in sale.items}),
     )
+    clients = UsersClient().get_clients(
+        list({sale.client_id for sale in sales}),
+    )
     sellers = {seller.id: seller for seller in sellers}
     products = {product.id: product for product in products}
+    clients = {client.id: client for client in clients}
     return [
         _sale_to_schema(
             sale,
             sellers,
+            clients,
             products,
         )
         for sale in sales

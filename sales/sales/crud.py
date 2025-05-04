@@ -54,3 +54,37 @@ def get_sale_by_id(db: Session, sale_id: UUID) -> Sale:
         .filter(Sale.id == sale_id)
         .first()
     )
+
+
+def create_sale(db: Session, sale: Sale) -> Sale:
+    """
+    Create a new sale in the database.
+
+    Args:
+        db (Session): The database session.
+        sale (Sale): The Sale object to create.
+
+    Returns:
+        Sale: The created Sale object.
+    """
+    db.add(sale)
+    db.flush()
+    db.refresh(sale)
+    return sale
+
+
+def create_sale_item(db: Session, sale_item: Sale) -> Sale:
+    """
+    Create a new sale item in the database.
+
+    Args:
+        db (Session): The database session.
+        sale_item (Sale): The SaleItem object to create.
+
+    Returns:
+        Sale: The created SaleItem object.
+    """
+    db.add(sale_item)
+    db.flush()
+    db.refresh(sale_item)
+    return sale_item

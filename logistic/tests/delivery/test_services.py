@@ -1,11 +1,11 @@
 import datetime
 import random
-from typing import List
 import uuid
-from faker import Faker
-from delivery import models, services
-from delivery import schemas
+from typing import List
+
+from delivery import models, schemas, services
 from delivery.schemas import DriverCreateSchema
+from faker import Faker
 
 fake = Faker()
 fake.seed_instance(123)
@@ -234,6 +234,7 @@ def test_create_delivery_stops_transaction_success(db_session):
         sales_item_id=fake.uuid4(),
         product_id=fake.uuid4(),
         warehouse_id=fake.uuid4(),
+        quantity=fake.random_int(min=1, max=10),
     )
 
     address = schemas.PayloadAddressSchema(
@@ -264,6 +265,7 @@ def test_create_duplicate_delivery_stops_transaction_success(db_session):
         sales_item_id=fake.uuid4(),
         product_id=fake.uuid4(),
         warehouse_id=fake.uuid4(),
+        quantity=fake.random_int(min=1, max=10),
     )
 
     address = schemas.PayloadAddressSchema(
@@ -286,7 +288,7 @@ def test_create_duplicate_delivery_stops_transaction_success(db_session):
     result = services.create_delivery_stops_transaction(db_session, delivery)
 
     # Assert
-    assert result is True
+    assert result is False
 
 
 def test_create_delivery_transaction_success(db_session):

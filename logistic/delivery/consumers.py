@@ -1,19 +1,20 @@
 import logging
 from typing import Dict
 
-from database import SessionLocal
 from delivery.schemas import (
     DeliverySaleResponseSchema,
     DeliverySaleStatus,
     PayloadSaleSchema,
 )
 from delivery.services import create_delivery_stops_transaction
-from seedwork.base_consumer import BaseConsumer
+from pydantic import ValidationError
 
+from database import SessionLocal
+from seedwork.base_consumer import BaseConsumer
 
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     force=True,
 )
 logger = logging.getLogger(__name__)
@@ -37,7 +38,7 @@ class GetProductsConsumer(BaseConsumer):
         db = SessionLocal()
         try:
             logger.info(f"Processing payload: {payload}")
-            sale_payload = PayloadSaleSchema.model_validate_json(payload)
+            sale_payload = PayloadSaleSchema.model_validate(payload)
             result = create_delivery_stops_transaction(db, sale_payload)
 
             if result:
@@ -54,7 +55,13 @@ class GetProductsConsumer(BaseConsumer):
                     status=DeliverySaleStatus.ERROR,
                     message="Failed to create delivery items",
                 ).model_dump_json()
-
+        except ValidationError as e:
+            logger.exception(f"Error processing payload: {str(e)}")
+            return DeliverySaleResponseSchema(
+                sale_id=None,
+                status=DeliverySaleStatus.ERROR,
+                message=str(e.errors()),
+            ).model_dump_json()
         except Exception as e:
             logger.exception(f"Error processing payload: {str(e)}")
             return DeliverySaleResponseSchema(

@@ -1,4 +1,5 @@
 import uuid
+from itertools import cycle
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -20,6 +21,9 @@ def seed_sales(db: Session):
         return
     # Bring all sellers
     sellers = UsersClient().get_all_sellers()
+    # Bring all clients
+    clients = UsersClient().get_all_clients()
+    cycle_clients = cycle(clients)
     # Bring all products
     products = SuppliersClient().get_all_products()[:3]
 
@@ -30,10 +34,12 @@ def seed_sales(db: Session):
     # Create one sale for each seller with two items
     for i, seller in enumerate(sellers):
         # Create sale
+        client = next(cycle_clients)
         sale_uuid = uuid.uuid4()
         sale = Sale(
             id=sale_uuid,
             seller_id=seller.id,
+            client_id=client.id,
             address_id=uuid.uuid4(),
             total_value=total,
             currency="USD",
