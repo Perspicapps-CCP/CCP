@@ -5,6 +5,8 @@ import uuid
 import pytest
 from faker import Faker
 from fastapi.testclient import TestClient
+
+from rpc_clients import schemas as rpc_schemas
 from rpc_clients.suppliers_client import SuppliersClient
 from stock.models import Stock
 from warehouse.models import Warehouse
@@ -553,3 +555,49 @@ def test_get_stock_failed_with_invalid_product_format(
 
     # Assert
     assert response.status_code == 422
+
+
+def test_get_aggregated_stock_success(
+    client: TestClient,
+    db_session,
+    mock_suppliers_client,
+) -> None:
+    """
+    Test getting aggregated stock.
+    """
+    # Arrange
+    dummy_warehouse = mock_warehouse_db()
+    db_session.add(dummy_warehouse)
+    db_session.flush()
+    db_session.refresh(dummy_warehouse)
+
+    dummy_stock = mock_stock_db(dummy_warehouse)
+    db_session.add(dummy_stock)
+    db_session.commit()
+    db_session.refresh(dummy_stock)
+
+    dummy_product = rpc_schemas.ProductSchema(
+        id=dummy_stock.product_id,
+        name="Unknown Product",
+        product_code="N/A",
+        manufacturer=rpc_schemas.ManufacturerSchema(
+            id=uuid.UUID(int=0), manufacturer_name="Unknown"
+        ),
+        price=0.0,
+        images=["https://example.com/default_image.png"],
+    )
+
+    mock_suppliers_client.get_products.return_value = [dummy_product]
+    client.app.dependency_overrides[SuppliersClient] = (
+        lambda: mock_suppliers_client
+    )
+
+    # Act
+    response = client.get("/inventory/stock/catalog")
+
+    # Assert
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+    assert len(response.json()) > 0
+    assert "quantity" in response.json()[0]
+    assert "product_id" in response.json()[0]

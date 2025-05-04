@@ -20,6 +20,7 @@ python-socketio= "*"
 [dev-packages]
 black = "*"
 pytest = "*"
+pytest-asyncio = "*"
 faker = "*"
 coverage = "*"
 pytest-cov = "*"
