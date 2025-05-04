@@ -1,6 +1,8 @@
 import socketio
 import logging
 
+import config
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -8,10 +10,9 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
-
 sio = socketio.AsyncServer(
     async_mode='asgi',
-    cors_allowed_origins=["*", "http://127.0.0.1:5500"],
+    cors_allowed_origins=config.CORS_ORIGINS,
     transports=["websocket", "polling"],
 )
 

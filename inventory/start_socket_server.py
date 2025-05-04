@@ -1,9 +1,12 @@
 from starlette.applications import Starlette
 from starlette.routing import Route, Mount
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 import logging
 import os
 
+import config
 from stock.websocket import sio_app
 from stock.consumers import _stockChangesConsumer
 
@@ -52,10 +55,20 @@ routes = [
     Mount("/inventory/ws", app=sio_app),
 ]
 
+middleware = [
+    Middleware(
+        CORSMiddleware,
+        allow_origins=config.CORS_ORIGINS,
+        allow_methods=["GET", "POST"],
+        allow_headers=["*"],
+    )
+]
+
 
 app = Starlette(
     debug=os.getenv("DEBUG", "false").lower() == "true",
     routes=routes,
+    middleware=middleware,
     on_startup=[on_startup],
     on_shutdown=[on_shutdown],
 )

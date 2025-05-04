@@ -10,6 +10,7 @@ class GetStocksEventsConsumer(BaseConsumer):
         super().__init__(queue="", auto_delete=True, durable=True)
         self.should_stop = False
         self.consumer_thread = None
+        self.event_thread = None
         self.exchange_name = "inventory_events"
         self.exchange_type = "fanout"
         self.exclusive = True
@@ -24,7 +25,6 @@ class GetStocksEventsConsumer(BaseConsumer):
             durable=self.durable,
         )
 
-        # Cola exclusiva para este consumidor
         result = self.channel.queue_declare(queue='', exclusive=self.exclusive)
         self.queue_name = result.method.queue
 
@@ -33,7 +33,6 @@ class GetStocksEventsConsumer(BaseConsumer):
             queue=self.queue_name,
         )
 
-        # Configurar el callback de consumo
         self.channel.basic_consume(
             queue=self.queue_name,
             on_message_callback=self.callback,
@@ -43,30 +42,29 @@ class GetStocksEventsConsumer(BaseConsumer):
         return self
 
     def process_payload(self, payload: Dict) -> None:
-        """Callback cuando se recibe un mensaje"""
+        """
+        Process the payload received from RabbitMQ and emit the event to the WebSocket.
+        """
         try:
-            print(
-                f"Enviando mensaje al sockets. Accion: {payload.get('action')}"
-            )
+            if not payload or 'data' not in payload:
+                print("Received invalid payload format")
+                return
+
             asyncio.run_coroutine_threadsafe(
                 broadcast_inventory_update(
                     payload.get('data')["product_id"], payload.get('data')
                 ),
                 self.loop,
             )
-            print("Enviando completado..!!")
+            print("Emmit socket event finished..!!")
 
         except Exception as e:
-            print(f"Error procesando mensaje: {str(e)}")
+            print(f"Error emmiting message: {str(e)}")
 
     def start(self):
-
-        def run_event_loop():
+        def event_loop():
             asyncio.set_event_loop(self.loop)
             self.loop.run_forever()
-
-        loop_thread = threading.Thread(target=run_event_loop, daemon=True)
-        loop_thread.start()
 
         def consume_loop():
             try:
@@ -80,6 +78,8 @@ class GetStocksEventsConsumer(BaseConsumer):
                     self.setup_connection()
                     self.start()
 
+        self.event_thread = threading.Thread(target=event_loop, daemon=True)
+        self.event_thread.start()
         self.consumer_thread = threading.Thread(
             target=consume_loop, daemon=True
         )
@@ -91,7 +91,8 @@ class GetStocksEventsConsumer(BaseConsumer):
             self.channel.stop_consuming()
         if self.connection:
             self.connection.close()
-        self.loop.call_soon_threadsafe(self.loop.stop)
+        if self.loop and self.loop.is_running():
+            self.loop.call_soon_threadsafe(self.loop.stop)
 
 
 _stockChangesConsumer = GetStocksEventsConsumer()
