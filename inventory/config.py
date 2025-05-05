@@ -12,13 +12,11 @@ DB_PORT = os.getenv("DB_PORT", "5432")
 DB_NAME = os.getenv("DB_NAME", "inventory_db")
 USERS_PATH = os.getenv("USERS_PATH")
 BROKER_HOST = os.getenv("BROKER_HOST", "localhost")
-CREATE_DELIVERY_TOPIC = os.getenv(
-    "CREATE_DELIVERY_TOPIC", "rpc_create_delivery"
-)
 CORS_ORIGINS = os.getenv(
     "CORS_ORIGINS",
     "http://localhost,"
     "http://localhost:4200,"
+    "http://127.0.0.1:5500,"
     "https://appstaff-dot-ccp-perspicapps.uc.r.appspot.com,"
     "*",
 ).split(",")

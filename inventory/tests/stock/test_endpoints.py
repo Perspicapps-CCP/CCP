@@ -5,6 +5,8 @@ import uuid
 import pytest
 from faker import Faker
 from fastapi.testclient import TestClient
+
+from rpc_clients import schemas as rpc_schemas
 from rpc_clients.suppliers_client import SuppliersClient
 from stock.models import Stock
 from warehouse.models import Warehouse
@@ -130,7 +132,7 @@ def test_upload_inventory_success_update_stock(
 
 
 def test_upload_inventory_failed_warehouse_not_exist(
-    client: TestClient, db_session
+    client: TestClient, db_session, mock_suppliers_client
 ) -> None:
     # Arrange
     dummy_warehouse = mock_warehouse_db()
@@ -140,6 +142,10 @@ def test_upload_inventory_failed_warehouse_not_exist(
 
     dummy_stock = mock_stock_dict(dummy_warehouse)
     dummy_stock["warehouse_id"] = str(fake.uuid4())
+
+    client.app.dependency_overrides[SuppliersClient] = (
+        lambda: mock_suppliers_client
+    )
 
     # Act
     response = client.post(
@@ -178,7 +184,7 @@ def test_upload_inventory_failed_product_not_exist(
 
 
 def test_upload_inventory_failed_quantity_negative(
-    client: TestClient, db_session
+    client: TestClient, db_session, mock_suppliers_client
 ) -> None:
     # Arrange
     dummy_warehouse = mock_warehouse_db()
@@ -188,6 +194,10 @@ def test_upload_inventory_failed_quantity_negative(
 
     dummy_stock = mock_stock_dict(dummy_warehouse)
     dummy_stock["quantity"] = -1
+
+    client.app.dependency_overrides[SuppliersClient] = (
+        lambda: mock_suppliers_client
+    )
 
     # Act
     response = client.post(
@@ -200,7 +210,7 @@ def test_upload_inventory_failed_quantity_negative(
 
 
 def test_upload_inventory_failed_warehouse_invalid_format(
-    client: TestClient, db_session
+    client: TestClient, db_session, mock_suppliers_client
 ) -> None:
     # Arrange
     dummy_warehouse = mock_warehouse_db()
@@ -210,6 +220,10 @@ def test_upload_inventory_failed_warehouse_invalid_format(
 
     dummy_stock = mock_stock_dict(dummy_warehouse)
     dummy_stock["warehouse_id"] = fake.iana_id()
+
+    client.app.dependency_overrides[SuppliersClient] = (
+        lambda: mock_suppliers_client
+    )
 
     # Act
     response = client.post(
@@ -222,7 +236,7 @@ def test_upload_inventory_failed_warehouse_invalid_format(
 
 
 def test_upload_inventory_failed_product_invalid_format(
-    client: TestClient, db_session
+    client: TestClient, db_session, mock_suppliers_client
 ) -> None:
     # Arrange
     dummy_warehouse = mock_warehouse_db()
@@ -232,6 +246,10 @@ def test_upload_inventory_failed_product_invalid_format(
 
     dummy_stock = mock_stock_dict(dummy_warehouse)
     dummy_stock["product_id"] = fake.iana_id()
+
+    client.app.dependency_overrides[SuppliersClient] = (
+        lambda: mock_suppliers_client
+    )
 
     # Act
     response = client.post(
@@ -288,7 +306,9 @@ def test_upload_inventory_csv_success(
 
 
 def test_upload_inventory_csv_failed_warehouse_invalid_format(
-    client: TestClient, csv_dummy_file: bytes
+    client: TestClient,
+    csv_dummy_file: bytes,
+    mock_suppliers_client,
 ) -> None:
     """
     Test uploading a CSV file with inventory data.
@@ -303,6 +323,10 @@ def test_upload_inventory_csv_failed_warehouse_invalid_format(
     }
     data = {"warehouse_id": fake.iana_id()}
 
+    client.app.dependency_overrides[SuppliersClient] = (
+        lambda: mock_suppliers_client
+    )
+
     # Act
     response = client.post(
         "/inventory/stock/csv",
@@ -315,7 +339,9 @@ def test_upload_inventory_csv_failed_warehouse_invalid_format(
 
 
 def test_upload_inventory_csv_failed_warehouse_not_exist(
-    client: TestClient, csv_dummy_file: bytes
+    client: TestClient,
+    csv_dummy_file: bytes,
+    mock_suppliers_client,
 ) -> None:
     """
     Test uploading a CSV file with unknow warehouse.
@@ -330,6 +356,10 @@ def test_upload_inventory_csv_failed_warehouse_not_exist(
     }
     data = {"warehouse_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"}
 
+    client.app.dependency_overrides[SuppliersClient] = (
+        lambda: mock_suppliers_client
+    )
+
     # Act
     response = client.post(
         "/inventory/stock/csv",
@@ -342,7 +372,10 @@ def test_upload_inventory_csv_failed_warehouse_not_exist(
 
 
 def test_upload_inventory_csv_failed_invalid_file_format(
-    client: TestClient, csv_dummy_file: bytes, db_session
+    client: TestClient,
+    csv_dummy_file: bytes,
+    db_session,
+    mock_suppliers_client,
 ) -> None:
     """
     Test uploading a CSV file with invalid file format.
@@ -361,6 +394,10 @@ def test_upload_inventory_csv_failed_invalid_file_format(
         )
     }
     data = {"warehouse_id": str(dummy_warehouse.id)}
+
+    client.app.dependency_overrides[SuppliersClient] = (
+        lambda: mock_suppliers_client
+    )
 
     # Act
     response = client.post(
@@ -518,3 +555,49 @@ def test_get_stock_failed_with_invalid_product_format(
 
     # Assert
     assert response.status_code == 422
+
+
+def test_get_aggregated_stock_success(
+    client: TestClient,
+    db_session,
+    mock_suppliers_client,
+) -> None:
+    """
+    Test getting aggregated stock.
+    """
+    # Arrange
+    dummy_warehouse = mock_warehouse_db()
+    db_session.add(dummy_warehouse)
+    db_session.flush()
+    db_session.refresh(dummy_warehouse)
+
+    dummy_stock = mock_stock_db(dummy_warehouse)
+    db_session.add(dummy_stock)
+    db_session.commit()
+    db_session.refresh(dummy_stock)
+
+    dummy_product = rpc_schemas.ProductSchema(
+        id=dummy_stock.product_id,
+        name="Unknown Product",
+        product_code="N/A",
+        manufacturer=rpc_schemas.ManufacturerSchema(
+            id=uuid.UUID(int=0), manufacturer_name="Unknown"
+        ),
+        price=0.0,
+        images=["https://example.com/default_image.png"],
+    )
+
+    mock_suppliers_client.get_products.return_value = [dummy_product]
+    client.app.dependency_overrides[SuppliersClient] = (
+        lambda: mock_suppliers_client
+    )
+
+    # Act
+    response = client.get("/inventory/stock/catalog")
+
+    # Assert
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+    assert len(response.json()) > 0
+    assert "quantity" in response.json()[0]
+    assert "product_id" in response.json()[0]

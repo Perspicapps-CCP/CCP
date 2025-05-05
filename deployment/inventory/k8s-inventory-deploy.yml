@@ -167,6 +167,7 @@ spec:
             cpu: "200m"
         ports:
         - containerPort: 8001
+          name: api-port
         env:
         - name: DB_USER
           valueFrom:
@@ -207,6 +208,58 @@ spec:
           httpGet:
             path: /inventory/health
             port: 8001
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 1
+          failureThreshold: 2
+      - name: inventory-socket
+        image: us-central1-docker.pkg.dev/ccp-perspicapps/ccp-images/inventory:latest
+        command: ["uvicorn", "start_socket_server:app", "--host", "0.0.0.0", "--port", "8006"]
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        ports:
+        - containerPort: 8006
+          name: socket-port
+        env:
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: inventory-secrets
+              key: DB_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: inventory-secrets
+              key: DB_PASSWORD
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: inventory-config
+              key: DB_HOST
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: inventory-config
+              key: DB_PORT
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: inventory-config
+              key: DB_NAME
+        - name: BROKER_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: inventory-config
+              key: BROKER_HOST
+        livenessProbe:
+          httpGet:
+            path: /inventory/health
+            port: 8006
           initialDelaySeconds: 10
           periodSeconds: 5
           timeoutSeconds: 1

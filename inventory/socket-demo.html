@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Socket.IO Client</title>
+    <!-- Socket.IO client library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .event-log {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 20px;
+            background-color: #f9f9f9;
+        }
+        .event-item {
+            margin-bottom: 8px;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .event-time {
+            color: #666;
+            font-size: 0.8em;
+        }
+        button {
+            padding: 8px 12px;
+            margin-right: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        input {
+            padding: 8px;
+            margin-right: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Inventory Socket.IO Client</h1>
+    
+    <div class="card">
+        <h2>Connection Status</h2>
+        <div id="connection-status">Disconnected</div>
+        <button id="connect-btn">Connect</button>
+        <button id="disconnect-btn" disabled>Disconnect</button>
+    </div>
+    
+    <div class="card">
+        <h2>Subscribe to Product</h2>
+        <input type="text" id="product-id" placeholder="Enter Product ID">
+        <button id="subscribe-product-btn" disabled>Subscribe</button>
+        <button id="unsubscribe-product-btn" disabled>Unsubscribe</button>
+    </div>
+    
+    <div class="card">
+        <h2>Subscribe to All Products</h2>
+        <button id="subscribe-all-btn" disabled>Subscribe to All</button>
+        <button id="unsubscribe-all-btn" disabled>Unsubscribe from All</button>
+    </div>
+    
+    <h2>Event Log</h2>
+    <div class="event-log" id="event-log"></div>
+    
+    <script>
+        // Socket.IO connection
+        let socket = null;
+        const serverUrl = 'ws://localhost:9006/'; // Change this to your server URL
+        
+        // UI elements
+        const connectionStatus = document.getElementById('connection-status');
+        const connectBtn = document.getElementById('connect-btn');
+        const disconnectBtn = document.getElementById('disconnect-btn');
+        const productIdInput = document.getElementById('product-id');
+        const subscribeProductBtn = document.getElementById('subscribe-product-btn');
+        const unsubscribeProductBtn = document.getElementById('unsubscribe-product-btn');
+        const subscribeAllBtn = document.getElementById('subscribe-all-btn');
+        const unsubscribeAllBtn = document.getElementById('unsubscribe-all-btn');
+        const eventLog = document.getElementById('event-log');
+        
+        // Add event to log
+        function logEvent(eventName, data) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString();
+            
+            const eventItem = document.createElement('div');
+            eventItem.className = 'event-item';
+            
+            const eventTime = document.createElement('span');
+            eventTime.className = 'event-time';
+            eventTime.textContent = `[${timeStr}] `;
+            
+            const eventContent = document.createElement('span');
+            eventContent.textContent = `${eventName}: ${JSON.stringify(data)}`;
+            
+            eventItem.appendChild(eventTime);
+            eventItem.appendChild(eventContent);
+            
+            eventLog.prepend(eventItem);
+        }
+        
+        // Connect to server
+        function connectToServer() {
+            try {
+                // Initialize socket connection
+                socket = io(serverUrl, {
+                    path: '/inventory/ws/socket.io',
+                    transports: ['websocket', 'polling']
+                });
+                
+                // Connection events
+                socket.on('connect', () => {
+                    connectionStatus.textContent = `Connected (ID: ${socket.id})`;
+                    logEvent('Connected to server', { id: socket.id });
+                    
+                    // Enable UI elements
+                    connectBtn.disabled = true;
+                    disconnectBtn.disabled = false;
+                    subscribeProductBtn.disabled = false;
+                    unsubscribeProductBtn.disabled = false;
+                    subscribeAllBtn.disabled = false;
+                    unsubscribeAllBtn.disabled = false;
+                });
+                
+                socket.on('disconnect', (reason) => {
+                    connectionStatus.textContent = `Disconnected: ${reason}`;
+                    logEvent('Disconnected', { reason });
+                    
+                    // Disable UI elements
+                    connectBtn.disabled = false;
+                    disconnectBtn.disabled = true;
+                    subscribeProductBtn.disabled = true;
+                    unsubscribeProductBtn.disabled = true;
+                    subscribeAllBtn.disabled = true;
+                    unsubscribeAllBtn.disabled = true;
+                });
+                
+                socket.on('connect_error', (error) => {
+                    connectionStatus.textContent = `Connection Error: ${error.message}`;
+                    logEvent('Connection Error', { message: error.message });
+                });
+                
+                // Subscription confirmations
+                socket.on('subscription_confirmed', (data) => {
+                    logEvent('Product Subscription Confirmed', data);
+                });
+                
+                socket.on('all_products_subscription_confirmed', () => {
+                    logEvent('All Products Subscription Confirmed', {});
+                });
+                
+                // Inventory change events
+                socket.on('inventory_change', (data) => {
+                    console.log('Inventory Change:', data);
+                    logEvent('Inventory Change', data);
+                });
+            } catch (error) {
+                console.log('exception', error.message);
+                connectionStatus.textContent = `Error: ${error.message}`;
+                logEvent('Error', { message: error.message });
+            }
+        }
+        
+        // Disconnect from server
+        function disconnectFromServer() {
+            if (socket) {
+                socket.disconnect();
+            }
+        }
+        
+        // Subscribe to a specific product
+        function subscribeToProduct() {
+            const productId = productIdInput.value.trim();
+            if (!productId) {
+                alert('Please enter a Product ID');
+                return;
+            }
+            
+            if (socket && socket.connected) {
+                socket.emit('subscribe_to_product', { product_id: productId });
+                logEvent('Subscribing to product', { product_id: productId });
+            }
+        }
+        
+        // Unsubscribe from a specific product
+        function unsubscribeFromProduct() {
+            const productId = productIdInput.value.trim();
+            if (!productId) {
+                alert('Please enter a Product ID');
+                return;
+            }
+            
+            if (socket && socket.connected) {
+                socket.emit('unsubscribe_from_product', { product_id: productId });
+                logEvent('Unsubscribing from product', { product_id: productId });
+            }
+        }
+        
+        // Subscribe to all products
+        function subscribeToAllProducts() {
+            if (socket && socket.connected) {
+                socket.emit('subscribe_to_all_products');
+                logEvent('Subscribing to all products', {});
+            }
+        }
+        
+        // Unsubscribe from all products
+        function unsubscribeFromAllProducts() {
+            if (socket && socket.connected) {
+                socket.emit('unsubscribe_from_all_products');
+                logEvent('Unsubscribing from all products', {});
+            }
+        }
+        
+        // Set up event listeners
+        connectBtn.addEventListener('click', connectToServer);
+        disconnectBtn.addEventListener('click', disconnectFromServer);
+        subscribeProductBtn.addEventListener('click', subscribeToProduct);
+        unsubscribeProductBtn.addEventListener('click', unsubscribeFromProduct);
+        subscribeAllBtn.addEventListener('click', subscribeToAllProducts);
+        unsubscribeAllBtn.addEventListener('click', unsubscribeFromAllProducts);
+    </script>
+</body>
+</html>

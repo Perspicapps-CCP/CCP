@@ -521,76 +521,31 @@ Crea el inventario de un producto si este no existe, en caso contrario actualiza
 </tbody>
 </table>
 
-## 7. Carga masiva de inventario desde CSV
-Permite cargar múltiples registros de inventario a través de un archivo CSV. Crea o actualiza el inventario de productos en las bodegas correspondientes.
 
-<table> 
-<tr> 
-<td> Método </td> 
-<td> POST </td> 
-</tr> 
-<tr> 
-<td> Ruta </td> 
-<td> <strong>/inventory/stock/csv</strong> </td> 
-</tr> 
-<tr> 
-<td> Parámetros </td> 
-<td> N/A </td> 
-</tr> 
-<tr> 
-<td> Encabezados </td> 
-<td>
+## 7. Bulk Upload Inventory from CSV
+### `POST /inventory/stock/csv`
 
-```Authorization: Bearer token```
-</td>
-</tr> 
-<tr> 
-<td> Cuerpo </td> 
-<td>
-warehouse_id: id de la bodega <br>
-inventory-upload: archivo CSV con formato multipart/form-data
-<br>
-<br>
-El documento CSV debe tener las siguientes columnas: <br>
-product_id: id del producto <br>
-quantity: unidades del producto que se desean registrar en la bodega
-</td> 
-</tr> 
-</table>
+Uploads multiple inventory records via CSV file.
 
-### Respuestas
+---
+🔐 Authentication
+Requires Bearer Token (JWT) in the `Authorization` header:
 
-<table> 
-<tr> 
-<th> Código </th> 
-<th> Descripción </th> 
-<th> Cuerpo </th> 
-</tr> 
-<tbody> 
-<tr> 
-<td> 401 </td> 
-<td>El token no es válido o está vencido.</td> 
-<td> N/A </td> 
-</tr> 
-<tr> 
-<td> 403 </td> 
-<td>No hay token en la solicitud</td> 
-<td> N/A </td> 
-</tr> 
-<tr> 
-<td> 400 </td> 
-<td>En el caso que el archivo no sea un CSV válido o no incluya las columnas requeridas.</td> 
-<td> N/A </td> 
-</tr> 
-<tr> 
-<td> 412 </td> 
-<td>En el caso que los valores de los campos no estén entre lo esperado, por ejemplo bodegas inexistentes o cantidades negativas.</td> 
-<td> N/A </td> 
-</tr> 
-<tr> 
-<td> 201 </td> 
-<td>En el caso que la carga de inventario se haya realizado con éxito.</td> 
-<td>
+```
+Authorization: Bearer <access_token>
+```
+---
+📥 Request
+Multipart form with:
+
+- `warehouse_id`: ID of the warehouse
+- `inventory-upload`: CSV file with columns:
+  - `product_id`: ID of the product
+  - `quantity`: Units of product to register
+
+---
+
+📤 Response (201 Created)
 
 ```json
 {
@@ -602,76 +557,56 @@ quantity: unidades del producto que se desean registrar en la bodega
   "created_at": fecha y hora en que se realizó la carga de inventario, en formato ISO
 }
 ```
-</td>
-</tr>
-</tbody>
-</table>
 
-## 8. Ver y filtrar el inventario
+❌ Error Responses
 
-Retorna el listado de inventario que coinciden con los parámetros brindados. Solo un usuario autorizado puede realizar esta operación.
+401 Unauthorized
+```json
+{
+  "detail": "Not authenticated"
+}
+```
+403 Forbidden
+```json
+{
+  "detail": "You do not have permission to perform this action"
+}
+```
+400 Bad Request
+```json
+{
+  "detail": "Invalid CSV file or missing required columns"
+}
+```
+412 Precondition Failed
+```json
+{
+  "detail": "Invalid field values"
+}
+```
 
-<table>
-<tr>
-<td> Método </td>
-<td> GET </td>
-</tr>
-<tr>
-<td> Ruta </td>
-<td> <strong>/inventory/stock?product={productId}&warehouse={warehouseId}</strong> </td>
-</tr>
-<tr>
-<td> Parámetros </td>
-<td>
-Todos los parámetros son opcionales, y su funcionamiento es de tipo AND.
-<ol>
-<li>product: id del producto que se desea consultar.</li>
-<li>warehouse: id de la bodega que se desea consultar.</li>
-</ol>
-En el caso de que ninguno esté presente se devolverá la lista de datos sin filtrar. Es decir, todo el inventario disponible.
-</td>
-</tr>
-<tr>
-<td> Encabezados </td>
-<td>
+## 8. View and Filter Inventory
+### `GET /inventory/stock?product={productId}&warehouse={warehouseId}`
 
-```Authorization: Bearer token```
-</td>
-</tr>
-<tr>
-<td> Cuerpo </td>
-<td> N/A </td>
-</tr>
-</table>
+Retrieves inventory records filtered by optional parameters.
 
-### Respuestas
+---
+🔐 Authentication
+Requires Bearer Token (JWT) in the `Authorization` header:
 
-<table>
-<tr>
-<th> Código </th>
-<th> Descripción </th>
-<th> Cuerpo </th>
-</tr>
-<tbody>
-<tr>
-<td> 401 </td>
-<td>El token no es válido o está vencido.</td>
-<td> N/A </td>
-</tr>
-<tr>
-<td> 403 </td>
-<td>No hay token en la solicitud</td>
-<td> N/A </td>
-</tr>
-<tr>
-<td> 400 </td>
-<td>En el caso que alguno de los campos de búsqueda no tenga el formato esperado.</td>
-<td> N/A </td>
-</tr>
-<tr>
-<td> 200 </td>
-<td>Listado de inventario que corresponden a los parametros de búsqueda.</td>
-<td>
+```
+Authorization: Bearer <access_token>
+```
+---
+📝 Query Parameters
+
+| Parameter | Type | Required	| Description |
+|-|-|-|-|
+|product|string|❌|Filter by product ID|
+|warehouse|string|❌|Filter by warehouse ID|
+
+---
+📤 Response (200 OK)
 
 ```json
 [
@@ -683,92 +618,99 @@ En el caso de que ninguno esté presente se devolverá la lista de datos sin fil
   }
 ]
 ```
-</td>
-</tr>
-</tbody>
-</table>
 
+❌ Error Responses
 
-### 9. Consulta del inventario en tiempo real
+401 Unauthorized
+```json
+{
+  "detail": "Not authenticated"
+}
+```
+403 Forbidden
+```json
+{
+  "detail": "You do not have permission to perform this action"
+}
+```
+400 Bad Request
+```json
+{
+  "detail": "Invalid search parameters"
+}
+```
 
+## 9. Get consolidated inventory catalog
+### `GET /inventory/stock/catalog/`
 
-Establece una conexión WebSocket para recibir actualizaciones del inventario en tiempo real. Solo un usuario autorizado puede establecer esta conexión.
+Retrieves detailed information about a products catalog available on CCP.
+---
+🔐 Authentication
+Requires Bearer Token (JWT) in the `Authorization` header:
 
-<table> 
-<tr> 
-<td> Protocolo </td> 
-<td> WebSocket </td> 
-</tr> 
-<tr> 
-<td> Evento </td> 
-<td> <strong>inventory_updates</strong> </td> 
-</tr> 
-<tr> 
-<td> Opciones del socket </td> 
-<td> auth.token: token de autenticación en formato JWT</td>
-</td> 
-</tr> 
-<tr>
-<td> Cuerpo (opcional) </td>
-<td>
+```
+Authorization: Bearer <access_token>
+```
+---
+
+📤 Response (200 OK)
 
 ```json
-  {
-    "product_id":id del producto,
-    "warehouse_id": id de la bodega
-  }
+[{
+    "product_id": Id del producto en formato UUID,
+    "product_name": Nombre del producto,
+    "product_code": Codigo del producto,
+    "manufacturer_name": Nombre del fabricante,
+    "price": Precio unitario del producto,
+    "images": ["https://example.com/images1.jpg", "https://example.com/images2.jpg"],
+    "quantity": Cantidad del producto disponible en el inventario 
+}]
 ```
-</td>
-</tr>
-</table>
 
+❌ Error Responses
 
+401 Unauthorized
+```json
+{
+  "detail": "Not authenticated"
+}
+```
+403 Forbidden
+```json
+{
+  "detail": "You do not have permission to perform this action"
+}
+```
 
-### Respuestas
-<table> 
-<tr> 
-<th> Evento </th> 
-<th> Descripción </th> 
-<th> Formato del mensaje </th> 
-</tr> 
-<tbody> 
-<tr> 
-<td> updated </td> 
-<td>Se recibe cuando hay una actualización en el inventario que coincide con los filtros establecidos.</td> 
-<td>
+## 10. Consulta del inventario en tiempo real
+### `WebSocket /inventory/ws/`
+
+Establishes a WebSocket connection for real-time inventory updates.
+---
+🔐 Authentication
+Requires Bearer Token (JWT) in the `Authorization` header:
+
+```
+Authorization: Bearer <access_token>
+```
+---
+
+📥 Subscriptions
+
+- subscribe_to_all_products
+  - Payload: { product_id: valid UUID product }
+
+- subscribe_to_product
+  - Payload: None
+
+---
+📤 Response
+
+Event: `inventory_change`
 
 ```json
 {
-  "product_id": id del producto,
-  "warehouse_id": id de la bodega,
-  "quantity": nueva cantidad disponible,
-  "last_update": fecha y hora de la actualización en formato ISO
+  "product_id": "string",
+  "quantity": "number"
 }
 ```
-</td> 
-</tr> 
-<tr> 
-<td> created </td> 
-<td>Se recibe cuando se crea un nuevo registro de inventario que coincide con los filtros establecidos.</td> 
-<td>
-
-```json
-{
-  "product_id": id del producto,
-  "warehouse_id": id de la bodega,
-  "quantity": cantidad inicial del producto,
-  "last_update": fecha y hora de la creación en formato ISO
-}
-```
-</td> </tr> <tr> <td> error </td> <td>Se recibe cuando ocurre un error en la conexión WebSocket.</td> <td>
-
-```json
-{
-  "code": código del error,
-  "message": descripción del error
-}
-```
-</td> 
-</tr> 
-</tbody> 
-</table>

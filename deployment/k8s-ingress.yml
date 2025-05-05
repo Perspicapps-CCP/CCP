@@ -37,6 +37,13 @@ spec:
             name: logistic-api
             port:
               number: 80
+      - path: /inventory/ws
+        pathType: Prefix
+        backend:
+          service:
+            name: inventory-socket
+            port:
+              number: 80
       - path: /inventory
         pathType: Prefix
         backend:

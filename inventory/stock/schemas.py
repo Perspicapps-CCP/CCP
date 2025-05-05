@@ -73,3 +73,23 @@ class StockProductResponseSchema(BaseModel):
     quantity: int
     warehouse_name: str
     last_updated: datetime.datetime
+
+
+class AggrStockResponseSchema(BaseModel):
+    product_id: uuid.UUID
+    product_name: str
+    product_code: str
+    manufacturer_name: str
+    price: Decimal
+    images: List[str]
+    quantity: int
+
+
+class EventDataSchema(BaseModel):
+    product_id: uuid.UUID
+    quantity: int
+
+
+class EventSchema(BaseModel):
+    action: str
+    data: EventDataSchema
