@@ -51,7 +51,7 @@ async def on_shutdown():
 
 
 routes = [
-    Route("/health", endpoint=health_check, methods=["GET"]),
+    Route("/inventory/health", endpoint=health_check, methods=["GET"]),
     Mount("/inventory/ws", app=sio_app),
 ]
 

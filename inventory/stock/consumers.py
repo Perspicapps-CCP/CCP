@@ -56,10 +56,10 @@ class GetStocksEventsConsumer(BaseConsumer):
                 ),
                 self.loop,
             )
-            print("Emmit socket event finished..!!")
+            print("Emit socket event finished..!!")
 
         except Exception as e:
-            print(f"Error emmiting message: {str(e)}")
+            print(f"Error emiting message: {str(e)}")
 
     def start(self):
         def event_loop():

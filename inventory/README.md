@@ -683,7 +683,7 @@ Authorization: Bearer <access_token>
 ```
 
 ## 10. Consulta del inventario en tiempo real
-### `WebSocket /inventory/stock/ws/`
+### `WebSocket /inventory/ws/`
 
 Establishes a WebSocket connection for real-time inventory updates.
 ---
@@ -695,62 +695,22 @@ Authorization: Bearer <access_token>
 ```
 ---
 
+📥 Subscriptions
+
+- subscribe_to_all_products
+  - Payload: { product_id: valid UUID product }
+
+- subscribe_to_product
+  - Payload: None
+
+---
 📤 Response
+
+Event: `inventory_change`
 
 ```json
 {
   "product_id": "string",
-  "quantity": "number",
-  "last_update": "string"
+  "quantity": "number"
 }
 ```
-
-
-### Respuestas
-<table> 
-<tr> 
-<th> Evento </th> 
-<th> Descripción </th> 
-<th> Formato del mensaje </th> 
-</tr> 
-<tbody> 
-<tr> 
-<td> updated </td> 
-<td>Se recibe cuando hay una actualización en el inventario que coincide con los filtros establecidos.</td> 
-<td>
-
-```json
-{
-  "product_id": id del producto,
-  "warehouse_id": id de la bodega,
-  "quantity": nueva cantidad disponible,
-  "last_update": fecha y hora de la actualización en formato ISO
-}
-```
-</td> 
-</tr> 
-<tr> 
-<td> created </td> 
-<td>Se recibe cuando se crea un nuevo registro de inventario que coincide con los filtros establecidos.</td> 
-<td>
-
-```json
-{
-  "product_id": id del producto,
-  "warehouse_id": id de la bodega,
-  "quantity": cantidad inicial del producto,
-  "last_update": fecha y hora de la creación en formato ISO
-}
-```
-</td> </tr> <tr> <td> error </td> <td>Se recibe cuando ocurre un error en la conexión WebSocket.</td> <td>
-
-```json
-{
-  "code": código del error,
-  "message": descripción del error
-}
-```
-</td> 
-</tr> 
-</tbody> 
-</table>
