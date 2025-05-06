@@ -2,7 +2,7 @@ import datetime
 import uuid
 from decimal import Decimal
 from typing import List, Optional
-
+from enum import Enum
 from pydantic import BaseModel, ConfigDict
 
 
@@ -57,3 +57,25 @@ class UserAuthSchema(UserSchema):
     is_client: bool
 
     model_config = ConfigDict(from_attributes=True)
+class PayloadSaleItemSchema(BaseModel):
+    sales_item_id: uuid.UUID
+    product_id: uuid.UUID
+    warehouse_id: uuid.UUID
+
+
+class PayloadSaleSchema(BaseModel):
+    sales_id: uuid.UUID
+    order_number: int
+    address_id: uuid.UUID
+    sales_items: List[PayloadSaleItemSchema]
+
+
+class DeliverySaleStatus(str, Enum):
+    SUCCESS = "success"
+    ERROR = "error"
+
+
+class DeliverySaleResponseSchema(BaseModel):
+    sale_id: uuid.UUID
+    status: DeliverySaleStatus
+    message: str

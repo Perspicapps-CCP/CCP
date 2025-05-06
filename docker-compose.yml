@@ -233,7 +233,7 @@ services:
 
   sales_broker_consumer:
     build: ./sales
-    command: python -u start_broker_consumer.py
+    command: bash -c "./start_services.sh"
     container_name: sales_broker_consumer
     environment:
       DB_USER: sales
@@ -254,6 +254,8 @@ services:
   sales_db:
     image: postgres:latest
     container_name: sales_db
+    ports:
+      - "5432:5432"
     volumes:
       - sales_data:/var/lib/postgresql/data
     environment:
@@ -320,6 +322,8 @@ services:
   logistic_db:
     image: postgres:latest
     container_name: logistic_db
+    ports:
+      - "5431:5432"
     volumes:
       - logistic_data:/var/lib/postgresql/data
     environment:

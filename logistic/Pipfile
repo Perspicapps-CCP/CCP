@@ -15,6 +15,7 @@ pika = "*"
 keyboard = "*"
 celery = "*"
 googlemaps = "*"
+ortools = "*"
 
 [dev-packages]
 black = "*"

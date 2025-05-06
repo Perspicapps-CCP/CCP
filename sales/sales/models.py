@@ -1,3 +1,5 @@
+import enum
+import json
 import uuid
 
 from sqlalchemy import (
@@ -9,6 +11,8 @@ from sqlalchemy import (
     Integer,
     Sequence,
     String,
+    Enum,
+    JSON,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -57,3 +61,37 @@ class SaleItem(Base):
         "Sale",
         back_populates="items",
     )
+
+
+class OutboxMessageType(enum.Enum):
+    SALES_ORDER = "SALES_ORDER"
+
+
+class OutboxStatus(enum.Enum):
+    PENDING = "PENDING"
+    SENT = "SENT"
+    FAILED = "FAILED"
+
+
+class Outbox(Base):
+    __tablename__ = "outbox"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    message_type = Column(
+        Enum(OutboxMessageType),
+        nullable=False,
+        default=OutboxMessageType.SALES_ORDER,
+    )
+    payload = Column(JSON, nullable=False)
+    status = Column(
+        Enum(OutboxStatus), nullable=False, default=OutboxStatus.PENDING
+    )
+    created_at = Column(DateTime, server_default=func.now())
+    processed_at = Column(DateTime, nullable=True)
+    error_message = Column(String, nullable=True)
+    attempt_count = Column(Integer, nullable=False, default=0)
+
+    def set_payload(self, payload_dict):
+        self.payload = json.dumps(payload_dict)
+
+    def get_payload(self):
+        return json.loads(self.payload) if self.payload else {}
