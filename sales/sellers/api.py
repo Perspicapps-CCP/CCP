@@ -86,7 +86,7 @@ def list_clients_for_sellers(
 
 @sellers_router.post(
     "/clients/{client_id}/visit",
-    response_model=schemas.ResponseAttachmentDetailSchema ,
+    response_model=schemas.ResponseAttachmentDetailSchema,
     status_code=status.HTTP_201_CREATED,
     responses={
         status.HTTP_422_UNPROCESSABLE_ENTITY: {
@@ -101,7 +101,7 @@ async def register_client_visit(
     attachments: Annotated[List[UploadFile], File(...)],
     bucket: storage.Bucket = Depends(get_storage_bucket),
     db: Session = Depends(get_db),
-) -> schemas.ResponseAttachmentDetailSchema :
+) -> schemas.ResponseAttachmentDetailSchema:
     """
     Register a new client visit.
     """
@@ -128,10 +128,11 @@ async def register_client_visit(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Timeout error, please try again in a few minutes.",
         )
-        
+
+
 @sellers_router.post(
     "/clients/{client_id}/videos",
-    response_model=schemas.ResponseAttachmentDetailSchema ,
+    response_model=schemas.ResponseAttachmentDetailSchema,
     status_code=status.HTTP_201_CREATED,
     responses={
         status.HTTP_422_UNPROCESSABLE_ENTITY: {
@@ -147,7 +148,7 @@ async def upload_client_video(
     video: Annotated[UploadFile, File(...)],
     bucket: storage.Bucket = Depends(get_storage_bucket),
     db: Session = Depends(get_db),
-) -> schemas.ResponseAttachmentDetailSchema :
+) -> schemas.ResponseAttachmentDetailSchema:
     """
     Upload a new video for client
     """
@@ -157,8 +158,12 @@ async def upload_client_video(
         blob = bucket.blob(videoPath)
         blob.upload_from_file(video.file)
         client_video = services.save_client_video(
-            db=db, client_id=client_id, title=title, description=description, video_path=videoPath
-            )
+            db=db,
+            client_id=client_id,
+            title=title,
+            description=description,
+            video_path=videoPath,
+        )
         return mappers.client_video_to_schema(client_video)
     except ValidationError as e:
         raise HTTPException(

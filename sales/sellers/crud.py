@@ -2,7 +2,12 @@ import uuid
 
 from sqlalchemy.orm import Session
 
-from .models import ClientForSeller, ClientVideo, ClientVisit, ClientAttachment
+from .models import (
+    ClientForSeller,
+    ClientVideo,
+    ClientVisit,
+    ClientAttachment,
+)
 from datetime import datetime
 
 
@@ -97,6 +102,7 @@ def save_client_attachment(
     db.commit()
 
     return clientAttachment
+
 
 def upload_client_video(
     db: Session,

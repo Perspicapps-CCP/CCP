@@ -60,19 +60,20 @@ def clients_for_sellers_to_schema(
 
 def visit_to_schema(
     visit: ClientVisit,
-) -> ResponseAttachmentDetailSchema :
-    return ResponseAttachmentDetailSchema (
+) -> ResponseAttachmentDetailSchema:
+    return ResponseAttachmentDetailSchema(
         id=visit.id,
         client_id=visit.client_id,
         description=visit.description,
         created_at=visit.created_at,
         updated_at=visit.updated_at,
     )
-    
+
+
 def client_video_to_schema(
     client_video: ClientVideo,
-) -> ResponseAttachmentDetailSchema :
-    return ResponseAttachmentDetailSchema (
+) -> ResponseAttachmentDetailSchema:
+    return ResponseAttachmentDetailSchema(
         id=client_video.id,
         client_id=client_video.client_id,
         title=client_video.title,
