@@ -14,6 +14,7 @@ gunicorn = "*"
 pika = "*"
 python-jose = "*"
 bcrypt = "*"
+google-cloud-storage = "*"
 
 [dev-packages]
 black = "*"

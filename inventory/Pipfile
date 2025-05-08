@@ -15,10 +15,12 @@ pika = "*"
 pandas = "*"
 python-multipart = "*"
 keyboard = "*"
+python-socketio= "*"
 
 [dev-packages]
 black = "*"
 pytest = "*"
+pytest-asyncio = "*"
 faker = "*"
 coverage = "*"
 pytest-cov = "*"

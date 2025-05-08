@@ -15,10 +15,10 @@ Authenticate a user using their username and password. Available for all roles: 
 }
 ```
 
-| Field     | Type   | Required | Description         |
-|-----------|--------|----------|---------------------|
-| username  | string | ✅       | User's username     |
-| password  | string | ✅       | User's password     |
+| Field    | Type   | Required | Description     |
+| -------- | ------ | -------- | --------------- |
+| username | string | ✅       | User's username |
+| password | string | ✅       | User's password |
 
 ---
 
@@ -36,12 +36,12 @@ Authenticate a user using their username and password. Available for all roles: 
 }
 ```
 
-| Field         | Type   | Description                              |
-|---------------|--------|------------------------------------------|
-| access_token  | string | JWT token for authenticated use          |
-| user          | object | Basic user information                   |
-| user.id       | UUID   | Unique identifier (UUID format)          |
-| user.role     | string | One of: `STAFF`, `SELLER`, `CLIENT`       |
+| Field        | Type   | Description                         |
+| ------------ | ------ | ----------------------------------- |
+| access_token | string | JWT token for authenticated use     |
+| user         | object | Basic user information              |
+| user.id      | UUID   | Unique identifier (UUID format)     |
+| user.role    | string | One of: `STAFF`, `SELLER`, `CLIENT` |
 
 ---
 
@@ -54,7 +54,6 @@ Authenticate a user using their username and password. Available for all roles: 
   "detail": "Invalid credentials"
 }
 ```
-
 
 ## 👤 Get User Profile API
 
@@ -85,12 +84,12 @@ Authorization: Bearer <access_token>
 }
 ```
 
-| Field     | Type   | Description                          |
-|-----------|--------|--------------------------------------|
-| id        | UUID   | User's unique identifier             |
-| username  | string | User's username                      |
-| email     | string | User's email address                 |
-| role      | string | One of: `STAFF`, `SELLER`, `CLIENT`   |
+| Field    | Type   | Description                         |
+| -------- | ------ | ----------------------------------- |
+| id       | UUID   | User's unique identifier            |
+| username | string | User's username                     |
+| email    | string | User's email address                |
+| role     | string | One of: `STAFF`, `SELLER`, `CLIENT` |
 
 ---
 
@@ -135,14 +134,14 @@ Authorization: Bearer <access_token>
 }
 ```
 
-| Field           | Type   | Required | Description                                |
-|------------------|--------|----------|--------------------------------------------|
-| full_name        | string | ✅       | Seller’s full name                         |
-| email            | string | ✅       | Seller’s email address                     |
-| id_type          | string | ✅       | Type of ID (e.g. `CC`, `CE`, `NIT`, etc.)  |
-| identification   | string | ✅       | ID number                                  |
-| phone            | string | ✅       | Phone number (e.g. with country code)      |
-| username         | string | ✅       | Username for login                         |
+| Field          | Type   | Required | Description                               |
+| -------------- | ------ | -------- | ----------------------------------------- |
+| full_name      | string | ✅       | Seller’s full name                        |
+| email          | string | ✅       | Seller’s email address                    |
+| id_type        | string | ✅       | Type of ID (e.g. `CC`, `CE`, `NIT`, etc.) |
+| identification | string | ✅       | ID number                                 |
+| phone          | string | ✅       | Phone number (e.g. with country code)     |
+| username       | string | ✅       | Username for login                        |
 
 ---
 
@@ -161,10 +160,10 @@ Authorization: Bearer <access_token>
 }
 ```
 
-| Field     | Type   | Description                              |
-|-----------|--------|------------------------------------------|
-| id        | UUID   | Unique ID of the newly created seller    |
-| role      | string | Always set to `SELLER`                   |
+| Field | Type   | Description                           |
+| ----- | ------ | ------------------------------------- |
+| id    | UUID   | Unique ID of the newly created seller |
+| role  | string | Always set to `SELLER`                |
 
 ---
 
@@ -254,15 +253,15 @@ Authorization: Bearer <access_token>
 ]
 ```
 
-| Field           | Type   | Description                            |
-|------------------|--------|----------------------------------------|
-| id               | UUID   | Unique identifier of the seller        |
-| full_name        | string | Seller’s full name                     |
-| email            | string | Email address                          |
-| username         | string | Username                               |
-| phone            | string | Phone number                           |
-| id_type          | string | Type of ID (e.g. `CC`, `CE`, `NIT`)    |
-| identification   | string | Document/ID number                     |
+| Field          | Type   | Description                         |
+| -------------- | ------ | ----------------------------------- |
+| id             | UUID   | Unique identifier of the seller     |
+| full_name      | string | Seller’s full name                  |
+| email          | string | Email address                       |
+| username       | string | Username                            |
+| phone          | string | Phone number                        |
+| id_type        | string | Type of ID (e.g. `CC`, `CE`, `NIT`) |
+| identification | string | Document/ID number                  |
 
 ---
 
@@ -283,3 +282,99 @@ Authorization: Bearer <access_token>
   "detail": "You do not have permission to perform this action"
 }
 ```
+
+## 👤 Client Sign Up API
+
+### `POST /api/v1/users/clients/`
+
+Create a new client using the provided personal, contact, and address information.
+
+---
+
+### 🔐 Authentication
+
+❌ No authentication required.
+
+---
+
+### 📥 Request Body
+
+```json
+{
+  "full_name": "Cosme Fulanito",
+  "email": "cosme@ccp.com.co",
+  "id_type": "CC",
+  "identification": "101000000000",
+  "phone": "+57 3000000000",
+  "username": "cosmef",
+  "address": {
+    "id": "de305d54-75b4-431b-adb2-eb6b9e546014",
+    "line": "Cra. 7 #123-45",
+    "neighborhood": "Chapinero",
+    "city": "Bogotá",
+    "state": "Cundinamarca",
+    "country": "Colombia",
+    "latitude": 4.6482837,
+    "longitude": -74.247894
+  },
+  "password": "P@ssw0rd!"
+}
+```
+
+| Field          | Type   | Required                                                 | Description                               |
+| -------------- | ------ | -------------------------------------------------------- | ----------------------------------------- |
+| full_name      | string | ✅                                                       | Client’s full name                        |
+| email          | string | ✅                                                       | Client’s email address                    |
+| id_type        | string | ✅                                                       | Type of ID (e.g. `CC`, `CE`, `NIT`, etc.) |
+| identification | string | ✅                                                       | ID number                                 |
+| phone          | string | ✅                                                       | Phone number (e.g. with country code)     |
+| username       | string | ✅                                                       | Username for login                        |
+| address        | object | ✅                                                       | Address details (see fields below)        |
+| password       | string | ✅ Password (at least 8 characters, 1 special character) |
+
+#### 🔹 Address Object
+
+| Field        | Type   | Required | Description               |
+| ------------ | ------ | -------- | ------------------------- |
+| id           | UUID   | ✅       | Unique ID for the address |
+| line         | string | ✅       | Street address            |
+| neighborhood | string | ✅       | Neighborhood name         |
+| city         | string | ✅       | City name                 |
+| state        | string | ✅       | State or department       |
+| country      | string | ✅       | Country name              |
+| latitude     | float  | ✅       | Latitude coordinate       |
+| longitude    | float  | ✅       | Longitude coordinate      |
+
+---
+
+### 📤 Response (201 Created)
+
+```json
+{
+  "id": "83f3e840-4c9e-4c21-babc-c5aa2cb3af19",
+  "full_name": "Cosme Fulanito",
+  "email": "cosme@ccp.com.co",
+  "id_type": "CC",
+  "identification": "101000000000",
+  "phone": "+57 3000000000",
+  "username": "cosmef",
+  "role": "CLIENT",
+  "address": {
+    "id": "de305d54-75b4-431b-adb2-eb6b9e546014",
+    "line": "Cra. 7 #123-45",
+    "neighborhood": "Chapinero",
+    "city": "Bogotá",
+    "state": "Cundinamarca",
+    "country": "Colombia",
+    "latitude": 4.6482837,
+    "longitude": -74.247894
+  },
+  "password": "P@ssw0rd!"
+}
+```
+
+| Field   | Type   | Description                                 |
+| ------- | ------ | ------------------------------------------- |
+| id      | UUID   | Unique ID of the newly created client       |
+| role    | string | Always set to `CLIENT`                      |
+| address | object | Address of the client (see structure above) |

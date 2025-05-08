@@ -222,3 +222,17 @@ def list_all_products_stock(db: Session = Depends(get_db)):
     """
     stock = services.get_list_all_products(db)
     return mappers.stock_product_list_to_schema(stock)
+
+
+@stock_router.get(
+    "/catalog", response_model=List[schemas.AggrStockResponseSchema]
+)
+def get_stock_aggregated(
+    db: Session = Depends(get_db),
+    suppliers_client: SuppliersClient = Depends(SuppliersClient),
+):
+    aggr_stock = services.get_stock_aggregated(db)
+    products = suppliers_client.get_products(
+        [product_id for product_id, _ in aggr_stock]
+    )
+    return mappers.aggr_stock_to_schema(aggr_stock, products)

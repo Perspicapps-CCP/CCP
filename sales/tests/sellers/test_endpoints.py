@@ -1,5 +1,6 @@
 import datetime
 from typing import List
+from unittest.mock import MagicMock
 from uuid import UUID, uuid4
 
 import pytest
@@ -10,6 +11,7 @@ from sqlalchemy.orm import Session
 from rpc_clients.schemas import UserAuthSchema
 from sellers.models import ClientForSeller
 from tests.conftest import generate_fake_sellers
+import io
 
 fake = Faker()
 
@@ -257,36 +259,38 @@ def test_was_visited_recently(
 
 
 def test_register_client_visit_success(
-    auth_client: TestClient, valid_payload
+    auth_client: TestClient, mock_storage_bucket: MagicMock, valid_payload
 ):
-    payLoad = {"description": "This is a description"}
-    client_id = valid_payload["client_id"]
-    response = auth_client.post(
-        f"/api/v1/sales/sellers/clients/{client_id}/visit", json=payLoad
-    )
-    assert response.status_code == 201
-    data = response.json()
-    assert "id" in data
-    assert data["client_id"] == client_id
-    assert data["description"] == payLoad["description"]
 
+    file_content = b"test file content"
+    file = ("test.txt", io.BytesIO(file_content), "text/plain")
 
-def test_register_client_visit_invalid_description_type(
-    auth_client: TestClient, valid_payload
-):
-    invalidPayLoad = {"description": 123}
     client_id = valid_payload["client_id"]
+
     response = auth_client.post(
         f"/api/v1/sales/sellers/clients/{client_id}/visit",
-        json=invalidPayLoad,
+        data={"description": "Test visit"},
+        files=[("attachments", file)],
     )
-    assert response.status_code == 422
-    assert "detail" in response.json()
+
+    assert response.status_code == 201
+    mock_storage_bucket.blob.assert_called_once()
+    json_data = response.json()
+    assert "id" in json_data
 
 
-def test_register_client_visit_invalid_client_id(auth_client: TestClient):
-    payLoad = {"description": "This is a description"}
+def test_register_client_visit_validation_error(
+    auth_client: TestClient, valid_payload
+):
+    client_id = valid_payload["client_id"]
+
+    file_content = b"test file content"
+    file = ("test.txt", io.BytesIO(file_content), "text/plain")
+
     response = auth_client.post(
-        "/api/v1/sales/sellers/clients/not-a-uuid/visit", json=payLoad
+        "/api/v1/sales/sellers/clients/{client_id}/visit",
+        data={},
+        files=[("attachments", file)],
     )
+
     assert response.status_code == 422

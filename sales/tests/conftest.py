@@ -2,6 +2,7 @@
 import uuid
 from typing import Any, Generator, List
 from unittest import mock
+from unittest.mock import MagicMock
 
 import pytest
 from faker import Faker
@@ -16,6 +17,7 @@ from database import Base
 from db_dependency import get_db
 from main import app as init_app
 from rpc_clients.schemas import ProductSchema, UserAuthSchema, UserSchema
+from storage_dependency import get_storage_bucket
 
 SQLALCHEMY_DATABASE_URL = "sqlite://"
 
@@ -42,6 +44,14 @@ def app(lite_engine: Engine) -> Generator[FastAPI, Any, None]:
     Base.metadata.create_all(lite_engine)  # Create the tables.
     yield init_app
     Base.metadata.drop_all(lite_engine)
+
+
+@pytest.fixture
+def mock_storage_bucket() -> Generator[MagicMock, Any, None]:
+    mock_blob = MagicMock()
+    mock_bucket = MagicMock()
+    mock_bucket.blob.return_value = mock_blob
+    yield mock_bucket
 
 
 @pytest.fixture
@@ -79,7 +89,7 @@ def db_session(
 
 @pytest.fixture()
 def client(
-    app: FastAPI, db_session: "Session"
+    app: FastAPI, mock_storage_bucket, db_session: "Session"
 ) -> Generator[TestClient, Any, None]:
     """
     Create a new FastAPI TestClient that uses the `db_session`
@@ -94,6 +104,7 @@ def client(
             pass
 
     app.dependency_overrides[get_db] = _get_test_db
+    app.dependency_overrides[get_storage_bucket] = lambda: mock_storage_bucket
     with TestClient(app) as client:
         # Set authorization token
         yield client

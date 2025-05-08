@@ -15,10 +15,11 @@ services:
       retries: 3
   inventory_api:
     build: ./inventory
-    command: uvicorn main:app --host 0.0.0.0 --port 9001
+    command: bash -c "uvicorn main:app --host 0.0.0.0 --port 9001 & uvicorn start_socket_server:app --host 0.0.0.0 --port 9006 & wait"
     container_name: inventory_api
     ports:
       - "9001:9001"
+      - "9006:9006"
     environment:
       DB_USER: inventory
       DB_PASSWORD: postgres
