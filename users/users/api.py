@@ -177,3 +177,48 @@ def get_all_sellers(
         list[schemas.UserDetailSchema]: A list of all sellers.
     """
     return services.get_all_sellers(db=db)
+
+
+@users_router.post(
+    "/clients/",
+    response_model=schemas.UserDetailSchema,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        400: {
+            "model": schemas.ErrorResponseSchema,
+            "description": "Bad Request",
+        },
+        422: {
+            "model": schemas.ErrorResponseSchema,
+            "description": "Validation Error",
+        },
+    },
+)
+def create_client(
+    payload: dict,
+    db: Session = Depends(get_db),
+):
+    """
+    Create a new client.
+
+    Args:
+        payload (schemas.CreateClientSchema): The data for creating
+          a new client.
+        db (Session, optional): The database session.
+        Defaults to Depends(get_db).
+
+    Returns:
+        schemas.CreateClientResponseSchema:
+        The details of the created client.
+    """
+    try:
+        payload = schemas.CreateClientSchema.model_validate(
+            payload, context={"db": db}
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=jsonable_encoder(e.errors()),
+        )
+
+    return services.create_client(db=db, payload=payload)

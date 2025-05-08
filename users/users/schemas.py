@@ -1,5 +1,6 @@
 # Shcema for user data validation
 import datetime
+import re
 import uuid
 from typing import List, Optional
 
@@ -18,12 +19,11 @@ from . import crud
 from .models import IdTypeEnum, RoleEnum
 
 
-class AddressSchema(BaseModel):
+class BaseAddressSchema(BaseModel):
     """
-    Schema for the address associated with a stop.
+    Base schema for address data.
     """
 
-    id: uuid.UUID
     line: str
     neighborhood: str
     city: str
@@ -31,6 +31,16 @@ class AddressSchema(BaseModel):
     country: str
     latitude: float
     longitude: float
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AddressSchema(BaseAddressSchema):
+    """
+    Schema for the address associated with a stop.
+    """
+
+    id: uuid.UUID
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -195,3 +205,27 @@ class AuthResponseSchema(BaseModel):
     user: Optional[UserAuthDetailSchema]
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CreateClientSchema(CreateSellerSchema):
+    """
+    Schema for creating a new client.
+    """
+
+    address: Optional[BaseAddressSchema] = None  # Make address optional
+    password: str
+    model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("password")
+    def validate_password(cls, value: str) -> str:
+        """
+        Validate that the password has at least 8 characters and includes
+        at least one special character.
+        """
+        if len(value) < 8:
+            raise ValueError("Password must be at least 8 characters long.")
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", value):
+            raise ValueError(
+                "Password must include at least one special character."
+            )
+        return value

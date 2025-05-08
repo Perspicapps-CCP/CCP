@@ -116,3 +116,48 @@ def get_clients_with_ids(
     return crud.get_users_by_ids(
         db, ids=client_ids, role=models.RoleEnum.CLIENT
     )
+
+
+def create_client(
+    db: Session, payload: schemas.CreateClientSchema
+) -> models.User:
+    """
+    Create a new client user in the database.
+    Args:
+        db (Session): The database session to use for the query.
+        payload (schemas.CreateClientSchema): The data of the client to create.
+    Returns:
+        models.User: The created client object.
+    """
+    # Create the user
+    user = models.User(
+        username=payload.username,
+        full_name=payload.full_name,
+        email=payload.email,
+        phone=payload.phone,
+        role=models.RoleEnum.CLIENT,
+        hashed_password=auth.get_password_hash(payload.password),
+        id_type=payload.id_type,
+        identification=payload.identification,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    # Create the address if provided
+    if payload.address:
+        address = models.Address(
+            user_id=user.id,
+            line=payload.address.line,
+            neighborhood=payload.address.neighborhood,
+            city=payload.address.city,
+            state=payload.address.state,
+            country=payload.address.country,
+            latitude=payload.address.latitude,
+            longitude=payload.address.longitude,
+        )
+        db.add(address)
+        db.commit()
+        db.refresh(user)
+
+    return user
