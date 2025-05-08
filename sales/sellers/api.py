@@ -86,7 +86,7 @@ def list_clients_for_sellers(
 
 @sellers_router.post(
     "/clients/{client_id}/visit",
-    response_model=schemas.RegisterClientVisitDetailSchema,
+    response_model=schemas.ResponseAttachmentDetailSchema,
     status_code=status.HTTP_201_CREATED,
     responses={
         status.HTTP_422_UNPROCESSABLE_ENTITY: {
@@ -101,7 +101,7 @@ async def register_client_visit(
     attachments: Annotated[List[UploadFile], File(...)],
     bucket: storage.Bucket = Depends(get_storage_bucket),
     db: Session = Depends(get_db),
-) -> schemas.RegisterClientVisitDetailSchema:
+) -> schemas.ResponseAttachmentDetailSchema:
     """
     Register a new client visit.
     """
@@ -118,6 +118,53 @@ async def register_client_visit(
                 db=db, visit=visit.id, pathFile=pathFile
             )
         return mappers.visit_to_schema(visit)
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=jsonable_encoder(e.errors()),
+        )
+    except TimeoutError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Timeout error, please try again in a few minutes.",
+        )
+
+
+@sellers_router.post(
+    "/clients/{client_id}/videos",
+    response_model=schemas.ResponseAttachmentDetailSchema,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "model": schemas.ErrorResponseSchema,
+            "description": "Bad Request",
+        }
+    },
+)
+async def upload_client_video(
+    client_id: UUID,
+    title: Annotated[str, Form(...)],
+    description: Annotated[str, Form(...)],
+    video: Annotated[UploadFile, File(...)],
+    bucket: storage.Bucket = Depends(get_storage_bucket),
+    db: Session = Depends(get_db),
+) -> schemas.ResponseAttachmentDetailSchema:
+    """
+    Upload a new video for client
+    """
+    try:
+        filename = video.filename
+        videoPath = f"client_attachments/{client_id}/{filename}"
+        blob = bucket.blob(videoPath)
+        blob.upload_from_file(video.file)
+        client_video = services.save_client_video(
+            db=db,
+            client_id=client_id,
+            title=title,
+            description=description,
+            video_path=videoPath,
+        )
+        return mappers.client_video_to_schema(client_video)
     except ValidationError as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

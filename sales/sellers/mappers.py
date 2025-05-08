@@ -2,10 +2,10 @@ from typing import Dict, List
 
 from rpc_clients.users_client import UsersClient
 
-from .models import ClientForSeller, ClientVisit
+from .models import ClientForSeller, ClientVideo, ClientVisit
 from .schemas import (
     ClientForSellerDetailSchema,
-    RegisterClientVisitDetailSchema,
+    ResponseAttachmentDetailSchema,
 )
 
 
@@ -60,11 +60,24 @@ def clients_for_sellers_to_schema(
 
 def visit_to_schema(
     visit: ClientVisit,
-) -> RegisterClientVisitDetailSchema:
-    return RegisterClientVisitDetailSchema(
+) -> ResponseAttachmentDetailSchema:
+    return ResponseAttachmentDetailSchema(
         id=visit.id,
         client_id=visit.client_id,
         description=visit.description,
         created_at=visit.created_at,
         updated_at=visit.updated_at,
+    )
+
+
+def client_video_to_schema(
+    client_video: ClientVideo,
+) -> ResponseAttachmentDetailSchema:
+    return ResponseAttachmentDetailSchema(
+        id=client_video.id,
+        client_id=client_video.client_id,
+        title=client_video.title,
+        description=client_video.description,
+        created_at=client_video.created_at,
+        updated_at=client_video.updated_at,
     )
