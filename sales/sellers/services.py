@@ -3,8 +3,7 @@ import uuid
 from sqlalchemy.orm import Session
 
 from . import crud
-from .models import ClientForSeller, ClientVisit, ClientAttachment
-from .schemas import RegisterClientVisitSchema
+from .models import ClientForSeller, ClientVideo, ClientVisit, ClientAttachment
 
 
 def associate_client_with_seller(
@@ -45,3 +44,12 @@ def save_client_attachment(
     """
     clientAttachment = ClientAttachment(visit_id=visit, path_file=pathFile)
     return crud.save_client_attachment(db, clientAttachment)
+
+def save_client_video(
+    db: Session, client_id: uuid.UUID, title: str, description: str, video_path: str
+) -> ClientVideo:
+    """
+    Save video for client
+    """
+    clientVideo = ClientVideo(client_id=client_id, title=title, description=description, video_path=video_path)
+    return crud.upload_client_video(db, clientVideo)

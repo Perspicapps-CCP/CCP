@@ -77,3 +77,14 @@ class ClientAttachment(Base):
     visit = relationship("ClientVisit", back_populates="attachments")
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+class ClientVideo(Base):
+    __tablename__ = "client_video"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    client_id = Column(UUID(as_uuid=True))
+    title = Column(String(100), nullable=False)
+    description = Column(String(500), nullable=False)
+    video_path = Column(String(500), nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
