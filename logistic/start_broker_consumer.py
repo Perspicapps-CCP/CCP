@@ -4,7 +4,10 @@ import time
 
 import keyboard
 
-from delivery.consumers import CreateDeliveryStopsConsumer
+from delivery.consumers import (
+    CreateDeliveryStopsConsumer,
+    GetDeliveriesConsumer,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -32,7 +35,7 @@ def start_threads(threaded_classes: list):
         run_thread(threaded_class)
 
 
-start_threads([CreateDeliveryStopsConsumer])
+start_threads([CreateDeliveryStopsConsumer, GetDeliveriesConsumer])
 
 
 try:
