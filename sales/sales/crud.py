@@ -1,15 +1,14 @@
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
-from .models import Sale
-from .schemas import ListSalesQueryParamsSchema
+from .models import Sale, SaleDelivery
 
 
 def get_all_sales(
-    db: Session, filters: ListSalesQueryParamsSchema
+    db: Session, filters: "ListSalesQueryParamsSchema"  # noqa: F821
 ) -> List[Sale]:
     """
     Retrieve all sales from the database, ordered by the oldest first.
@@ -88,3 +87,45 @@ def create_sale_item(db: Session, sale_item: Sale) -> Sale:
     db.flush()
     db.refresh(sale_item)
     return sale_item
+
+
+def get_sale_delivery(
+    db: Session, sale_id: UUID, delivery_id: UUID
+) -> Optional[SaleDelivery]:
+    """
+    Retrieve a sale delivery by its ID.
+
+    Args:
+        db (Session): The database session.
+        sale_id (UUID): The ID of the sale.
+        delivery_id (UUID): The ID of the delivery.
+
+    Returns:
+        SaleDelivery: The SaleDelivery object if found, otherwise None.
+    """
+    return (
+        db.query(SaleDelivery)
+        .filter(SaleDelivery.sale_id == sale_id)
+        .filter(SaleDelivery.id == delivery_id)
+        .first()
+    )
+
+
+def associate_delivery_to_sale(
+    db: Session, sale_id: UUID, delivery_id: UUID
+) -> SaleDelivery:
+    """
+    Associate a delivery with a sale.
+    Args:
+        db (Session): The database session.
+        sale_id (UUID): The ID of the sale.
+        delivery_id (UUID): The ID of the delivery.
+    Returns:
+        SaleDelivery: The created or existing SaleDelivery object.
+    """
+    if not get_sale_delivery(db, sale_id, delivery_id):
+        sale_delivery = SaleDelivery(sale_id=sale_id, id=delivery_id)
+        db.add(sale_delivery)
+        db.flush()
+        db.refresh(sale_delivery)
+        return sale_delivery

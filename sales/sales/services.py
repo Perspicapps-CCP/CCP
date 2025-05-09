@@ -5,9 +5,7 @@ from sqlalchemy.orm import Session
 
 from rpc_clients.inventory_client import InventoryClient
 from rpc_clients.logistic_client import LogisticClient
-from rpc_clients.schemas import (
-    UserAuthSchema,
-)
+from rpc_clients.schemas import UserAuthSchema
 from rpc_clients.suppliers_client import SuppliersClient
 from rpc_clients.users_client import UsersClient
 
@@ -150,3 +148,22 @@ def create_sale(
         )
 
     return sale
+
+
+def associate_delivery_to_sale(
+    db: Session,
+    sale_id: UUID,
+    delivery_id: UUID,
+) -> models.SaleDelivery:
+    """
+    Associate a delivery to a sale.
+
+    Args:
+        db (Session): The database session.
+        sale_id (UUID): The ID of the sale.
+        delivery_id (UUID): The ID of the delivery.
+
+    Returns:
+        SaleDelivery: The created SaleDelivery.
+    """
+    return crud.associate_delivery_to_sale(db, sale_id, delivery_id)

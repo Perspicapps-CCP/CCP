@@ -6,9 +6,9 @@ from uuid import uuid4
 import pytest
 from faker import Faker
 from fastapi.testclient import TestClient
-from sales.models import Sale, SaleItem
 from sqlalchemy.orm import Session
 
+from sales.models import Sale, SaleItem
 from tests.conftest import generate_fake_sellers
 
 fake = Faker()
@@ -330,3 +330,12 @@ def test_export_sales_as_csv_with_filters(client: TestClient, seed_sales):
     # Ensure no extra rows in the CSV
     with pytest.raises(StopIteration):
         next(csv_reader)
+
+
+# class TestCreateSaleEndpoint:
+
+#     def test_create_sale_correctly(self):
+#         assert False
+
+#     def test_create_sale_stock_not_available(self):
+#         assert False

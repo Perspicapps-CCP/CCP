@@ -11,15 +11,16 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-from sellers import crud as sellers_crud
 
 from rpc_clients.schemas import (
     AddressSchema,
     DeliverySchema,
     ProductSchema,
-    UserSchema,
     UserAuthSchema,
+    UserSchema,
 )
+from sales import crud as sales_crud
+from sellers import crud as sellers_crud
 
 
 class SaleItemSchema(BaseModel):
@@ -110,10 +111,43 @@ class CreateSaleSchema(BaseModel):
         Returns:
             CreateSaleSchema: The validated sale values.
         Raises:
-            ValueError: If the client ID is invalid or not associated with the seller.
+            ValueError: If the client ID is invalid or
+            not associated with the seller.
         """
         context = info.context
         user: UserAuthSchema = context.get("user")
         if user.is_seller and not self.client_id:
             raise ValueError("Client ID is required for sellers.")
         return self
+
+
+class CreateSaleDeliverySchema(BaseModel):
+    """
+    Schema for creating a sale delivery.
+    """
+
+    sale_id: UUID
+    delivery_id: UUID
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("sale_id")
+    @classmethod
+    def validate_sale_id(cls, sale_id: UUID, info: ValidationInfo) -> UUID:
+        """
+        Validates the delivery ID.
+        Args:
+            sale_id (UUID): The sale ID to validate.
+            info (ValidationInfo): The validation information.
+        Returns:
+            UUID: The validated sale_id ID.
+        Raises:
+            ValueError: If the sale_id ID is invalid or
+            not associated with the sale.
+        """
+        context = info.context
+        db = context.get("db")
+        sale = sales_crud.get_sale_by_id(db, sale_id)
+        if not sale:
+            raise ValueError("Sale not found.")
+        return sale_id
