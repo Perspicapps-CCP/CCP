@@ -4,7 +4,7 @@ import uuid
 from enum import Enum
 from typing import List, Optional, Union
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class DeleteResponse(BaseModel):
@@ -19,6 +19,7 @@ class DeliveryItemGetResponseSchema(BaseModel):
     product_name: str
     quantity: Optional[int] = 1
     images: List[str]
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DeliveryCreateRequestSchema(BaseModel):
@@ -56,6 +57,8 @@ class DeliveryCreateResponseSchema(BaseModel):
 
 class DeliveryDetailGetResponseSchema(DeliveryCreateResponseSchema):
     orders: List[DeliveryItemGetResponseSchema]
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DriverCreateSchema(BaseModel):
@@ -123,3 +126,13 @@ class DeliveryGetRouteSchema(BaseModel):
     order_customer_phone_number: str = "01234456789"
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+
+
+class GetDelivieriesSchema(BaseModel):
+    deliveries_ids: Optional[List[uuid.UUID]]
+
+
+class GetDeliveriesResponseSchema(BaseModel):
+    deliveries: list[DeliveryDetailGetResponseSchema]
+
+    model_config = ConfigDict(from_attributes=True)

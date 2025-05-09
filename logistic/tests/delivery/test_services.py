@@ -2,10 +2,13 @@ import datetime
 import random
 import uuid
 from typing import List
+from unittest.mock import patch
+
+import pytest
+from faker import Faker
 
 from delivery import models, schemas, services
 from delivery.schemas import DriverCreateSchema
-from faker import Faker
 
 fake = Faker()
 fake.seed_instance(123)
@@ -56,7 +59,8 @@ def dummy_delivery():
 
 def test_create_driver_success(db_session):
     """
-    Test that create_driver correctly creates a new driver with the provided information.
+    Test that create_driver correctly creates a new driver
+      with the provided information.
     """
     # Create a mock driver schema
     driver_schema = DriverCreateSchema(
@@ -291,6 +295,16 @@ def test_create_duplicate_delivery_stops_transaction_success(db_session):
     assert result is False
 
 
+@pytest.fixture
+def mock_sales_client():
+    """
+    Fixture to mock the SalesClient.
+    """
+    with patch("delivery.services.SalesClient") as mock_client:
+        yield mock_client
+
+
+@pytest.mark.usefixtures("mock_sales_client")
 def test_create_delivery_transaction_success(db_session):
     # Arrange
     address = dummy_address()

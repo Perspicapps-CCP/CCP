@@ -2,9 +2,12 @@ from datetime import datetime
 from typing import Dict, Generator, List, Optional, Tuple
 from uuid import UUID
 
-from delivery import models, schemas
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+
+from delivery import models, schemas
+from rpc_clients.sales_client import SalesClient
+from rpc_clients.schemas import CreateSaleDeliverySchema
 
 from .helpers import group_items_by_warehouse, group_stops_by_warehouse
 from .unit_of_work import unit_of_work
@@ -196,9 +199,29 @@ def create_delivery_transaction(
                         return created_deliveries
                     uow.commit()
                     created_deliveries.append(db_delivery)
+            for delivery in created_deliveries:
+                # Update the delivery with the request details
+                for stop in delivery.stops:
+                    client = SalesClient()
+                    client.create_sale_delivery(
+                        CreateSaleDeliverySchema(
+                            sale_id=stop.sales_id,
+                            delivery_id=delivery.id,
+                        )
+                    )
 
             return created_deliveries
         except Exception as e:
             uow.rollback()
             print(f"Error creating deliveries: {e}")
             return []
+
+
+def get_deliveries_by_ids(
+    db: Session, deliveries_ids: Optional[List[UUID]]
+) -> List[models.Delivery]:
+    """Get deliveries by their IDs."""
+    with unit_of_work(db) as uow:
+        if not deliveries_ids:
+            return uow.delivery.get_all()
+        return uow.delivery.get_by_ids(deliveries_ids)

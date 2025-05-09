@@ -32,6 +32,13 @@ class DeliveryRepository:
         )
         return query.first()
 
+    def get_by_ids(self, delivery_ids: List[UUID]) -> List[models.Delivery]:
+        """Get deliveries by a list of IDs."""
+        query = self.session.query(models.Delivery).filter(
+            models.Delivery.id.in_(delivery_ids)
+        )
+        return query.all()
+
     def get_without_stops_ordered(self) -> List[models.Delivery]:
         """Get deliveries without ordered stops."""
         query = (

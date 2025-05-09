@@ -33,3 +33,9 @@ class WarehouseSchema(BaseModel):
 class GetWarehousesResponseSchema(BaseModel):
     warehouses: list[WarehouseSchema]
     model_config = ConfigDict(from_attributes=True)
+
+
+class CreateSaleDeliverySchema(BaseModel):
+    sale_id: uuid.UUID
+    delivery_id: uuid.UUID
+    model_config = ConfigDict(from_attributes=True)
