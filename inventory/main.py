@@ -1,6 +1,6 @@
 # Main application
-from contextlib import asynccontextmanager
 import sys
+from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,14 +15,6 @@ from stock.events import setup_db_events
 from stock.seed_data import seed_stock
 from warehouse.api import warehouse_router
 from warehouse.seed_data import seed_warehouses
-
-
-def seed_database(db: Session = None):
-    db = db or SessionLocal()
-    try:
-        seed_warehouses(db)
-    finally:
-        db.close()
 
 
 @asynccontextmanager

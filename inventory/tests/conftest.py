@@ -135,3 +135,23 @@ def mock_suppliers_rpc_client(request):
         autospec=True,
     ):
         yield
+
+
+@pytest.fixture(autouse=True)
+def mock_rabbitmq_client(request):
+    """
+    Mock the RabbitMQ client (pika) to avoid actual RabbitMQ calls.
+    """
+    if request.node.get_closest_marker("skip_mock_rabbitmq"):
+        yield  # Skip the fixture
+        return
+
+    # Mock the pika connection and channel
+    mock_connection = mock.MagicMock()
+    mock_channel = mock.MagicMock()
+
+    # Mock pika.BlockingConnection to return the mock connection
+    with mock.patch("pika.BlockingConnection", return_value=mock_connection):
+        # Mock the connection.channel() to return the mock channel
+        mock_connection.channel.return_value = mock_channel
+        yield mock_channel

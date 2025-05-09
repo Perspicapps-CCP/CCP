@@ -5,6 +5,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from warehouse.models import Warehouse
+
 from . import exceptions, models, schemas
 
 
@@ -155,7 +156,11 @@ def allocate_stock_products(
         .with_for_update()
         .filter(models.Stock.product_id.in_(products.keys()))
         .filter(models.Stock.quantity > 0)
-        .order_by(models.Stock.product_id.asc(), models.Stock.quantity.desc())
+        .order_by(
+            models.Stock.product_id.asc(),
+            models.Stock.quantity.desc(),
+            models.Stock.warehouse_id.asc(),
+        )
         .all()
     )
 
