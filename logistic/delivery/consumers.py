@@ -1,15 +1,15 @@
 import logging
 from typing import Dict
 
+from pydantic import ValidationError
+
+from database import SessionLocal
 from delivery.schemas import (
     DeliverySaleResponseSchema,
     DeliverySaleStatus,
     PayloadSaleSchema,
 )
 from delivery.services import create_delivery_stops_transaction
-from pydantic import ValidationError
-
-from database import SessionLocal
 from seedwork.base_consumer import BaseConsumer
 
 logging.basicConfig(
@@ -20,10 +20,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class GetProductsConsumer(BaseConsumer):
+class CreateDeliveryStopsConsumer(BaseConsumer):
     """
     Consumer for processing sales data and creating delivery items.
-    This consumer listens to the queue "logistic.send_pending_sales_to_delivery"
+    This consumer listens to the queue
+    "logistic.send_pending_sales_to_delivery"
     """
 
     def __init__(self):

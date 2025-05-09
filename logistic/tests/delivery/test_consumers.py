@@ -4,9 +4,10 @@ import uuid
 from unittest.mock import MagicMock, patch
 
 import pytest
-from delivery.consumers import GetProductsConsumer
-from delivery.schemas import DeliverySaleStatus
 from sqlalchemy.orm import Session
+
+from delivery.consumers import CreateDeliveryStopsConsumer
+from delivery.schemas import DeliverySaleStatus
 
 
 @pytest.fixture
@@ -30,7 +31,7 @@ class TestGetProductsConsumer:
 
     def test_init(self):
         # Act
-        consumer = GetProductsConsumer()
+        consumer = CreateDeliveryStopsConsumer()
 
         # Assert
         assert consumer.queue == "logistic.send_pending_sales_to_delivery"
@@ -41,7 +42,7 @@ class TestGetProductsConsumer:
         self, mock_session_local, mock_create_transaction, payload_dict
     ):
         # Arrange
-        consumer = GetProductsConsumer()
+        consumer = CreateDeliveryStopsConsumer()
         consumer.connection = MagicMock()
         consumer.channel = MagicMock()
 
@@ -67,7 +68,7 @@ class TestGetProductsConsumer:
         self, mock_session_local, mock_create_transaction, payload_dict
     ):
         # Arrange
-        consumer = GetProductsConsumer()
+        consumer = CreateDeliveryStopsConsumer()
         consumer.connection = MagicMock()
         consumer.channel = MagicMock()
         mock_db = MagicMock(spec=Session)
@@ -88,7 +89,7 @@ class TestGetProductsConsumer:
         mock_create_transaction.assert_not_called()
 
         result_dict = json.loads(result)
-        assert result_dict["sale_id"] == None
+        assert result_dict["sale_id"] is None
         assert result_dict["status"] == DeliverySaleStatus.ERROR
         assert "sales_id" in result_dict["message"]
 
@@ -98,7 +99,7 @@ class TestGetProductsConsumer:
         self, mock_session_local, mock_create_transaction, payload_dict
     ):
         # Arrange
-        consumer = GetProductsConsumer()
+        consumer = CreateDeliveryStopsConsumer()
         consumer.connection = MagicMock()
         consumer.channel = MagicMock()
         mock_db = MagicMock(spec=Session)

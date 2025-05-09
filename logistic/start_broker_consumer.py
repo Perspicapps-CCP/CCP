@@ -3,7 +3,8 @@ import threading
 import time
 
 import keyboard
-from delivery.consumers import GetProductsConsumer
+
+from delivery.consumers import CreateDeliveryStopsConsumer
 
 logging.basicConfig(
     level=logging.INFO,
@@ -31,16 +32,16 @@ def start_threads(threaded_classes: list):
         run_thread(threaded_class)
 
 
-start_threads([GetProductsConsumer])
+start_threads([CreateDeliveryStopsConsumer])
 
 
-# try:
-#     logger.info("Starting consumer threads...")
-#     while any(t.is_alive() for t in threads) and not keyboard.is_pressed('q'):
-#         time.sleep(1)
-# except KeyboardInterrupt:
-#     logger.error("Keyboard interrupt received, shutting down...")
-#     for thread in threads:
-#         if hasattr(thread, 'stop') and callable(thread.stop):
-#             thread.stop()
+try:
+    logger.info("Starting consumer threads...")
+    while any(t.is_alive() for t in threads) and not keyboard.is_pressed('q'):
+        time.sleep(1)
+except KeyboardInterrupt:
+    logger.error("Keyboard interrupt received, shutting down...")
+    for thread in threads:
+        if hasattr(thread, 'stop') and callable(thread.stop):
+            thread.stop()
 logger.info("All consumers stopped, exiting...")

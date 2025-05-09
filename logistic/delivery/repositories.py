@@ -2,9 +2,10 @@ from datetime import datetime
 from typing import Dict, Generator, List, Optional, Tuple
 from uuid import UUID
 
-from delivery import models, schemas
 from sqlalchemy import and_, func, update
 from sqlalchemy.orm import Session, joinedload
+
+from delivery import models, schemas
 
 
 class DeliveryRepository:
@@ -212,7 +213,7 @@ class DeliveryStopRepository:
             .where(
                 and_(
                     models.DeliveryStop.id.in_(stop_ids),
-                    models.DeliveryStop.delivery_id is None,
+                    models.DeliveryStop.delivery_id == None,  # noqa: E711
                 )
             )
         )
@@ -295,7 +296,7 @@ class DriverRepository:
                     models.Delivery.delivery_date == delivery_date,
                 ),
             )
-            .filter(models.Delivery.id is None)
+            .filter(models.Delivery.id == None)  # noqa: E711
             .first()
         )
 
