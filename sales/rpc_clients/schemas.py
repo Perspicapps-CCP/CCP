@@ -75,6 +75,7 @@ class DeliveryItemSchema(BaseModel):
 
 
 class DeliverySchema(BaseModel):
+    id: uuid.UUID
     shipping_number: str
     license_plate: str
     diver_name: str

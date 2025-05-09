@@ -16,7 +16,7 @@ class CreateSaleDelivery(BaseConsumer):
     """
 
     def __init__(self):
-        super().__init__(queue="users.create_sale_delivery")
+        super().__init__(queue="sales.create_sale_delivery")
 
     def process_payload(self, payload: Dict) -> str | Dict:
         """

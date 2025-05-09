@@ -106,7 +106,7 @@ def get_sale_delivery(
     return (
         db.query(SaleDelivery)
         .filter(SaleDelivery.sale_id == sale_id)
-        .filter(SaleDelivery.id == delivery_id)
+        .filter(SaleDelivery.delivery_id == delivery_id)
         .first()
     )
 
@@ -124,8 +124,8 @@ def associate_delivery_to_sale(
         SaleDelivery: The created or existing SaleDelivery object.
     """
     if not get_sale_delivery(db, sale_id, delivery_id):
-        sale_delivery = SaleDelivery(sale_id=sale_id, id=delivery_id)
+        sale_delivery = SaleDelivery(sale_id=sale_id, delivery_id=delivery_id)
         db.add(sale_delivery)
-        db.flush()
+        db.commit()
         db.refresh(sale_delivery)
         return sale_delivery

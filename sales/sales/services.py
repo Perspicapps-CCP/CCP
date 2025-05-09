@@ -146,7 +146,8 @@ def create_sale(
         raise exceptions.SaleCantBeCreated(
             "Logistic order failed",
         )
-
+    db.commit()
+    db.refresh(sale)
     return sale
 
 

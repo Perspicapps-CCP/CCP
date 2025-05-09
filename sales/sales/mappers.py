@@ -3,7 +3,8 @@ from uuid import UUID
 
 import faker
 
-from rpc_clients.schemas import ProductSchema, UserSchema
+from rpc_clients.logistic_client import LogisticClient
+from rpc_clients.schemas import DeliverySchema, ProductSchema, UserSchema
 from rpc_clients.suppliers_client import SuppliersClient
 from rpc_clients.users_client import UsersClient
 
@@ -18,12 +19,17 @@ def _sale_to_schema(
     sellers: Dict[UUID, UserSchema],
     clients: Dict[UUID, UserSchema],
     products: Dict[UUID, ProductSchema],
+    deliveries: Dict[UUID, DeliverySchema],
 ) -> SaleDetailSchema:
     """
     Map a Sale model to a SaleDetailSchema.
     """
 
     client = clients.get(sale.client_id)
+
+    deliveries = [
+        deliveries.get(delivery.delivery_id) for delivery in sale.deliveries
+    ]
 
     return SaleDetailSchema(
         id=sale.id,
@@ -47,7 +53,7 @@ def _sale_to_schema(
             )
             for item in sale.items
         ],
-        deliveries=[],
+        deliveries=[d for d in deliveries if d is not None],
     )
 
 
@@ -71,15 +77,26 @@ def sales_to_schema(sales: List[Sale]) -> List[SaleDetailSchema]:
     clients = UsersClient().get_clients(
         list({sale.client_id for sale in sales}),
     )
+    deliveries = LogisticClient().get_deliveries(
+        list(
+            {
+                delivery.delivery_id
+                for sale in sales
+                for delivery in sale.deliveries
+            }
+        ),
+    )
     sellers = {seller.id: seller for seller in sellers}
     products = {product.id: product for product in products}
     clients = {client.id: client for client in clients}
+    deliveries = {delivery.id: delivery for delivery in deliveries}
     return [
         _sale_to_schema(
             sale,
             sellers,
             clients,
             products,
+            deliveries,
         )
         for sale in sales
     ]

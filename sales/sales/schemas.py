@@ -46,7 +46,7 @@ class SaleDetailSchema(BaseModel):
     created_at: datetime
     updated_at: Optional[datetime]
     items: List[SaleItemSchema]
-    deliveries: List[DeliverySchema]
+    deliveries: List[Optional[DeliverySchema]]
 
     model_config = ConfigDict(from_attributes=True)
 
