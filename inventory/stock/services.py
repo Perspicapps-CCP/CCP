@@ -1,10 +1,12 @@
 from typing import List, Tuple
 from uuid import UUID
+
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from warehouse.models import Warehouse
-from . import models, schemas
+
+from . import exceptions, models, schemas
 
 
 def create_delivery(
@@ -140,3 +142,68 @@ def get_product_aggregated(db: Session, product_id: UUID) -> Tuple[UUID, int]:
         .group_by(models.Stock.product_id)
     )
     return db_stock.first()
+
+
+def allocate_stock_products(
+    db: Session,
+    allocation: schemas.AllocateStockSchema,
+) -> list[models.StockMovement]:
+    """Allocate products in stock."""
+    products = {item.product_id: item.quantity for item in allocation.items}
+
+    stock_list = (
+        db.query(models.Stock)
+        .with_for_update()
+        .filter(models.Stock.product_id.in_(products.keys()))
+        .filter(models.Stock.quantity > 0)
+        .order_by(
+            models.Stock.product_id.asc(),
+            models.Stock.quantity.desc(),
+            models.Stock.warehouse_id.asc(),
+        )
+        .all()
+    )
+
+    avalaible_stock = {product_id: 0 for product_id in products.keys()}
+
+    for stock in stock_list:
+        avalaible_stock[stock.product_id] += stock.quantity
+
+    # Validate there is enough stock to allocate
+    if any(
+        avalaible_stock[product_id] < products[product_id]
+        for product_id in products.keys()
+    ):
+        raise exceptions.InsufficientStockToAllocateException(
+            avalaible_stock, products
+        )
+    # Allocate stock.
+    movements = []
+    for product_id, quantity in products.items():
+        stocks = [
+            stock for stock in stock_list if stock.product_id == product_id
+        ]
+        for stock in stocks:
+            quantity_moved = 0
+            if stock.quantity >= quantity:
+                stock.quantity -= quantity
+                quantity_moved = quantity
+                quantity = 0
+            else:
+                quantity -= stock.quantity
+                quantity_moved = stock.quantity
+                stock.quantity = 0
+            movements.append(
+                models.StockMovement(
+                    stock_product_id=stock.product_id,
+                    stock_warehouse_id=stock.warehouse_id,
+                    quantity=quantity_moved,
+                    sale_id=allocation.sale_id,
+                    order_number=allocation.order_number,
+                )
+            )
+            if quantity == 0:
+                break
+    db.add_all(movements)
+    db.commit()
+    return movements

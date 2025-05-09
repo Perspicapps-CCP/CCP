@@ -1,8 +1,14 @@
 import threading
-import asyncio
 from typing import Dict
+
+import asyncio
+from pydantic import ValidationError
+
+from database import SessionLocal
 from seedwork.base_consumer import BaseConsumer
 from stock.websocket import broadcast_inventory_update
+
+from . import exceptions, schemas, services
 
 
 class GetStocksEventsConsumer(BaseConsumer):
@@ -96,3 +102,47 @@ class GetStocksEventsConsumer(BaseConsumer):
 
 
 _stockChangesConsumer = GetStocksEventsConsumer()
+
+
+class AllocateStockConsumer(BaseConsumer):
+    """
+    Consumer for stock reservation.
+    """
+
+    def __init__(self):
+        super().__init__(queue="inventory.reserve_stock")
+
+    def process_payload(self, payload: Dict) -> str | Dict:
+        """
+        Process the payload received from the queue.
+        """
+        db = SessionLocal()
+        try:
+            reserve_schema = schemas.AllocateStockSchema.model_validate(
+                payload
+            )
+            # allocate products
+            movements = services.allocate_stock_products(db, reserve_schema)
+
+            return schemas.AllocateStockResponseSchema(
+                order_number=reserve_schema.order_number,
+                sale_id=str(reserve_schema.sale_id),
+                items=[
+                    schemas.StockResponseSchema(
+                        product_id=str(movement.stock_product_id),
+                        quantity=movement.quantity,
+                        warehouse_id=str(movement.stock_warehouse_id),
+                        last_updated=movement.created_at,
+                    )
+                    for movement in movements
+                ],
+            ).model_dump_json()
+
+        except ValidationError as e:
+            return {"error": e.errors(), "code": "validation_error"}
+        except exceptions.InsufficientStockToAllocateException as e:
+            return {"error": e.errors(), "code": "insufficient_stock"}
+        except Exception as e:
+            return {"error": str(e)}
+        finally:
+            db.close()

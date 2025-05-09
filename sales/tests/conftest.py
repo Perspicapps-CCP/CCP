@@ -238,6 +238,37 @@ def mock_suppliers_rpc_client(request):
 
 
 @pytest.fixture(autouse=True)
+def mock_inventory_inventory_client(request):
+    """
+    Mock the InventoryClient to avoid actual RPC calls.
+    """
+    if request.node.get_closest_marker("skip_mock_inventory_client"):
+        return
+
+    with mock.patch(
+        "rpc_clients.inventory_client.InventoryClient",
+        autospec=True,
+    ):
+        yield
+
+
+@pytest.fixture(autouse=True)
+def mock_logistic_client(request):
+    """
+    Mock the LogisticClient to avoid actual RPC calls.
+    """
+
+    if request.node.get_closest_marker("skip_mock_logistic_client"):
+        return
+
+    with mock.patch(
+        "rpc_clients.logistic_client.LogisticClient.get_deliveries",
+        autospec=True,
+    ):
+        yield
+
+
+@pytest.fixture(autouse=True)
 def mock_rabbitmq_client(request):
     """
     Mock the RabbitMQ client (pika) to avoid actual RabbitMQ calls.

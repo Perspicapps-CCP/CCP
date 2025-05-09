@@ -1,12 +1,17 @@
 import logging
 import threading
 import time
+
 import keyboard
-from delivery.consumers import GetProductsConsumer
+
+from delivery.consumers import (
+    CreateDeliveryStopsConsumer,
+    GetDeliveriesConsumer,
+)
 
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     force=True,
 )
 logger = logging.getLogger(__name__)
@@ -30,7 +35,7 @@ def start_threads(threaded_classes: list):
         run_thread(threaded_class)
 
 
-start_threads([GetProductsConsumer])
+start_threads([CreateDeliveryStopsConsumer, GetDeliveriesConsumer])
 
 
 try:

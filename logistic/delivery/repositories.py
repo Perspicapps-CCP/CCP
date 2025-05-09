@@ -1,6 +1,7 @@
 from datetime import datetime
-from typing import Dict, List, Generator, Tuple, Optional
+from typing import Dict, Generator, List, Optional, Tuple
 from uuid import UUID
+
 from sqlalchemy import and_, func, update
 from sqlalchemy.orm import Session, joinedload
 
@@ -30,6 +31,13 @@ class DeliveryRepository:
             models.Delivery.id == delivery_id
         )
         return query.first()
+
+    def get_by_ids(self, delivery_ids: List[UUID]) -> List[models.Delivery]:
+        """Get deliveries by a list of IDs."""
+        query = self.session.query(models.Delivery).filter(
+            models.Delivery.id.in_(delivery_ids)
+        )
+        return query.all()
 
     def get_without_stops_ordered(self) -> List[models.Delivery]:
         """Get deliveries without ordered stops."""
@@ -140,6 +148,7 @@ class DeliveryItemRepository:
         product_id: UUID,
         warehouse_id: UUID,
         delivery_stop_id: UUID,
+        quantity: int = 1,
     ) -> models.DeliveryItem:
         """Create a new delivery item."""
         db_delivery_item = models.DeliveryItem(
@@ -148,6 +157,7 @@ class DeliveryItemRepository:
             product_id=product_id,
             warehouse_id=warehouse_id,
             delivery_stop_id=delivery_stop_id,
+            quantity=quantity,
         )
         self.session.add(db_delivery_item)
         self.session.flush()
@@ -210,7 +220,7 @@ class DeliveryStopRepository:
             .where(
                 and_(
                     models.DeliveryStop.id.in_(stop_ids),
-                    models.DeliveryStop.delivery_id == None,
+                    models.DeliveryStop.delivery_id == None,  # noqa: E711
                 )
             )
         )
@@ -223,7 +233,7 @@ class DeliveryStopRepository:
             update_query = (
                 update(models.DeliveryStop)
                 .values(order_stop=index + 1)
-                .where(models.DeliveryStop.id == stop_id['stop'])
+                .where(models.DeliveryStop.id == stop_id["stop"])
             )
             result = self.session.execute(update_query)
             if result.rowcount == 0:
@@ -266,6 +276,13 @@ class DeliveryAddressRepository:
         self.session.refresh(db_delivery_address)
         return db_delivery_address
 
+    def get_by_id(self, address_id: UUID) -> Optional[models.DeliveryAddress]:
+        """Get a specific delivery address by ID."""
+        query = self.session.query(models.DeliveryAddress).filter(
+            models.DeliveryAddress.id == address_id
+        )
+        return query.first()
+
 
 class DriverRepository:
     """Repository class for driver operations."""
@@ -286,7 +303,7 @@ class DriverRepository:
                     models.Delivery.delivery_date == delivery_date,
                 ),
             )
-            .filter(models.Delivery.id == None)
+            .filter(models.Delivery.id == None)  # noqa: E711
             .first()
         )
 

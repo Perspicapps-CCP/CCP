@@ -1,16 +1,19 @@
 import csv
 import datetime
 from io import StringIO
-from typing import Annotated, List
+from typing import Annotated, Dict, List
 from uuid import UUID
 
+from common.api import get_auth_user
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import StreamingResponse
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from db_dependency import get_db
 
-from . import mappers, schemas, services
+from . import exceptions, mappers, schemas, services
 
 sales_router = APIRouter(prefix="/sales", tags=["Sales"])
 
@@ -42,6 +45,50 @@ def list_sales(
             in sale.seller.full_name.lower()
         ]
     return response
+
+
+@sales_router.post(
+    "/",
+    response_model=schemas.SaleDetailSchema,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_201_CREATED: {
+            "description": "Sale created successfully.",
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "description": "Invalid input data.",
+        },
+    },
+)
+def create_sale(
+    payload: Dict,
+    db: Session = Depends(get_db),
+    user=Depends(get_auth_user),
+) -> schemas.SaleDetailSchema:
+    """
+    Create a new sale.
+    """
+    try:
+        payload = schemas.CreateSaleSchema.model_validate(
+            payload, context={"user": user, "db": db}
+        )
+        sale = services.create_sale(db, user, payload)
+        return mappers.sale_to_schema(sale)
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=jsonable_encoder(e.errors()),
+        )
+    except exceptions.SaleCantBeCreated as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=e.errors(),
+        )
+    except TimeoutError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Timeout error, please try again in a few minutes.",
+        )
 
 
 @sales_router.get(

@@ -1,6 +1,6 @@
 # Main application
-from contextlib import asynccontextmanager
 import sys
+from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,16 +12,9 @@ from database import Base, SessionLocal, engine
 from db_dependency import get_db
 from stock.api import stock_router
 from stock.events import setup_db_events
+from stock.seed_data import seed_stock
 from warehouse.api import warehouse_router
 from warehouse.seed_data import seed_warehouses
-
-
-def seed_database(db: Session = None):
-    db = db or SessionLocal()
-    try:
-        seed_warehouses(db)
-    finally:
-        db.close()
 
 
 @asynccontextmanager
@@ -46,6 +39,15 @@ inventory_router.include_router(stock_router)
 inventory_router.include_router(warehouse_router)
 
 
+def seed_database(db: Session = None):
+    db = db or SessionLocal()
+    try:
+        seed_warehouses(db)
+        seed_stock(db)
+    finally:
+        db.close()
+
+
 if "pytest" not in sys.modules:
     Base.metadata.create_all(bind=engine)
     # Seeding the database with initial data
@@ -58,7 +60,7 @@ def reset(db: Session = Depends(get_db)):
     Base.metadata.drop_all(bind=db.get_bind())
     Base.metadata.create_all(bind=db.get_bind())
     db.commit()
-    seed_warehouses(db)
+    seed_database(db)
     return schemas.DeleteResponse()
 
 

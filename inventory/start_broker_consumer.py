@@ -4,6 +4,7 @@ import time
 
 import keyboard
 
+from stock.consumers import AllocateStockConsumer
 from warehouse.consumers import GetWarehousesConsumer
 
 logging.basicConfig(
@@ -32,7 +33,7 @@ def start_threads(threaded_classes: list):
         run_thread(threaded_class)
 
 
-start_threads([GetWarehousesConsumer])
+start_threads([GetWarehousesConsumer, AllocateStockConsumer])
 
 
 try:

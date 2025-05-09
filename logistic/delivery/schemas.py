@@ -1,10 +1,10 @@
 # Fite to validate the data that is being sent and recieved to the API
 import datetime
-from enum import Enum
 import uuid
+from enum import Enum
 from typing import List, Optional, Union
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class DeleteResponse(BaseModel):
@@ -19,13 +19,14 @@ class DeliveryItemGetResponseSchema(BaseModel):
     product_name: str
     quantity: Optional[int] = 1
     images: List[str]
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DeliveryCreateRequestSchema(BaseModel):
     delivery_date: datetime.date
     warehouse_id: uuid.UUID
 
-    @field_validator('delivery_date', mode='before')
+    @field_validator("delivery_date", mode="before")
     def validate_date(cls, v):
         if isinstance(v, datetime.date):
             return v
@@ -56,6 +57,9 @@ class DeliveryCreateResponseSchema(BaseModel):
 
 class DeliveryDetailGetResponseSchema(DeliveryCreateResponseSchema):
     orders: List[DeliveryItemGetResponseSchema]
+    id: uuid.UUID
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DriverCreateSchema(BaseModel):
@@ -65,7 +69,7 @@ class DriverCreateSchema(BaseModel):
         description="Phone number as string or integer"
     )
 
-    @field_validator('phone_number')
+    @field_validator("phone_number")
     def validate_phone(cls, v):
         phone_str = str(v)
         if not phone_str.isdigit():
@@ -94,6 +98,7 @@ class PayloadSaleItemSchema(BaseModel):
     sales_item_id: uuid.UUID
     product_id: uuid.UUID
     warehouse_id: uuid.UUID
+    quantity: int
 
 
 class PayloadSaleSchema(BaseModel):
@@ -109,7 +114,7 @@ class DeliverySaleStatus(str, Enum):
 
 
 class DeliverySaleResponseSchema(BaseModel):
-    sale_id: uuid.UUID
+    sale_id: Optional[uuid.UUID]
     status: DeliverySaleStatus
     message: str
 
@@ -122,3 +127,13 @@ class DeliveryGetRouteSchema(BaseModel):
     order_customer_phone_number: str = "01234456789"
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+
+
+class GetDelivieriesSchema(BaseModel):
+    deliveries_ids: Optional[List[uuid.UUID]]
+
+
+class GetDeliveriesResponseSchema(BaseModel):
+    deliveries: list[DeliveryDetailGetResponseSchema]
+
+    model_config = ConfigDict(from_attributes=True)

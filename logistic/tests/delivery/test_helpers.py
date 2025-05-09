@@ -1,12 +1,12 @@
 import uuid
 
-from faker import Faker
 from delivery import helpers
 from delivery.schemas import (
     PayloadAddressSchema,
     PayloadSaleItemSchema,
     PayloadSaleSchema,
 )
+from faker import Faker
 
 fake = Faker()
 fake.seed_instance(123)
@@ -60,11 +60,13 @@ def test_group_items_by_warehouse_single_warehouse():
                 sales_item_id=uuid.UUID(int=0),
                 product_id=uuid.UUID("aaaaaaaa-1234-5678-1234-567812345678"),
                 warehouse_id=warehouse_id,
+                quantity=fake.random_int(min=1, max=10),
             ),
             PayloadSaleItemSchema(
                 sales_item_id=uuid.UUID(int=0),
                 product_id=uuid.UUID("bbbbbbbb-1234-5678-1234-567812345678"),
                 warehouse_id=warehouse_id,
+                quantity=fake.random_int(min=1, max=10),
             ),
         ],
     )
@@ -102,16 +104,19 @@ def test_group_items_by_warehouse_multiple_warehouses():
                 sales_item_id=uuid.UUID(int=0),
                 product_id=uuid.UUID("aaaaaaaa-1234-5678-1234-567812345678"),
                 warehouse_id=warehouse_id1,
+                quantity=fake.random_int(min=1, max=10),
             ),
             PayloadSaleItemSchema(
                 sales_item_id=uuid.UUID(int=0),
                 product_id=uuid.UUID("bbbbbbbb-1234-5678-1234-567812345678"),
                 warehouse_id=warehouse_id2,
+                quantity=fake.random_int(min=1, max=10),
             ),
             PayloadSaleItemSchema(
                 sales_item_id=uuid.UUID(int=0),
                 product_id=uuid.UUID("cccccccc-1234-5678-1234-567812345678"),
                 warehouse_id=warehouse_id1,
+                quantity=fake.random_int(min=1, max=10),
             ),
         ],
     )

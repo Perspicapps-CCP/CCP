@@ -1,13 +1,16 @@
 from datetime import datetime
-import re
-from typing import Dict, List, Generator, Tuple, Optional
+from typing import Dict, Generator, List, Optional, Tuple
 from uuid import UUID
-from sqlalchemy.orm import Session
+
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 from delivery import models, schemas
-from .unit_of_work import unit_of_work
+from rpc_clients.sales_client import SalesClient
+from rpc_clients.schemas import CreateSaleDeliverySchema
+
 from .helpers import group_items_by_warehouse, group_stops_by_warehouse
+from .unit_of_work import unit_of_work
 
 
 # Read-only services (no transactions needed)
@@ -113,7 +116,9 @@ def create_delivery_stops_transaction(
     with unit_of_work(db) as uow:
         try:
             items_by_warehouse = group_items_by_warehouse(sale)
-            db_delivery_address = uow.delivery_address.create(sale.address)
+            db_delivery_address = uow.delivery_address.get_by_id(
+                sale.address.id
+            ) or uow.delivery_address.create(sale.address)
 
             for warehouse_id, warehouse_items in items_by_warehouse.items():
                 db_delivery_stop = uow.delivery_stop.create(
@@ -129,13 +134,14 @@ def create_delivery_stops_transaction(
                         product_id=item.product_id,
                         warehouse_id=item.warehouse_id,
                         delivery_stop_id=db_delivery_stop.id,
+                        quantity=item.quantity,
                     )
             uow.commit()
             return True
         except IntegrityError as e:
             uow.rollback()
             print(f"Duplicate entry found: {e.orig}")
-            return True
+            return False
         except Exception as e:
             uow.rollback()
             print(f"Error creating delivery items: {e}")
@@ -193,9 +199,29 @@ def create_delivery_transaction(
                         return created_deliveries
                     uow.commit()
                     created_deliveries.append(db_delivery)
+            for delivery in created_deliveries:
+                # Update the delivery with the request details
+                for stop in delivery.stops:
+                    client = SalesClient()
+                    client.create_sale_delivery(
+                        CreateSaleDeliverySchema(
+                            sale_id=stop.sales_id,
+                            delivery_id=delivery.id,
+                        )
+                    )
 
             return created_deliveries
         except Exception as e:
             uow.rollback()
             print(f"Error creating deliveries: {e}")
             return []
+
+
+def get_deliveries_by_ids(
+    db: Session, deliveries_ids: Optional[List[UUID]]
+) -> List[models.Delivery]:
+    """Get deliveries by their IDs."""
+    with unit_of_work(db) as uow:
+        if not deliveries_ids:
+            return uow.delivery.get_all()
+        return uow.delivery.get_by_ids(deliveries_ids)

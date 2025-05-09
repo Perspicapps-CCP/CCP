@@ -1,17 +1,20 @@
-import uuid
 import enum
+import uuid
+
 from sqlalchemy import (
+    UUID,
     Column,
     DateTime,
     Enum,
     ForeignKey,
+    ForeignKeyConstraint,
     Integer,
-    UUID,
     String,
     UniqueConstraint,
     func,
 )
 from sqlalchemy.orm import relationship
+
 from database import Base
 
 
@@ -35,6 +38,11 @@ class Stock(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     warehouse = relationship("Warehouse", back_populates="stocks")
+    movements = relationship(
+        "StockMovement",
+        back_populates="stock",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self):
         return f"<Stock(warehouse_id={self.warehouse_id}, product_id={self.product_id}, quantity={self.quantity})>"
@@ -63,3 +71,28 @@ class Operation(Base):
 class Delivery(Base):
     __tablename__ = "deliveries"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+
+class StockMovement(Base):
+    __tablename__ = "stock_movements"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    stock_warehouse_id = Column(UUID(as_uuid=True), nullable=False)
+    stock_product_id = Column(UUID(as_uuid=True), nullable=False)
+    sale_id = Column(UUID(as_uuid=True), nullable=False)
+    order_number = Column(Integer, nullable=False)
+    quantity = Column(Integer, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    stock = relationship(
+        "Stock",
+        back_populates="movements",
+        primaryjoin="and_(StockMovement.stock_warehouse_id == Stock.warehouse_id, "
+        "StockMovement.stock_product_id == Stock.product_id)",
+    )
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["stock_warehouse_id", "stock_product_id"],
+            ["stocks.warehouse_id", "stocks.product_id"],
+        ),
+    )

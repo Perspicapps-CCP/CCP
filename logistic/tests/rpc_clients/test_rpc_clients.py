@@ -1,10 +1,12 @@
-import pytest
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
+
+import pytest
 from faker import Faker
 
 from rpc_clients.inventory_client import InventoryClient
-from rpc_clients.schemas import ProductSchema
+from rpc_clients.sales_client import SalesClient
+from rpc_clients.schemas import CreateSaleDeliverySchema, ProductSchema
 from rpc_clients.suppliers_client import SuppliersClient
 
 fake = Faker()
@@ -188,3 +190,51 @@ class TestInventoryClient:
         result = inventory_client.get_warehouses()
 
         assert result == []
+
+
+class TestSalesClient:
+    @pytest.fixture
+    def mock_call_broker(self):
+        """
+        Fixture to mock the call_broker method.
+        """
+        return MagicMock()
+
+    @pytest.fixture
+    def sales_client(self, mock_call_broker) -> SalesClient:
+        """
+        Fixture to create a SalesClient instance with a mocked call_broker.
+        """
+        with patch('pika.BlockingConnection') as mock_connection:
+            mock_channel = MagicMock()
+            mock_connection.return_value.channel.return_value = mock_channel
+            client = SalesClient()
+            client.call_broker = mock_call_broker
+            return client
+
+    def test_create_sale_delivery_calls_broker_with_correct_routing_key(
+        self, sales_client: SalesClient, mock_call_broker: MagicMock
+    ):
+        """
+        Test that create_sale_delivery calls call_broker with the correct
+          routing key and payload.
+        """
+        sale_id = fake.uuid4(cast_to=None)
+        delivery_id = fake.uuid4(cast_to=None)
+        data = CreateSaleDeliverySchema(
+            sale_id=str(sale_id),
+            delivery_id=str(delivery_id),
+        )
+        mock_call_broker.return_value = {
+            "sale_id": str(sale_id),
+            "delivery_id": str(delivery_id),
+        }
+        sales_client.create_sale_delivery(data)
+
+        mock_call_broker.assert_called_once_with(
+            "sales.create_sale_delivery",
+            {
+                "sale_id": str(sale_id),
+                "delivery_id": str(delivery_id),
+            },
+        )

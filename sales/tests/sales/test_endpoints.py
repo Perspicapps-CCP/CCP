@@ -30,6 +30,7 @@ def seed_sales(db_session: Session) -> Callable[[int, int], List[Sale]]:
             sale = Sale(
                 id=uuid4(),
                 seller_id=uuid4(),
+                client_id=uuid4(),
                 order_number=fake.random_int(min=1000, max=9999),
                 address_id=uuid4(),
                 total_value=fake.pydecimal(
@@ -177,11 +178,14 @@ def test_filter_sales_by_seller_name(client: TestClient, seed_sales):
     sells = seed_sales(3, items_per_sale=2)  # Seed 3 sales
 
     sellers = generate_fake_sellers([sale.seller_id for sale in sells])
+    buyers = generate_fake_sellers(
+        [sale.client_id for sale in sells], with_address=True
+    )
 
-    with mock.patch(
-        "rpc_clients.users_client.UsersClient.get_sellers",
-        return_value=sellers,
-        autospec=True,
+    with mock.patch.multiple(
+        "rpc_clients.users_client.UsersClient",
+        get_sellers=mock.Mock(return_value=sellers),
+        get_clients=mock.Mock(return_value=buyers),
     ):
         response = client.get(
             f"/api/v1/sales/sales/?seller_name={sellers[0].full_name}"
@@ -326,3 +330,12 @@ def test_export_sales_as_csv_with_filters(client: TestClient, seed_sales):
     # Ensure no extra rows in the CSV
     with pytest.raises(StopIteration):
         next(csv_reader)
+
+
+# class TestCreateSaleEndpoint:
+
+#     def test_create_sale_correctly(self):
+#         assert False
+
+#     def test_create_sale_stock_not_available(self):
+#         assert False

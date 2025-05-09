@@ -4,6 +4,7 @@ from uuid import uuid4
 import pytest
 from faker import Faker
 
+from rpc_clients.inventory_client import InventoryClient
 from rpc_clients.schemas import ProductSchema, UserAuthSchema, UserSchema
 from rpc_clients.suppliers_client import SuppliersClient
 from rpc_clients.users_client import UsersClient
@@ -467,3 +468,48 @@ class TestUsersClientAuthUser(UsersClientMixin):
         result = users_client.auth_user(bearer_token)
         # Assert the result is None
         assert result is None
+
+
+class TestInventoryClient:
+
+    @pytest.fixture
+    def mock_call_broker(self):
+        """
+        Fixture to mock the call_broker method.
+        """
+        return MagicMock()
+
+    @pytest.fixture
+    def suppliers_client(self, mock_call_broker) -> InventoryClient:
+        """
+        Fixture to create a InventoryClient instance with a mocked call_broker.
+        """
+        client = InventoryClient()
+        client.call_broker = mock_call_broker
+        return client
+
+    def test_reserve_stock_calls_broker_with_correct_routing_key(
+        self, suppliers_client: InventoryClient, mock_call_broker: MagicMock
+    ):
+        """
+        Test that reserve_stock calls call_broker with the
+          correct routing key and payload.
+        """
+        payload = {
+            "order_number": fake.random_int(min=1, max=10),
+            "sale_id": fake.uuid4(),
+            "items": [
+                {
+                    "product_id": fake.uuid4(),
+                    "quantity": fake.random_int(min=1, max=10),
+                }
+                for _ in range(3)
+            ],
+        }
+        suppliers_client.reserve_stock(payload)
+
+        # Assert call_broker was called with the
+        #  correct routing key and payload
+        mock_call_broker.assert_called_once_with(
+            "inventory.reserve_stock", payload
+        )

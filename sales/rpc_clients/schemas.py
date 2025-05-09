@@ -57,3 +57,70 @@ class UserAuthSchema(UserSchema):
     is_client: bool
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class WarehouseSchema(BaseModel):
+    warehouse_id: uuid.UUID
+    warehouse_name: str
+
+
+class DeliveryItemSchema(BaseModel):
+    order_number: str
+    order_address: str
+    customer_phone_number: Optional[str]
+    product_code: str
+    product_name: str
+    quantity: Optional[int]
+    images: List[str]
+
+
+class DeliverySchema(BaseModel):
+    id: uuid.UUID
+    shipping_number: str
+    license_plate: str
+    diver_name: str
+    warehouse: WarehouseSchema
+    delivery_status: str
+    created_at: datetime.datetime
+    updated_at: Optional[datetime.datetime]
+    orders: List[DeliveryItemSchema]
+
+
+class ReserveStockItemSchema(BaseModel):
+    product_id: uuid.UUID
+    quantity: int
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ReserveStockSchema(BaseModel):
+    """
+    Schema for reserving stock.
+    """
+
+    order_number: int
+    sale_id: uuid.UUID
+    items: List[ReserveStockItemSchema]
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PayloadAddressSchema(BaseModel):
+    id: uuid.UUID
+    street: str
+    city: str
+    state: str
+    postal_code: str
+    country: str
+
+
+class PayloadSaleItemSchema(BaseModel):
+    sales_item_id: uuid.UUID
+    product_id: uuid.UUID
+    warehouse_id: uuid.UUID
+    quantity: int
+
+
+class PayloadSaleSchema(BaseModel):
+    sales_id: uuid.UUID
+    order_number: int
+    address: PayloadAddressSchema
+    sales_items: List[PayloadSaleItemSchema]
