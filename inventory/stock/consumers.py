@@ -1,11 +1,12 @@
+import asyncio
 import threading
 from typing import Dict
 
-import asyncio
 from pydantic import ValidationError
 
 from database import SessionLocal
 from seedwork.base_consumer import BaseConsumer
+from stock.events import setup_db_events
 from stock.websocket import broadcast_inventory_update
 
 from . import exceptions, schemas, services
@@ -49,7 +50,8 @@ class GetStocksEventsConsumer(BaseConsumer):
 
     def process_payload(self, payload: Dict) -> None:
         """
-        Process the payload received from RabbitMQ and emit the event to the WebSocket.
+        Process the payload received from RabbitMQ and
+        emit the event to the WebSocket.
         """
         try:
             if not payload or 'data' not in payload:
@@ -111,6 +113,7 @@ class AllocateStockConsumer(BaseConsumer):
 
     def __init__(self):
         super().__init__(queue="inventory.reserve_stock")
+        setup_db_events()
 
     def process_payload(self, payload: Dict) -> str | Dict:
         """
