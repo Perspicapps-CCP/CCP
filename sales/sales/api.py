@@ -190,17 +190,11 @@ def get_sale(
     Retrieve a specific sale by ID.
     """
     sale = services.get_sale_by_id(db, sale_id)
-    if user.is_client and sale.client_id != user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to access this sale.",
-        )
-    if user.is_seller and sale.seller_id != user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to access this sale.",
-        )
-    if not sale:
+    if (
+        not sale
+        or (user.is_client and sale.client_id != user.id)
+        or (user.is_seller and sale.seller_id != user.id)
+    ):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Sale not found.",

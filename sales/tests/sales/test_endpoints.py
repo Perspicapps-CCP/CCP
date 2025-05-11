@@ -1,17 +1,68 @@
 import csv
-from typing import Callable, List
+from typing import Callable, Dict, List, Optional
 from unittest import mock
-from uuid import uuid4
+from uuid import UUID
 
 import pytest
 from faker import Faker
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from rpc_clients.schemas import UserAuthSchema
 from sales.models import Sale, SaleItem
 from tests.conftest import generate_fake_sellers
 
 fake = Faker()
+
+
+def create_sales(
+    db_session: Session,
+    count: int = 2,
+    items_per_sale: int = 2,
+    sale_kwargs: Dict = None,
+) -> List[Sale]:
+    sales = []
+    for _ in range(count):
+        sale_body = {
+            "id": fake.uuid4(cast_to=None),
+            "seller_id": fake.uuid4(cast_to=None),
+            "client_id": fake.uuid4(cast_to=None),
+            "order_number": fake.random_int(min=1000, max=9999),
+            "address_id": fake.uuid4(cast_to=None),
+            "total_value": fake.pydecimal(
+                left_digits=5, right_digits=2, positive=True
+            ),
+            "currency": "USD",
+            "created_at": fake.date_time_this_year(),
+            "updated_at": fake.date_time_this_year(),
+            **(sale_kwargs or {}),
+        }
+        sale = Sale(**sale_body)
+        db_session.add(sale)
+        db_session.commit()
+
+        # Add items to the sale
+        for _ in range(items_per_sale):
+            item = SaleItem(
+                id=fake.uuid4(cast_to=None),
+                sale_id=sale.id,
+                product_id=fake.uuid4(cast_to=None),
+                quantity=fake.random_int(min=1, max=10),
+                unit_price=fake.pydecimal(
+                    left_digits=3, right_digits=2, positive=True
+                ),
+                total_value=fake.pydecimal(
+                    left_digits=4, right_digits=2, positive=True
+                ),
+                created_at=fake.date_time_this_year(),
+                updated_at=fake.date_time_this_year(),
+            )
+            db_session.add(item)
+
+        sales.append(sale)
+    db_session.commit()
+    sales.sort(key=lambda x: x.created_at, reverse=True)
+    return sales
 
 
 @pytest.fixture
@@ -24,61 +75,71 @@ def seed_sales(db_session: Session) -> Callable[[int, int], List[Sale]]:
           A function to seed sales with items.
     """
 
-    def _seed_sales(count: int = 2, items_per_sale: int = 2) -> List[Sale]:
-        sales = []
-        for _ in range(count):
-            sale = Sale(
-                id=uuid4(),
-                seller_id=uuid4(),
-                client_id=uuid4(),
-                order_number=fake.random_int(min=1000, max=9999),
-                address_id=uuid4(),
-                total_value=fake.pydecimal(
-                    left_digits=5, right_digits=2, positive=True
-                ),
-                currency="USD",
-                created_at=fake.date_time_this_year(),
-                updated_at=fake.date_time_this_year(),
-            )
-            db_session.add(sale)
-            db_session.commit()
-
-            # Add items to the sale
-            for _ in range(items_per_sale):
-                item = SaleItem(
-                    id=uuid4(),
-                    sale_id=sale.id,
-                    product_id=uuid4(),
-                    quantity=fake.random_int(min=1, max=10),
-                    unit_price=fake.pydecimal(
-                        left_digits=3, right_digits=2, positive=True
-                    ),
-                    total_value=fake.pydecimal(
-                        left_digits=4, right_digits=2, positive=True
-                    ),
-                    created_at=fake.date_time_this_year(),
-                    updated_at=fake.date_time_this_year(),
-                )
-                db_session.add(item)
-
-            sales.append(sale)
-        db_session.commit()
-        sales.sort(key=lambda x: x.created_at, reverse=True)
-        return sales
+    def _seed_sales(
+        count: int = 2,
+        items_per_sale: int = 2,
+        sale_kwargs: Optional[Dict] = None,
+    ) -> List[Sale]:
+        return create_sales(
+            db_session,
+            count=count,
+            items_per_sale=items_per_sale,
+            sale_kwargs=sale_kwargs,
+        )
 
     return _seed_sales
 
 
 class MixinListSales:
 
-    def test_list_sales_with_data(self, client: TestClient, seed_sales):
+    @pytest.fixture
+    def seed_sales(
+        self, db_session: Session, auth_user_uuid: UUID
+    ) -> Callable[[int, int], List[Sale]]:
+        """
+        Fixture to seed sales in the database for testing.
+        """
+        # Some sales that do no belong to the user
+
+        def _seed_sales(
+            count: int = 2, items_per_sale: int = 2, sale_kwargs: Dict = None
+        ) -> List[Sale]:
+            create_sales(
+                db_session,
+                count=count,
+                items_per_sale=items_per_sale,
+            )
+            # Sales that belong to the user
+            return create_sales(
+                db_session,
+                count=count,
+                items_per_sale=items_per_sale,
+                sale_kwargs={
+                    "seller_id": auth_user_uuid,
+                    **(sale_kwargs or {}),
+                },
+            )
+
+        return _seed_sales
+
+    @pytest.fixture
+    def auth_client(
+        self, client: TestClient, auth_user_uuid: UUID
+    ) -> TestClient:
+        """
+        Fixture to provide an authenticated client for testing.
+        """
+        client.headers.update({"Authorization": f"Bearer {auth_user_uuid}"})
+        return client
+
+    def test_list_sales_with_data(self, auth_client: TestClient, seed_sales):
         """
         Test the list sales endpoint when there are sales in the database.
         """
         sales = seed_sales(
             3, items_per_sale=2
         )  # Seed 3 sales with 2 items each
-        response = client.get("/api/v1/sales/sales/")
+        response = auth_client.get("/api/v1/sales/sales/")
         assert response.status_code == 200
 
         data = response.json()
@@ -90,18 +151,18 @@ class MixinListSales:
             assert data[i]["currency"] == sale.currency
             assert len(data[i]["items"]) == 2  # Verify items are included
 
-    def test_list_sales_empty_database(self, client: TestClient):
+    def test_list_sales_empty_database(self, auth_client: TestClient):
         """
         Test the list sales endpoint when the database is empty.
         """
-        response = client.get("/api/v1/sales/sales/")
+        response = auth_client.get("/api/v1/sales/sales/")
         assert response.status_code == 200
 
         data = response.json()
         assert len(data) == 0
 
     def test_filter_sales_by_order_number(
-        self, client: TestClient, seed_sales
+        self, auth_client: TestClient, seed_sales
     ):
         """
         Test filtering sales by order number.
@@ -109,7 +170,7 @@ class MixinListSales:
         sales = seed_sales(3, items_per_sale=2)  # Seed 3 sales
         sale = sales[0]  # Use the first sale for filtering
 
-        response = client.get(
+        response = auth_client.get(
             f"/api/v1/sales/sales/?order_number={sale.order_number}"
         )
         assert response.status_code == 200
@@ -121,7 +182,12 @@ class MixinListSales:
         assert data[0]["total_value"] == str(sale.total_value)
         assert data[0]["currency"] == sale.currency
 
-    def test_filter_sales_by_seller_id(self, client: TestClient, seed_sales):
+    def test_filter_sales_by_seller_id(
+        self,
+        auth_client: TestClient,
+        seed_sales: Callable,
+        request: pytest.FixtureRequest,
+    ):
         """
         Test filtering sales by seller ID.
         """
@@ -129,22 +195,31 @@ class MixinListSales:
         sale = sales[0]  # Use the first sale for filtering
         sale_last = sales[-1]  # Use the last sale for filtering
 
-        response = client.get(
+        is_client = bool(
+            request.node.get_closest_marker("mock_auth_as_client")
+        )
+
+        response = auth_client.get(
             f"/api/v1/sales/sales/?seller_id={sale.seller_id}&"
             f"seller_id={sale_last.seller_id}"
         )
         assert response.status_code == 200
 
         data = response.json()
-        assert len(data) == 2
-        for sale in [sale, sale_last]:
+        expected = [sale, sale_last]
+        if not is_client:
+            expected = sales
+        assert len(expected) == len(data)
+        for sale in expected:
             assert any(
                 item["id"] == str(sale.id)
                 and item["seller"]["id"] == str(sale.seller_id)
                 for item in data
             )
 
-    def test_filter_sales_by_date_range(self, client: TestClient, seed_sales):
+    def test_filter_sales_by_date_range(
+        self, auth_client: TestClient, seed_sales
+    ):
         """
         Test filtering sales by start_date and end_date.
         """
@@ -159,7 +234,7 @@ class MixinListSales:
         ]
         expected_sales.sort(key=lambda x: x.created_at, reverse=True)
 
-        response = client.get(
+        response = auth_client.get(
             f"/api/v1/sales/sales/?start_date={start_date}&end_date={end_date}"
         )
         assert response.status_code == 200
@@ -173,42 +248,84 @@ class MixinListSales:
 
     @pytest.mark.skip_mock_users
     def test_filter_sales_by_seller_name(
-        self, client: TestClient, seed_sales
+        self,
+        auth_client: TestClient,
+        auth_user_uuid: UUID,
+        seed_sales: Callable,
+        request: pytest.FixtureRequest,
     ):
         """
         Test filtering sales by seller name.
         """
+        seed_sales(
+            3,
+            items_per_sale=2,
+            sale_kwargs={"seller_id": fake.uuid4(cast_to=None)},
+        )
         sells = seed_sales(3, items_per_sale=2)  # Seed 3 sales
 
-        sellers = generate_fake_sellers([sale.seller_id for sale in sells])
+        sellers = generate_fake_sellers({sale.seller_id for sale in sells})
         buyers = generate_fake_sellers(
             [sale.client_id for sale in sells], with_address=True
         )
-
+        is_client = bool(
+            request.node.get_closest_marker("mock_auth_as_client")
+        )
         with mock.patch.multiple(
             "rpc_clients.users_client.UsersClient",
             get_sellers=mock.Mock(return_value=sellers),
             get_clients=mock.Mock(return_value=buyers),
+            auth_user=mock.Mock(
+                return_value=UserAuthSchema(
+                    **(
+                        generate_fake_sellers(
+                            [auth_user_uuid], with_address=True
+                        )[0].model_dump()
+                    ),
+                    is_active=True,
+                    is_seller=not is_client,
+                    is_client=is_client,
+                )
+            ),
         ):
-            response = client.get(
+            response = auth_client.get(
                 f"/api/v1/sales/sales/?seller_name={sellers[0].full_name}"
             )
         assert response.status_code == 200
 
         data = response.json()
-        assert len(data) == 1
-        assert data[0]["seller"]["full_name"] == sellers[0].full_name
+        if is_client:
+            assert len(data) == 1
+            assert data[0]["seller"]["full_name"] == sellers[0].full_name
+        else:
+            assert len(data) == 3
 
 
 class TestGetSalesAsSeller(MixinListSales):
-    pass
+    @pytest.fixture
+    def auth_user_uuid(self):
+        return fake.uuid4(cast_to=None)
+
+
+class TestGetSalesAsClient(MixinListSales):
+    @pytest.mark.mock_auth_as_client
+    @pytest.fixture(autouse=True)
+    def auth_user_uuid(self):
+        return fake.uuid4(cast_to=None)
 
 
 def test_get_sale_exists(client: TestClient, seed_sales):
     """
     Test retrieving a specific sale when it exists.
     """
-    sales = seed_sales(1, items_per_sale=2)  # Seed 1 sale with 2 items
+    auth_user_uuid = fake.uuid4(cast_to=None)
+    client.headers.update({"Authorization": f"Bearer {auth_user_uuid}"})
+
+    sales = seed_sales(
+        1,
+        items_per_sale=2,
+        sale_kwargs={"seller_id": auth_user_uuid},
+    )  # Seed 1 sale with 2 items
     sale = sales[0]
 
     response = client.get(f"/api/v1/sales/sales/{sale.id}")
@@ -226,9 +343,41 @@ def test_get_sale_not_found(client: TestClient):
     """
     Test retrieving a specific sale when it does not exist.
     """
-    non_existent_sale_id = uuid4()
-
+    non_existent_sale_id = fake.uuid4(cast_to=None)
+    auth_user_uuid = fake.uuid4(cast_to=None)
+    client.headers.update({"Authorization": f"Bearer {auth_user_uuid}"})
     response = client.get(f"/api/v1/sales/sales/{non_existent_sale_id}")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Sale not found."
+
+
+@pytest.mark.mock_auth_as_client
+def test_get_sale_not_found_as_client(client: TestClient, seed_sales):
+    """
+    Test retrieving a specific sale when it does not exist.
+    """
+    auth_user_uuid = fake.uuid4(cast_to=None)
+    client.headers.update({"Authorization": f"Bearer {auth_user_uuid}"})
+    sales = seed_sales(
+        1,
+        items_per_sale=2,
+    )  # Seed 1 sale with 2 items
+    response = client.get(f"/api/v1/sales/sales/{sales[0].id}")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Sale not found."
+
+
+def test_get_sale_not_found_as_sellers(client: TestClient, seed_sales):
+    """
+    Test retrieving a specific sale when it does not exist.
+    """
+    auth_user_uuid = fake.uuid4(cast_to=None)
+    client.headers.update({"Authorization": f"Bearer {auth_user_uuid}"})
+    sales = seed_sales(
+        1,
+        items_per_sale=2,
+    )  # Seed 1 sale with 2 items
+    response = client.get(f"/api/v1/sales/sales/{sales[0].id}")
     assert response.status_code == 404
     assert response.json()["detail"] == "Sale not found."
 
