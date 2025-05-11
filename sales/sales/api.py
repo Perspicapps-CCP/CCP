@@ -4,13 +4,13 @@ from io import StringIO
 from typing import Annotated, Dict, List
 from uuid import UUID
 
-from common.api import get_auth_user
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import StreamingResponse
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
+from common.api import get_auth_user
 from db_dependency import get_db
 
 from . import exceptions, mappers, schemas, services
@@ -31,10 +31,15 @@ sales_router = APIRouter(prefix="/sales", tags=["Sales"])
 def list_sales(
     filter_query: Annotated[schemas.ListSalesQueryParamsSchema, Query()],
     db: Session = Depends(get_db),
+    user=Depends(get_auth_user),
 ) -> List[schemas.SaleDetailSchema]:
     """
     List all sales.
     """
+    if user.is_seller:
+        filter_query.seller_id = [user.id]
+    if user.is_client:
+        filter_query.client_id = user.id
     sales = services.get_all_sales(db, filter_query)
     response = mappers.sales_to_schema(sales)
     if filter_query.seller_name:
@@ -177,12 +182,24 @@ def export_sales_as_csv(
     },
 )
 def get_sale(
-    sale_id: UUID, db: Session = Depends(get_db)
+    sale_id: UUID,
+    db: Session = Depends(get_db),
+    user=Depends(get_auth_user),
 ) -> schemas.SaleDetailSchema:
     """
     Retrieve a specific sale by ID.
     """
     sale = services.get_sale_by_id(db, sale_id)
+    if user.is_client and sale.client_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to access this sale.",
+        )
+    if user.is_seller and sale.seller_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to access this sale.",
+        )
     if not sale:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

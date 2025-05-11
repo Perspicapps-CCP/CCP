@@ -55,6 +55,7 @@ class ListSalesQueryParamsSchema(BaseModel):
     order_number: Optional[int] = None
     seller_name: Optional[str] = None
     seller_id: Optional[List[UUID]] = None
+    client_id: Optional[UUID] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
 

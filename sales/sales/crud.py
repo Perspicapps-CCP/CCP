@@ -32,6 +32,8 @@ def get_all_sales(
         qs = qs.filter(func.date(Sale.created_at) <= filters.end_date)
     if filters.order_number:
         qs = qs.filter(Sale.order_number == filters.order_number)
+    if filters.client_id:
+        qs = qs.filter(Sale.client_id == filters.client_id)
 
     return qs.all()
 
