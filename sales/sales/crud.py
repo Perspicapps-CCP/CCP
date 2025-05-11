@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
-from .models import Sale, SaleDelivery
+from .models import Sale, SaleDelivery, SaleStatusEnum
 
 
 def get_all_sales(
@@ -32,6 +32,8 @@ def get_all_sales(
         qs = qs.filter(func.date(Sale.created_at) <= filters.end_date)
     if filters.order_number:
         qs = qs.filter(Sale.order_number == filters.order_number)
+    if filters.client_id:
+        qs = qs.filter(Sale.client_id == filters.client_id)
 
     return qs.all()
 
@@ -126,6 +128,8 @@ def associate_delivery_to_sale(
     if not get_sale_delivery(db, sale_id, delivery_id):
         sale_delivery = SaleDelivery(sale_id=sale_id, delivery_id=delivery_id)
         db.add(sale_delivery)
+        sale = get_sale_by_id(db, sale_id)
+        sale.status = SaleStatusEnum.IN_PROGRESS
         db.commit()
         db.refresh(sale_delivery)
         return sale_delivery

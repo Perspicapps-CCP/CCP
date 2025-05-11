@@ -54,6 +54,7 @@ def _sale_to_schema(
             for item in sale.items
         ],
         deliveries=[d for d in deliveries if d is not None],
+        status=sale.status,
     )
 
 

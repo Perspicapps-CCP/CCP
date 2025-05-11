@@ -196,14 +196,18 @@ def mock_users_rpc_client(request):
     def auth_user(bearer: str):
         if bearer == "invalid_token":
             return None
-        seller = generate_fake_sellers(
+
+        auth_user = generate_fake_sellers(
             [uuid.UUID(bearer)], with_address=True
         )[0]
+        is_client = bool(
+            request.node.get_closest_marker("mock_auth_as_client")
+        )
         return UserAuthSchema(
-            **seller.model_dump(),
+            **auth_user.model_dump(),
             is_active=True,
-            is_seller=True,
-            is_client=False,
+            is_seller=not is_client,
+            is_client=is_client,
         )
 
     with mock.patch.multiple(

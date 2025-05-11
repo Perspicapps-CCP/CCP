@@ -45,6 +45,7 @@ class SaleDetailSchema(BaseModel):
     currency: str
     created_at: datetime
     updated_at: Optional[datetime]
+    status: Optional[str]
     items: List[SaleItemSchema]
     deliveries: List[Optional[DeliverySchema]]
 
@@ -55,6 +56,7 @@ class ListSalesQueryParamsSchema(BaseModel):
     order_number: Optional[int] = None
     seller_name: Optional[str] = None
     seller_id: Optional[List[UUID]] = None
+    client_id: Optional[UUID] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
 
