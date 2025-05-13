@@ -56,7 +56,7 @@ def save_client_video(
     client_id: uuid.UUID,
     title: str,
     description: str,
-    video_path: str,
+    url: str,
 ) -> ClientVideo:
     """
     Save video for client
@@ -65,6 +65,15 @@ def save_client_video(
         client_id=client_id,
         title=title,
         description=description,
-        video_path=video_path,
+        url=url,
     )
     return crud.upload_client_video(db, clientVideo)
+
+
+def get_all_client_video(
+    db: Session, client_id: uuid.UUID
+) -> list[ClientVideo]:
+    """
+    Get all videos for a client.
+    """
+    return crud.get_all_client_video(db, client_id)

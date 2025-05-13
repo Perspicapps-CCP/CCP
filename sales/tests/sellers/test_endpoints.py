@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from rpc_clients.schemas import UserAuthSchema
-from sellers.models import ClientForSeller
+from sellers.models import ClientForSeller, ClientVideo
 from tests.conftest import generate_fake_sellers
 import io
 
@@ -288,9 +288,120 @@ def test_register_client_visit_validation_error(
     file = ("test.txt", io.BytesIO(file_content), "text/plain")
 
     response = auth_client.post(
-        "/api/v1/sales/sellers/clients/{client_id}/visit",
+        f"/api/v1/sales/sellers/clients/{client_id}/visit",
         data={},
         files=[("attachments", file)],
     )
 
     assert response.status_code == 422
+
+
+def test_upload_client_video_success(
+    auth_client: TestClient,
+    mock_storage_bucket: MagicMock,
+    db_session: Session,
+    valid_payload,
+):
+    """
+    Test successful upload of a client video.
+    """
+    # Arrange
+    client_id = valid_payload["client_id"]
+    title = "Test Video Title"
+    description = "Test video description"
+    file_content = b"fake video content"
+    video_file = ("test_video.mp4", io.BytesIO(file_content), "video/mp4")
+
+    # Act
+    response = auth_client.post(
+        f"/api/v1/sales/sellers/clients/{client_id}/videos",
+        data={"title": title, "description": description},
+        files=[("video", video_file)],
+    )
+
+    # Assert
+    assert response.status_code == 201
+    mock_storage_bucket.blob.assert_called_once()
+    mock_storage_bucket.blob().upload_from_file.assert_called_once()
+
+    json_data = response.json()
+    assert "id" in json_data
+    assert json_data["title"] == title
+    assert json_data["description"] == description
+    assert "url" in json_data
+    assert "https://storage.googleapis.com/" in json_data["url"]
+    assert "status" in json_data
+
+    db_video = (
+        db_session.query(ClientVideo)
+        .filter_by(id=UUID(json_data["id"]))
+        .first()
+    )
+    assert db_video is not None
+    assert db_video.title == title
+    assert db_video.description == description
+
+
+def test_upload_client_video_storage_error(
+    mock_storage_bucket: MagicMock, auth_client: TestClient, valid_payload
+):
+    """
+    Test handling of storage service errors.
+    """
+    # Arrange
+    mock_storage_bucket.blob().upload_from_file.side_effect = TimeoutError(
+        "TimeoutError"
+    )
+
+    client_id = valid_payload["client_id"]
+    file_content = b"test video content"
+    video_file = ("test_video.mp4", io.BytesIO(file_content), "video/mp4")
+
+    # Act
+    response = auth_client.post(
+        f"/api/v1/sales/sellers/clients/{client_id}/videos",
+        data={"title": "Test", "description": "Test description"},
+        files=[("video", video_file)],
+    )
+
+    # Assert
+    assert response.status_code >= 500
+
+
+def test_get_client_video_success_with_records(
+    auth_client: TestClient,
+    db_session: Session,
+):
+    db_client_video = ClientVideo(
+        id=uuid4(),
+        client_id=uuid4(),
+        title=fake.sentence(),
+        description=fake.sentence(),
+        url=f"gs://mybucket/myfolder/{uuid4()}/video.mp4",
+        status="PENDING",
+        created_at=fake.date_time(),
+        updated_at=fake.date_time(),
+    )
+    db_session.add(db_client_video)
+    db_session.commit()
+
+    response = auth_client.get(
+        f"/api/v1/sales/sellers/clients/{db_client_video.client_id}/videos"
+    )
+
+    assert response.status_code == 200
+    assert len(response.json()) > 0
+    assert response.json()[0]["id"] == str(db_client_video.id)
+    assert response.json()[0]["status"] == db_client_video.status
+    assert "mybucket/myfolder/" in response.json()[0]["url"]
+
+
+def test_get_client_video_success_without_records(
+    auth_client: TestClient,
+):
+    response = auth_client.get(
+        f"/api/v1/sales/sellers/clients/{uuid4()}/videos"
+    )
+
+    assert response.status_code == 200
+    assert len(response.json()) == 0
