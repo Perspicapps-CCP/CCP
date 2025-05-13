@@ -15,6 +15,9 @@ pika = "*"
 python-jose = "*"
 bcrypt = "*"
 google-cloud-storage = "*"
+google-cloud-videointelligence = "*"
+google-genai = "*"
+numpy = "*"
 
 [dev-packages]
 black = "*"

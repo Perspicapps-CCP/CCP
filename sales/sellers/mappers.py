@@ -6,6 +6,7 @@ from .models import ClientForSeller, ClientVideo, ClientVisit
 from .schemas import (
     ClientForSellerDetailSchema,
     ResponseAttachmentDetailSchema,
+    ResponseClientVideoSchema,
 )
 
 
@@ -72,12 +73,32 @@ def visit_to_schema(
 
 def client_video_to_schema(
     client_video: ClientVideo,
-) -> ResponseAttachmentDetailSchema:
-    return ResponseAttachmentDetailSchema(
+) -> ResponseClientVideoSchema:
+    return ResponseClientVideoSchema(
         id=client_video.id,
-        client_id=client_video.client_id,
         title=client_video.title,
+        status=client_video.status,
         description=client_video.description,
-        created_at=client_video.created_at,
-        updated_at=client_video.updated_at,
+        url=client_video.url.replace(
+            "gs://", "https://storage.googleapis.com/"
+        ),
+        recomendations=client_video.recomendations,
     )
+
+
+def list_client_video_to_schema(
+    list_client_videos: list[ClientVideo],
+) -> list[ResponseClientVideoSchema]:
+    return [
+        ResponseClientVideoSchema(
+            id=client_video.id,
+            title=client_video.title,
+            status=client_video.status,
+            description=client_video.description,
+            url=client_video.url.replace(
+                "gs://", "https://storage.googleapis.com/"
+            ),
+            recomendations=client_video.recomendations,
+        )
+        for client_video in list_client_videos
+    ]

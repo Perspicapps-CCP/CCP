@@ -1,10 +1,12 @@
 import datetime
+import enum
 import uuid
 
 from sqlalchemy import (
     UUID,
     Column,
     DateTime,
+    Enum,
     UniqueConstraint,
     String,
     ForeignKey,
@@ -15,6 +17,14 @@ from sqlalchemy.orm import relationship
 from database import Base
 
 from .constants import VISITED_RECENTLY_HOURS
+
+
+class VideoStatusEnum(str, enum.Enum):
+    """Enum for video status."""
+
+    PENDING = "PENDING"
+    ANALISYS_GENERATED = "ANALISYS_GENERATED"
+    RECOMENDATIONS_GENERATED = "RECOMENDATIONS_GENERATED"
 
 
 class ClientForSeller(Base):
@@ -86,6 +96,11 @@ class ClientVideo(Base):
     client_id = Column(UUID(as_uuid=True))
     title = Column(String(100), nullable=False)
     description = Column(String(500), nullable=False)
-    video_path = Column(String(500), nullable=False)
+    recomendations = Column(String(3000), nullable=True)
+    url = Column(String(500), nullable=False)
+    status = Column(
+        Enum(VideoStatusEnum),
+        default=VideoStatusEnum.PENDING,
+    )
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

@@ -67,3 +67,12 @@ class ResponseAttachmentDetailSchema(BaseModel):
     client_id: uuid.UUID
     created_at: datetime
     updated_at: Optional[datetime]
+
+
+class ResponseClientVideoSchema(BaseModel):
+    id: uuid.UUID
+    title: str
+    status: str
+    description: str
+    url: str
+    recommendation: Optional[str] = None

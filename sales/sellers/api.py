@@ -1,3 +1,4 @@
+import datetime
 from typing import Dict, List, Annotated
 
 from fastapi import (
@@ -11,6 +12,7 @@ from fastapi import (
 )
 from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
+from config import GCS_BUCKET_NAME
 from storage_dependency import get_storage_bucket
 from sqlalchemy.orm import Session
 
@@ -132,7 +134,7 @@ async def register_client_visit(
 
 @sellers_router.post(
     "/clients/{client_id}/videos",
-    response_model=schemas.ResponseAttachmentDetailSchema,
+    response_model=schemas.ResponseClientVideoSchema,
     status_code=status.HTTP_201_CREATED,
     responses={
         status.HTTP_422_UNPROCESSABLE_ENTITY: {
@@ -148,13 +150,13 @@ async def upload_client_video(
     video: Annotated[UploadFile, File(...)],
     bucket: storage.Bucket = Depends(get_storage_bucket),
     db: Session = Depends(get_db),
-) -> schemas.ResponseAttachmentDetailSchema:
+) -> schemas.ResponseClientVideoSchema:
     """
     Upload a new video for client
     """
     try:
         filename = video.filename
-        videoPath = f"client_attachments/{client_id}/{filename}"
+        videoPath = f"videos/{client_id}/{filename}_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}"
         blob = bucket.blob(videoPath)
         blob.upload_from_file(video.file)
         client_video = services.save_client_video(
@@ -162,7 +164,7 @@ async def upload_client_video(
             client_id=client_id,
             title=title,
             description=description,
-            video_path=videoPath,
+            url=f"gs://{GCS_BUCKET_NAME}/{videoPath}",
         )
         return mappers.client_video_to_schema(client_video)
     except ValidationError as e:
@@ -175,3 +177,21 @@ async def upload_client_video(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Timeout error, please try again in a few minutes.",
         )
+
+
+@sellers_router.get(
+    "/clients/{client_id}/videos",
+    response_model=List[schemas.ResponseClientVideoSchema],
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "description": "List of all client videos.",
+        }
+    },
+)
+async def get_client_video(
+    client_id: UUID,
+    db: Session = Depends(get_db),
+) -> List[schemas.ResponseClientVideoSchema]:
+    list_client_videos = services.get_all_client_video(db, client_id)
+    return mappers.list_client_video_to_schema(list_client_videos)

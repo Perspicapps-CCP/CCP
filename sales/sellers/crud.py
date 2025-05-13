@@ -115,3 +115,15 @@ def upload_client_video(
     db.commit()
 
     return clientVideo
+
+
+def get_all_client_video(
+    db: Session,
+    client_id: uuid.UUID,
+) -> list[ClientVideo]:
+    """
+    Get all videos for a client.
+    """
+    return (
+        db.query(ClientVideo).filter(ClientVideo.client_id == client_id).all()
+    )
