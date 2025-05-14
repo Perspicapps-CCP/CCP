@@ -7,6 +7,7 @@ from .models import (
     ClientVideo,
     ClientVisit,
     ClientAttachment,
+    VideoStatusEnum,
 )
 from datetime import datetime
 
@@ -127,3 +128,54 @@ def get_all_client_video(
     return (
         db.query(ClientVideo).filter(ClientVideo.client_id == client_id).all()
     )
+
+
+def get_all_videos_without_analysis(
+    db: Session,
+) -> list[ClientVideo]:
+    """
+    Get all videos for a client that are not analyzed.
+    """
+    return (
+        db.query(ClientVideo)
+        .filter(
+            ClientVideo.status == VideoStatusEnum.PENDING,
+        )
+        .all()
+    )
+
+
+def get_all_videos_without_recommendations(
+    db: Session,
+) -> list[ClientVideo]:
+    """
+    Get all videos for a client that are not analyzed.
+    """
+    return (
+        db.query(ClientVideo)
+        .filter(
+            ClientVideo.status == VideoStatusEnum.ANALISYS_GENERATED,
+        )
+        .all()
+    )
+
+
+def update_video_status(
+    db: Session,
+    video_id: uuid.UUID,
+    status: VideoStatusEnum,
+    recommendations: str = None,
+) -> ClientVideo:
+    """
+    Update the status of a video.
+    """
+    video = db.query(ClientVideo).filter(ClientVideo.id == video_id).first()
+    if not video:
+        return None
+
+    video.status = status
+    if recommendations:
+        video.recommendations = recommendations
+
+    db.commit()
+    return video

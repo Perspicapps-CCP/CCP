@@ -77,3 +77,30 @@ def get_all_client_video(
     Get all videos for a client.
     """
     return crud.get_all_client_video(db, client_id)
+
+
+def get_all_videos_without_analysis(
+    db: Session,
+) -> list[ClientVideo]:
+    """
+    Get all videos for a client that are not analyzed.
+    """
+    return crud.get_all_videos_without_analysis(db)
+
+
+def get_all_videos_without_recommendations(
+    db: Session,
+) -> list[ClientVideo]:
+    """
+    Get all videos for a client that are not recommended.
+    """
+    return crud.get_all_videos_without_recommendations(db)
+
+
+def update_video_status(
+    db: Session, video_id: uuid.UUID, status: str, recommendations: str = None
+) -> ClientVideo:
+    """
+    Update the status of a video.
+    """
+    return crud.update_video_status(db, video_id, status, recommendations)

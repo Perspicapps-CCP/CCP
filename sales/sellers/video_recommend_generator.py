@@ -1,0 +1,160 @@
+from google import genai
+from google.genai import types
+from google.cloud import storage
+import json
+
+
+class VideoRecommendationGenerator:
+    """
+    Class for generating retail recommendations based on shelf video analysis
+    using Gemini.
+    """
+
+    def __init__(self, gemini_api_key: str, bucket_name: str):
+        """
+        Initialize the recommendation generator.
+        """
+        self.bucket_name = bucket_name
+
+        # Set up Storage client
+        self.storage_client = storage.Client()
+
+        # Set up Gemini
+        self.gemini_client = genai.Client(api_key=gemini_api_key)
+
+    def read_analysis_from_gcs(self, video_path: str):
+        """
+        Read analysis results from GCS.
+
+        Args:
+            video_path (str): GCS URI of the video file.
+
+        Returns:
+            dict: Analysis results.
+        """
+        try:
+
+            if not video_path.startswith("gs://"):
+                raise ValueError(
+                    "Invalid video path. Must start with 'gs://'."
+                )
+
+            # Extract filename from video_path
+            path_without_prefix = "/".join(video_path.split("/")[3:])
+            file_path_parts = path_without_prefix.split("/")
+
+            if len(file_path_parts) < 2:
+                raise ValueError("Invalid GCS URI format")
+
+            analysis_filename = f"analysis_{file_path_parts[-1]}.json"
+            analysis_path = (
+                f"{"/".join(file_path_parts[:-1])}/{analysis_filename}"
+            )
+
+            bucket = self.storage_client.bucket(self.bucket_name)
+            blob = bucket.blob(analysis_path)
+
+            # Download analysis file content
+            analysis_content = blob.download_as_text()
+            analysis_results = json.loads(analysis_content)
+
+            print(f"Analysis loaded from {video_path}")
+            return analysis_results
+
+        except Exception as e:
+            print(f"Error reading analysis from GCS: {e}")
+            raise
+
+    def generate_recommendations(self, analysis_results):
+        """
+        Generate recommendations based on analysis using Gemini.
+
+        Args:
+            analysis_results (dict): Results from video analysis.
+
+        Returns:
+            dict: Generated recommendations.
+        """
+        # Format analysis results for Gemini
+        prompt = self._create_recommendation_prompt(analysis_results)
+
+        # Generate recommendations with Gemini
+        response = self.gemini_client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                max_output_tokens=2800, temperature=0.1
+            ),
+        )
+
+        return {"recommendations": response.text}
+
+    def _create_recommendation_prompt(self, analysis_results):
+        """Create a prompt for Gemini based on analysis results."""
+        # Extract relevant information
+        top_objects = sorted(
+            analysis_results["objects"],
+            key=lambda x: x["confidence"],
+            reverse=True,
+        )[:10]
+
+        top_labels = sorted(
+            analysis_results["labels"],
+            key=lambda x: x["confidence"],
+            reverse=True,
+        )[:10]
+
+        detected_text = [t["text"] for t in analysis_results["text"]]
+        detected_logos = [
+            logo["description"] for logo in analysis_results["logos"]
+        ]
+
+        # Get vertical distribution information
+        vertical_info = ""
+        if "vertical_distribution" in analysis_results:
+            vertical_data = analysis_results["vertical_distribution"]
+            vertical_info = "DISTRIBUCIÓN VERTICAL DE PRODUCTOS:\n"
+
+            # Information by level
+            for level_name, level_data in vertical_data[
+                "distribution_by_level"
+            ].items():
+                vertical_info += f"- {level_name}: {level_data['total_objects']} productos ({level_data['percentage']}%)\n"
+                top_products = sorted(
+                    level_data["objects"].items(),
+                    key=lambda x: x[1],
+                    reverse=True,
+                )[:3]
+                if top_products:
+                    vertical_info += f"  Productos principales: {', '.join([f'{p[0]} ({p[1]})' for p in top_products])}\n"
+
+            # Relevant metrics
+            metrics = vertical_data["metrics"]
+            vertical_info += f"- Nivel más denso: {metrics['highest_density_level']['level']} ({metrics['highest_density_level']['count']} productos)\n"
+            vertical_info += f"- Uniformidad de distribución: {metrics['distribution_evenness']['value']} ({metrics['distribution_evenness']['interpretation']})\n"
+
+        # Create prompt
+        prompt = f"""
+        Actúa como un consultor experto en retail que analiza estanterías de tiendas.
+        
+        Basado en el siguiente análisis de video de una estantería, genera recomendaciones 
+        específicas para mejorar la presentación, organización y estrategia de ventas.
+        
+        ANÁLISIS DEL VIDEO:
+        - Objetos principales detectados: {", ".join([f"{obj['entity']} ({obj['confidence']})" for obj in top_objects])}
+        - Categorías/etiquetas: {", ".join([f"{label['description']} ({label['confidence']})" for label in top_labels])}
+        - Texto detectado: {", ".join(detected_text) if detected_text else "Ninguno"}
+        - Logos reconocidos: {", ".join(detected_logos) if detected_logos else "Ninguno"}
+        
+        {vertical_info}
+        
+        Genera un análisis detallado y recomendaciones que incluyan:
+        1. Optimización de la distribución vertical (qué productos deberían ir en cada nivel según principios de merchandising)
+        2. Mejoras en la presentación visual y organización
+        3. Estrategias para aumentar ventas basadas en la distribución actual
+        4. Sugerencias de productos complementarios o alternativos
+        
+        Se conciso, máximo 5 párrafos.
+        """
+
+        return prompt
