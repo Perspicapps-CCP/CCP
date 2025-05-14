@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from rpc_clients.suppliers_client import SuppliersClient
 from rpc_clients.users_client import UsersClient
+from sales.crud import create_sale
 
 from .models import Sale, SaleItem
 
@@ -36,18 +37,17 @@ def seed_sales(db: Session):
         # Create sale
         client = next(cycle_clients)
         sale_uuid = uuid.uuid4()
-        sale = Sale(
-            id=sale_uuid,
-            seller_id=seller.id,
-            client_id=client.id,
-            address_id=uuid.uuid4(),
-            total_value=total,
-            currency="USD",
-            order_number=i + 1,
+        sale = create_sale(
+            db,
+            Sale(
+                id=sale_uuid,
+                seller_id=seller.id,
+                client_id=client.id,
+                address_id=uuid.uuid4(),
+                total_value=total,
+                currency="USD",
+            ),
         )
-        db.add(sale)
-        db.commit()
-        db.refresh(sale)
 
         for i, product in enumerate(products):
             item = SaleItem(

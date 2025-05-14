@@ -55,6 +55,7 @@ def _sale_to_schema(
         ],
         deliveries=[d for d in deliveries if d is not None],
         status=sale.status,
+        date=sale.created_at.date(),
     )
 
 
@@ -70,7 +71,7 @@ def sales_to_schema(sales: List[Sale]) -> List[SaleDetailSchema]:
     Map a list of Sale models to a list of SaleDetailSchema.
     """
     sellers = UsersClient().get_sellers(
-        list({sale.seller_id for sale in sales}),
+        list({sale.seller_id for sale in sales if sale.seller_id}),
     )
     products = SuppliersClient().get_products(
         list({item.product_id for sale in sales for item in sale.items}),

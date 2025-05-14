@@ -488,6 +488,7 @@ class TestInventoryClient:
         client.call_broker = mock_call_broker
         return client
 
+    @pytest.mark.skip_mock_inventory_client
     def test_reserve_stock_calls_broker_with_correct_routing_key(
         self, suppliers_client: InventoryClient, mock_call_broker: MagicMock
     ):

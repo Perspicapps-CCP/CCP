@@ -58,7 +58,7 @@ def create_sale(
         Sale: The created Sale object.
     """
     seller_id = user.id if user.is_seller else None
-    client_id = create_sale_schema.client_id
+    client_id = user.id if user.is_client else create_sale_schema.client_id
     client = (
         UsersClient().get_clients([client_id])[0] if user.is_seller else user
     )
