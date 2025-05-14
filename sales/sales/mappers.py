@@ -55,6 +55,7 @@ def _sale_to_schema(
         ],
         deliveries=[d for d in deliveries if d is not None],
         status=sale.status,
+        date=sale.created_at.date(),
     )
 
 

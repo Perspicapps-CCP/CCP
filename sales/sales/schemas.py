@@ -45,6 +45,7 @@ class SaleDetailSchema(BaseModel):
     currency: str
     created_at: datetime
     updated_at: Optional[datetime]
+    date: date
     status: Optional[str]
     items: List[SaleItemSchema]
     deliveries: List[Optional[DeliverySchema]]
