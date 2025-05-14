@@ -1,3 +1,4 @@
+import copy
 import csv
 from typing import Callable, Dict, List, Optional
 from unittest import mock
@@ -10,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from rpc_clients.schemas import UserAuthSchema
 from sales.models import Sale, SaleItem
+from sellers.models import ClientForSeller
 from tests.conftest import generate_fake_sellers
 
 fake = Faker()
@@ -488,10 +490,154 @@ def test_export_sales_as_csv_with_filters(client: TestClient, seed_sales):
         next(csv_reader)
 
 
-# class TestCreateSaleEndpoint:
+class CreateSaleMixin:
+    @pytest.fixture
+    def auth_client(
+        self, client: TestClient, auth_user_uuid: UUID
+    ) -> TestClient:
+        """
+        Fixture to provide an authenticated client for testing.
+        """
+        client.headers.update({"Authorization": f"Bearer {auth_user_uuid}"})
+        return client
 
-#     def test_create_sale_correctly(self):
-#         assert False
+    @pytest.fixture
+    def is_user_seller(self, request) -> bool:
+        return not bool(
+            request.node.get_closest_marker("mock_auth_as_client")
+        )
 
-#     def test_create_sale_stock_not_available(self):
-#         assert False
+    @pytest.fixture
+    def existing_sales(self, db_session: Session):
+        """
+        Fixture to create existing sales for testing.
+        """
+        create_sales(db_session)
+
+    @pytest.fixture
+    def base_payload(self) -> Dict:
+        return {
+            "items": [
+                {
+                    "product_id": fake.uuid4(),
+                    "quantity": fake.random_int(min=1, max=10),
+                }
+                for _ in range(4)
+            ]
+        }
+
+    @pytest.fixture
+    def payload(self, base_payload: Dict) -> Dict:
+        return base_payload
+
+    def test_not_authenticated(self, client: TestClient):
+        """
+        Test creating a sale when not authenticated.
+        """
+        response = client.post("/api/v1/sales/sales/")
+        assert response.status_code == 401
+        assert response.json()["detail"] == "Not authenticated"
+
+    @pytest.mark.usefixtures("existing_sales")
+    def test_create_sale(
+        self,
+        db_session: Session,
+        auth_client: TestClient,
+        payload: Dict,
+        is_user_seller: bool,
+        auth_user_uuid: UUID,
+    ):
+        """
+        Test creating a sale with valid data.
+        """
+        qs = db_session.query(Sale)
+        assert qs.count() == 2
+        if is_user_seller:
+            qs = qs.filter(Sale.seller_id == auth_user_uuid)
+        else:
+            qs = qs.filter(Sale.client_id == auth_user_uuid)
+        assert qs.count() == 0
+        response = auth_client.post(
+            "/api/v1/sales/sales/",
+            json=payload,
+        )
+        assert response.status_code == 201, response.json()
+        assert response.json()["id"] is not None
+        assert qs.count() == 1
+        sale = qs.filter(Sale.id == UUID(response.json()["id"])).first()
+        assert sale is not None
+        assert len(sale.items) == len(payload["items"])
+
+    @pytest.mark.skip_mock_inventory_client
+    def test_not_enough_inventory(
+        self, auth_client: TestClient, payload: Dict, db_session: Session
+    ):
+
+        def reserve_stock(
+            _self,
+            payload: Dict,
+        ) -> Dict:
+            return {
+                "error": "Not enough stock",
+            }
+
+        with mock.patch(
+            "rpc_clients.inventory_client.InventoryClient.reserve_stock",
+            side_effect=reserve_stock,
+            autospec=True,
+        ):
+            response = auth_client.post(
+                "/api/v1/sales/sales/",
+                json=payload,
+            )
+        assert response.status_code == 422
+        assert response.json()["detail"] == {
+            "error": "Not enough stock",
+        }
+        assert db_session.query(Sale).count() == 0
+
+
+class TestCreaeSaleAsSeller(CreateSaleMixin):
+
+    @pytest.fixture
+    def auth_user_uuid(self):
+
+        return fake.uuid4(cast_to=None)
+
+    @pytest.fixture
+    def client_uuid(self, db_session: Session, auth_user_uuid: UUID) -> UUID:
+        client_id = fake.uuid4(cast_to=None)
+        relation = ClientForSeller(
+            client_id=client_id, seller_id=auth_user_uuid
+        )
+        db_session.add(relation)
+        db_session.commit()
+        return client_id
+
+    @pytest.fixture
+    def payload(self, base_payload: Dict, client_uuid: UUID) -> Dict:
+        payload = copy.deepcopy(base_payload)
+        payload["client_id"] = str(client_uuid)
+        return payload
+
+
+class TestCreateSaleAsClient(CreateSaleMixin):
+    @pytest.fixture(autouse=True)
+    def setup(
+        self,
+        mock_users_client: Callable,
+    ):
+        """
+        Fixture to set up the test environment.
+        """
+        # Create a client for the seller
+        with mock_users_client(as_seller=False):
+            yield
+
+    @pytest.fixture
+    def auth_user_uuid(self):
+        return fake.uuid4(cast_to=None)
+
+    @pytest.fixture
+    def is_user_seller(self) -> bool:
+        return False

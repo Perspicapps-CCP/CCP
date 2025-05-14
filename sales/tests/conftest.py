@@ -1,6 +1,7 @@
 # Mock database
 import uuid
-from typing import Any, Generator, List
+from contextlib import contextmanager
+from typing import Any, Callable, Generator, List
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -34,6 +35,47 @@ def lite_engine() -> Engine:
     )
 
     return engine
+
+
+@pytest.fixture(autouse=True)
+def mock_order_number_sequence():
+    """
+    Mock a sequence for the order_number field in SQLite.
+    """
+    counter = 0
+
+    def get_next_order_number():
+        nonlocal counter
+        counter += 1
+        return counter
+
+    def _create_sale(
+        db: Session,
+        sale: Any,
+    ) -> Any:
+        """
+        Mock the create_sale function to return a
+          sale with a mocked order number.
+        """
+        sale.order_number = get_next_order_number()
+        db.add(sale)
+        db.flush()
+        db.refresh(sale)
+        return sale
+
+    with (
+        mock.patch(
+            "sales.crud.create_sale",
+            side_effect=_create_sale,
+            autospec=True,
+        ),
+        mock.patch(
+            "sales.seed_data.create_sale",
+            side_effect=_create_sale,
+            autospec=True,
+        ),
+    ):
+        yield
 
 
 @pytest.fixture(autouse=True)
@@ -75,6 +117,7 @@ def db_session(
         autocommit=False, autoflush=False, bind=lite_engine
     )
     session = TestingSessionLocal(bind=connection)
+
     try:
         yield session  # use the session in tests.
     finally:
@@ -169,54 +212,65 @@ def generate_fake_products(product_ids) -> List[ProductSchema]:
 
 
 @pytest.fixture(autouse=True)
-def mock_users_rpc_client(request):
+def mock_users_client():
+
+    @contextmanager
+    def _mock_users_client(as_seller: bool):
+        def get_sellers(seller_ids=None):
+            """
+            Mock the get_sellers method to return fake sellers.
+            """
+            if seller_ids is None:
+                seller_ids = [uuid.uuid4() for _ in range(5)]
+            return generate_fake_sellers(seller_ids)
+
+        def get_clients(client_ids=None):
+            """
+            Mock the get_clients method to return fake clients.
+            """
+            if client_ids is None:
+                client_ids = [uuid.uuid4() for _ in range(5)]
+            return generate_fake_sellers(client_ids, with_address=True)
+
+        def auth_user(bearer: str):
+            if bearer == "invalid_token":
+                return None
+
+            auth_user = generate_fake_sellers(
+                [uuid.UUID(bearer)], with_address=True
+            )[0]
+            is_client = not as_seller
+            return UserAuthSchema(
+                **auth_user.model_dump(),
+                is_active=True,
+                is_seller=not is_client,
+                is_client=is_client,
+            )
+
+        with mock.patch.multiple(
+            "rpc_clients.users_client.UsersClient",
+            get_sellers=mock.Mock(side_effect=get_sellers),
+            get_clients=mock.Mock(side_effect=get_clients),
+            auth_user=mock.Mock(side_effect=auth_user),
+        ):
+            yield
+
+    return _mock_users_client
+
+
+@pytest.fixture(autouse=True)
+def mock_users_rpc_client(request, mock_users_client: Callable):
     """
     Mock the UsersClient to avoid actual RPC calls.
     """
     if request.node.get_closest_marker("skip_mock_users"):
         yield  # Skip the fixture
         return
-
-    def get_sellers(seller_ids=None):
-        """
-        Mock the get_sellers method to return fake sellers.
-        """
-        if seller_ids is None:
-            seller_ids = [uuid.uuid4() for _ in range(5)]
-        return generate_fake_sellers(seller_ids)
-
-    def get_clients(client_ids=None):
-        """
-        Mock the get_clients method to return fake clients.
-        """
-        if client_ids is None:
-            client_ids = [uuid.uuid4() for _ in range(5)]
-        return generate_fake_sellers(client_ids, with_address=True)
-
-    def auth_user(bearer: str):
-        if bearer == "invalid_token":
-            return None
-
-        auth_user = generate_fake_sellers(
-            [uuid.UUID(bearer)], with_address=True
-        )[0]
-        is_client = bool(
-            request.node.get_closest_marker("mock_auth_as_client")
-        )
-        return UserAuthSchema(
-            **auth_user.model_dump(),
-            is_active=True,
-            is_seller=not is_client,
-            is_client=is_client,
-        )
-
-    with mock.patch.multiple(
-        "rpc_clients.users_client.UsersClient",
-        get_sellers=mock.Mock(side_effect=get_sellers),
-        get_clients=mock.Mock(side_effect=get_clients),
-        auth_user=mock.Mock(side_effect=auth_user),
-    ):
-        yield
+    as_seller = not bool(
+        request.node.get_closest_marker("mock_auth_as_client")
+    )
+    with mock_users_client(as_seller=as_seller) as mock_client:
+        yield mock_client
 
 
 @pytest.fixture(autouse=True)
@@ -247,10 +301,30 @@ def mock_inventory_inventory_client(request):
     Mock the InventoryClient to avoid actual RPC calls.
     """
     if request.node.get_closest_marker("skip_mock_inventory_client"):
+        yield
         return
 
+    def reserve_stock(_self, payload):
+        """
+        Mock the reserve_stock method to return a success response.
+        """
+        return {
+            "order_number": payload["order_number"],
+            "sale_id": payload["sale_id"],
+            "items": [
+                {
+                    "product_id": item["product_id"],
+                    "warehouse_id": fake.uuid4(),
+                    "quantity": item["quantity"],
+                    "last_updated": fake.date_time().isoformat(),
+                }
+                for item in payload["items"]
+            ],
+        }
+
     with mock.patch(
-        "rpc_clients.inventory_client.InventoryClient",
+        "rpc_clients.inventory_client.InventoryClient.reserve_stock",
+        side_effect=reserve_stock,
         autospec=True,
     ):
         yield
@@ -263,11 +337,20 @@ def mock_logistic_client(request):
     """
 
     if request.node.get_closest_marker("skip_mock_logistic_client"):
+        yield
         return
 
-    with mock.patch(
-        "rpc_clients.logistic_client.LogisticClient.get_deliveries",
-        autospec=True,
+    def send_pending_sales_to_delivery(_self, payload):
+        """
+        Mock the send_pending_sales_to_delivery
+          method to return a success response.
+        """
+        return {"status": "success", "message": "Sales sent to delivery."}
+
+    with mock.patch.multiple(
+        "rpc_clients.logistic_client.LogisticClient",
+        get_deliveries=mock.MagicMock(),
+        send_pending_sales_to_delivery=send_pending_sales_to_delivery,
     ):
         yield
 

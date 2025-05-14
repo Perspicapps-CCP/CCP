@@ -120,6 +120,8 @@ class CreateSaleSchema(BaseModel):
         user: UserAuthSchema = context.get("user")
         if user.is_seller and not self.client_id:
             raise ValueError("Client ID is required for sellers.")
+        if user.is_client:
+            self.client_id = user.id
         return self
 
 
