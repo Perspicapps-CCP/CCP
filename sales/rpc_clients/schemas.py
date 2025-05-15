@@ -81,6 +81,7 @@ class DeliverySchema(BaseModel):
     diver_name: str
     warehouse: WarehouseSchema
     delivery_status: str
+    delivery_date: datetime.datetime
     created_at: datetime.datetime
     updated_at: Optional[datetime.datetime]
     orders: List[DeliveryItemSchema]
