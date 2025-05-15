@@ -95,6 +95,7 @@ def deliveries_to_aggregation(
             updated_at=delivery.updated_at,
             orders=[],
             id=delivery.id,
+            delivery_date=delivery.delivery_date,
         )
 
         for item, address in get_delivery_items(db, delivery.id):

@@ -30,6 +30,14 @@ def _sale_to_schema(
     deliveries = [
         deliveries.get(delivery.delivery_id) for delivery in sale.deliveries
     ]
+    for delivery in deliveries:
+        if delivery is None:
+            continue
+        delivery.orders = [
+            order
+            for order in delivery.orders
+            if order.order_number == str(sale.id)
+        ]
 
     return SaleDetailSchema(
         id=sale.id,

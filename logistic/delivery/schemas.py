@@ -57,6 +57,7 @@ class DeliveryCreateResponseSchema(BaseModel):
 
 class DeliveryDetailGetResponseSchema(DeliveryCreateResponseSchema):
     orders: List[DeliveryItemGetResponseSchema]
+    delivery_date: Optional[datetime.datetime]
     id: uuid.UUID
 
     model_config = ConfigDict(from_attributes=True)
