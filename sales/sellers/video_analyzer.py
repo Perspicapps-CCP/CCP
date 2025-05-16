@@ -100,7 +100,6 @@ class VideoAnalyzer:
                     if frame.normalized_bounding_box:
                         box = frame.normalized_bounding_box
                         position = {
-                            "time_offset": frame.time_offset.total_seconds(),
                             "box": {
                                 "left": round(box.left, 2),
                                 "top": round(box.top, 2),
@@ -223,7 +222,7 @@ class VideoAnalyzer:
             # Define level names
             level_names = {
                 0: "Nivel Superior",
-                1: "Nivel Medio" if shelf_levels == 3 else f"Nivel {level+1}",
+                1: "Nivel Medio",
                 2: "Nivel Inferior",
             }
 

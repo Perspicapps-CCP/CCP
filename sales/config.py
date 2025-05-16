@@ -5,11 +5,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Environment variables
-DB_USER = os.getenv("DB_USER", "postgres")
+DB_USER = os.getenv("DB_USER", "sales")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "postgres")
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "5432")
-DB_NAME = os.getenv("DB_NAME", "sales")
+DB_NAME = os.getenv("DB_NAME", "sales_db")
 USERS_PATH = os.getenv("USERS_PATH")
 BROKER_HOST = os.getenv("BROKER_HOST", "localhost")
 GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME", "ccp-files-storage")

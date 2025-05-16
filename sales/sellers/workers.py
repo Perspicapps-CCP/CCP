@@ -40,25 +40,25 @@ celery_app.conf.update(
 
 celery_app.conf.beat_schedule = {
     "generate-video-analysis": {
-        "task": "sales.workers.generate_video_analysis",
+        "task": "sellers.workers.generate_video_analysis",
         "schedule": timedelta(minutes=2),
         "options": {
             "queue": "ccp.video_analysis",
             "expires": 300,
         },
     },
-    "generate-video-recomendattions": {
-        "task": "sales.workers.generate_video_recomendattions",
+    "generate-video-recommendations": {
+        "task": "sellers.workers.generate_video_recommendations",
         "schedule": timedelta(minutes=2),
         "options": {
-            "queue": "ccp.video_recomendattions",
+            "queue": "ccp.video_recommendations",
             "expires": 300,
         },
     },
 }
 
 
-@celery_app.task(name="sales.workers.generate_video_analysis")
+@celery_app.task(name="sellers.workers.generate_video_analysis")
 def generate_video_analysis():
     db = next(get_db())
 
@@ -81,8 +81,8 @@ def generate_video_analysis():
         logger.error(f"Error generating video analysis: {e}")
 
 
-@celery_app.task(name="sales.workers.generate_video_recomendattions")
-def generate_video_recomendattions():
+@celery_app.task(name="sellers.workers.generate_video_recommendations")
+def generate_video_recommendations():
     db = next(get_db())
 
     try:

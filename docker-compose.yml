@@ -233,7 +233,7 @@ services:
 
   sales_broker_consumer:
     build: ./sales
-    command: python -u start_broker_consumer.py
+    command: bash -c "./start_workers.sh"
     container_name: sales_broker_consumer
     environment:
       DB_USER: sales

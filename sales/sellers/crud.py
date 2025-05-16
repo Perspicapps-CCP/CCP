@@ -178,4 +178,5 @@ def update_video_status(
         video.recommendations = recommendations
 
     db.commit()
+    db.refresh(video)
     return video

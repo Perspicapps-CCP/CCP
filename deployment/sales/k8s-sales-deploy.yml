@@ -113,7 +113,7 @@ spec:
       containers:
       - name: sales-broker-consumer
         image: us-central1-docker.pkg.dev/ccp-perspicapps/ccp-images/sales:latest
-        command: ["python", "-u", "start_broker_consumer.py"]
+        command: ["bash", "-c", "./start_workers.sh"]
         env:
         - name: DB_USER
           valueFrom:
