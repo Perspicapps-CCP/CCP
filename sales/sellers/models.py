@@ -96,7 +96,7 @@ class ClientVideo(Base):
     client_id = Column(UUID(as_uuid=True))
     title = Column(String(100), nullable=False)
     description = Column(String(500), nullable=False)
-    recomendations = Column(String(3000), nullable=True)
+    recommendations = Column(String(20000), nullable=True)
     url = Column(String(500), nullable=False)
     status = Column(
         Enum(VideoStatusEnum),

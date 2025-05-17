@@ -156,7 +156,7 @@ async def upload_client_video(
     """
     try:
         filename = video.filename
-        videoPath = f"videos/{client_id}/{filename}_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}"
+        videoPath = f"videos/{client_id}/{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}_{filename}"
         blob = bucket.blob(videoPath)
         blob.upload_from_file(video.file)
         client_video = services.save_client_video(
