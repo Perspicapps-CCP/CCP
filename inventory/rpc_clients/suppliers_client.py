@@ -15,7 +15,7 @@ class SuppliersClient(BaseRPCClient):
         self, product_ids: Optional[List[UUUID]]
     ) -> List[ProductSchema]:
         """
-        Get user by id.
+         Fetch products by their ids.
         """
         payload = {
             "product_ids": (
@@ -32,7 +32,7 @@ class SuppliersClient(BaseRPCClient):
         self, product_codes: List[str]
     ) -> List[ProductSchema]:
         """
-        Get user by id.
+        Fetch products by their codes.
         """
         payload = {"product_codes": product_codes}
         response = self.call_broker("suppliers.get_products_by_code", payload)

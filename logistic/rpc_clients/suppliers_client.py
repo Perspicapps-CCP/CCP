@@ -15,7 +15,7 @@ class SuppliersClient(BaseRPCClient):
         self, product_ids: Optional[List[UUUID]]
     ) -> List[ProductSchema]:
         """
-        Get user by id.
+        Get products by their ids.
         """
         payload = {
             "product_ids": (
@@ -30,7 +30,7 @@ class SuppliersClient(BaseRPCClient):
 
     def get_product(self, product_id: UUUID) -> ProductSchema:
         """
-        Get user by id.
+        Get a product by its id.
         """
         product = self.get_products([product_id])
         if not product:
