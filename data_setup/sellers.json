@@ -1,0 +1,82 @@
+[
+  {
+    "full_name": "María Martínez",
+    "email": "maría.martínez@test.com",
+    "id_type": "CC",
+    "identification": "1567514745",
+    "phone": "3183216412",
+    "username": "royjohn"
+  },
+  {
+    "full_name": "Santiago García",
+    "email": "santiago.garcía@test.com",
+    "id_type": "CC",
+    "identification": "407519901",
+    "phone": "3591796514",
+    "username": "henrymichelle"
+  },
+  {
+    "full_name": "Julián Castro",
+    "email": "julián.castro@test.com",
+    "id_type": "CC",
+    "identification": "8284144159",
+    "phone": "3434983311",
+    "username": "michael62"
+  },
+  {
+    "full_name": "Natalia Hernández",
+    "email": "natalia.hernández@test.com",
+    "id_type": "CC",
+    "identification": "8778351823",
+    "phone": "3382619177",
+    "username": "haysjohn"
+  },
+  {
+    "full_name": "Laura Morales",
+    "email": "laura.morales@test.com",
+    "id_type": "CC",
+    "identification": "1793028437",
+    "phone": "3090020194",
+    "username": "davidsonkatelyn"
+  },
+  {
+    "full_name": "Santiago Gómez",
+    "email": "santiago.gómez@test.com",
+    "id_type": "CC",
+    "identification": "5579206504",
+    "phone": "3591703153",
+    "username": "jennykennedy"
+  },
+  {
+    "full_name": "Julián Vargas",
+    "email": "julián.vargas@test.com",
+    "id_type": "CC",
+    "identification": "4436176524",
+    "phone": "3065451467",
+    "username": "pwelch"
+  },
+  {
+    "full_name": "Carlos García",
+    "email": "carlos.garcía@test.com",
+    "id_type": "CC",
+    "identification": "4151276342",
+    "phone": "3183817161",
+    "username": "dkane"
+  },
+  {
+    "full_name": "Carlos Morales",
+    "email": "carlos.morales@test.com",
+    "id_type": "CC",
+    "identification": "8423547077",
+    "phone": "3290629991",
+    "username": "davisgeorge"
+  },
+  {
+    "full_name": "Natalia Gómez",
+    "email": "natalia.gómez@test.com",
+    "id_type": "CC",
+    "identification": "9568429142",
+    "phone": "3243872081",
+    "username": "davidhamilton"
+  }
+]

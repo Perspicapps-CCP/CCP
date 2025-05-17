@@ -7,7 +7,10 @@ import pytest
 from faker import Faker
 from sqlalchemy.orm import Session
 
-from manufacturers.consumers import GetProductsConsumer
+from manufacturers.consumers import (
+    GetProductsByCodeConsumer,
+    GetProductsConsumer,
+)
 from manufacturers.models import (
     IdentificationType,
     Manufacturer,
@@ -57,7 +60,11 @@ def products_in_db(
     ]
     db_session.add_all(products)
     db_session.commit()
-    return products
+    return list(
+        db_session.query(ManufacturerProduct)
+        .order_by(ManufacturerProduct.updated_at.desc())
+        .all()
+    )
 
 
 class TestGetProductsConsumer:
@@ -147,3 +154,86 @@ class TestGetProductsConsumer:
 
         assert "products" in products_data
         assert len(products_data["products"]) == 0
+
+
+class TestGetProductsByCodeConsumer:
+    """
+    Test suite for the GetProductsByCodeConsumer class.
+    """
+
+    def test_invalid_payload(self):
+        """
+        Test GetProductsByCodeConsumer with an invalid payload.
+        """
+        consumer = GetProductsByCodeConsumer()
+        invalid_payload = {"invalid_key": "invalid_value"}
+
+        response = consumer.process_payload(invalid_payload)
+
+        assert "error" in response
+        assert isinstance(response["error"], list)
+        assert response["error"][0]["loc"] == ("product_codes",)
+        assert response["error"][0]["msg"] == "Field required"
+
+    def test_valid_payload(
+        self, db_session: Session, products_in_db: List[ManufacturerProduct]
+    ):
+        """
+        Test GetProductsByCodeConsumer with
+          a valid payload and verify the data.
+        """
+        consumer = GetProductsByCodeConsumer()
+        select_products = products_in_db[:2]  # Select first two products
+
+        # Prepare a valid payload with product codes
+        product_codes = [product.code for product in select_products]
+        valid_payload = {"product_codes": product_codes}
+
+        with mock.patch("manufacturers.consumers.SessionLocal") as get_session:
+            get_session.return_value = db_session
+            products_data = consumer.process_payload(valid_payload)
+            products_data = json.loads(products_data)
+
+        assert "products" in products_data
+        products_data = products_data["products"]
+
+        assert len(products_data) == len(select_products)
+        for product, product_data in zip(select_products, products_data):
+            assert product.code == product_data["product_code"]
+            assert product.name == product_data["name"]
+            assert str(product.price) == product_data["price"]
+
+    def test_list_missing_products(self, db_session: Session):
+        """
+        Test GetProductsByCodeConsumer with codes that do not exist.
+        """
+        consumer = GetProductsByCodeConsumer()
+        valid_payload = {
+            "product_codes": [
+                "NONEXISTENT1",
+                "NONEXISTENT2",
+                "NONEXISTENT3",
+            ]
+        }
+        with mock.patch("manufacturers.consumers.SessionLocal") as get_session:
+            get_session.return_value = db_session
+            products_data = consumer.process_payload(valid_payload)
+            products_data = json.loads(products_data)
+
+        assert "products" in products_data
+        assert len(products_data["products"]) == 0
+
+    @pytest.mark.usefixtures("products_in_db")
+    def test_empty_products(self, db_session: Session):
+        """
+        Test GetProductsByCodeConsumer with an empty list of product codes.
+        """
+        consumer = GetProductsByCodeConsumer()
+        valid_payload = {"product_codes": []}
+
+        with mock.patch("manufacturers.consumers.SessionLocal") as get_session:
+            get_session.return_value = db_session
+            products_data = consumer.process_payload(valid_payload)
+            products_data = products_data
+
+        assert "error" in products_data

@@ -74,6 +74,7 @@ def get_products(
     db: Session,
     productsIds: Optional[List[str]] = None,
     manufacturer_id: Optional[UUID] = None,
+    codeIds: Optional[List[str]] = None,
 ) -> List[models.ManufacturerProduct]:
     query = db.query(models.ManufacturerProduct)
     if productsIds is not None:
@@ -82,6 +83,8 @@ def get_products(
         query = query.filter(
             models.ManufacturerProduct.manufacturer_id == manufacturer_id
         )
+    if codeIds is not None:
+        query = query.filter(models.ManufacturerProduct.code.in_(codeIds))
     return query.order_by(models.ManufacturerProduct.updated_at.desc()).all()
 
 

@@ -44,7 +44,7 @@ def csv_dummy_file() -> bytes:
     """Helper para crear un archivo CSV de prueba"""
     csv_file = io.StringIO()
     writer = csv.writer(csv_file)
-    writer.writerow(['product_id', 'quantity'])
+    writer.writerow(['product_code', 'quantity'])
     test_data = [
         [fake.uuid4(), fake.random_int(min=1, max=100)],
         [fake.uuid4(), fake.random_int(min=1, max=100)],

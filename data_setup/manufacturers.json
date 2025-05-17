@@ -1,0 +1,122 @@
+[
+  {
+    "manufacturer_name": "Acme Medical Devices",
+    "identification_type": "CE",
+    "identification_number": "59090",
+    "address": "196 Anderson Road, Taylorshire, IA 58355",
+    "contact_phone": "+1-162-005-5817x5027",
+    "email": "matthewmendez@scott.org"
+  },
+  {
+    "manufacturer_name": "Heidelberg Instruments GmbH",
+    "identification_type": "CE",
+    "identification_number": "185030",
+    "address": "USCGC Conrad, FPO AA 45514",
+    "contact_phone": "789-383-9335x13622",
+    "email": "usnyder@reeves.com"
+  },
+  {
+    "manufacturer_name": "Shenzhen Biotech Corp",
+    "identification_type": "CE",
+    "identification_number": "190343",
+    "address": "0021 Amy Orchard Suite 442, East Krystal, AL 38393",
+    "contact_phone": "001-357-216-1087x38898",
+    "email": "mleach@stevens-costa.info"
+  },
+  {
+    "manufacturer_name": "Meditronic Italia S.p.A.",
+    "identification_type": "CE",
+    "identification_number": "655110",
+    "address": "478 Eugene Prairie Suite 837, East Cherylburgh, GA 72821",
+    "contact_phone": "+1-998-443-8673x5714",
+    "email": "dmoore@richards-estes.com"
+  },
+  {
+    "manufacturer_name": "NovaCare Diagnostics Ltd.",
+    "identification_type": "CE",
+    "identification_number": "714746",
+    "address": "6835 Ethan Light Apt. 021, Johnsonton, MT 67259",
+    "contact_phone": "+1-463-646-3123x94878",
+    "email": "kjohnson@castillo.info"
+  },
+  {
+    "manufacturer_name": "TitanFit Sportswear",
+    "identification_type": "CE",
+    "identification_number": "971118",
+    "address": "553 Brian Mountains Apt. 470, Wilsonborough, DC 90041",
+    "contact_phone": "095-099-8875x096",
+    "email": "zcook@erickson.com"
+  },
+  {
+    "manufacturer_name": "ProGoal Equipment Inc.",
+    "identification_type": "CE",
+    "identification_number": "197441",
+    "address": "3568 Jessica Lane, East Christina, HI 72545",
+    "contact_phone": "434-415-3834x281",
+    "email": "juliemeyer@mcmahon-morgan.com"
+  },
+  {
+    "manufacturer_name": "Peak Performance Gear",
+    "identification_type": "CE",
+    "identification_number": "278840",
+    "address": "736 Mary Coves, Johnshire, ID 13670",
+    "contact_phone": "(825)507-2689x80095",
+    "email": "martinjuan@brown-brown.com"
+  },
+  {
+    "manufacturer_name": "GreenBite Organics",
+    "identification_type": "CE",
+    "identification_number": "691081",
+    "address": "7786 Lori Cliffs Apt. 744, East Samuel, IN 38141",
+    "contact_phone": "(545)864-1853x902",
+    "email": "kimberly42@cortez.com"
+  },
+  {
+    "manufacturer_name": "FreshHarvest Foods",
+    "identification_type": "CE",
+    "identification_number": "307804",
+    "address": "58023 Steele Motorway Suite 439, Cruzview, UT 07445",
+    "contact_phone": "293.555.7661x651",
+    "email": "cmartin@faulkner.info"
+  },
+  {
+    "manufacturer_name": "Tuscany Taste Co.",
+    "identification_type": "CE",
+    "identification_number": "853211",
+    "address": "3315 Tiffany Road, East Crystalville, RI 87249",
+    "contact_phone": "+1-255-241-6156x2195",
+    "email": "sandersrose@smith-nash.com"
+  },
+  {
+    "manufacturer_name": "GlobalSpice Ltd.",
+    "identification_type": "CE",
+    "identification_number": "663688",
+    "address": "829 Karen Vista, Delgadofort, ME 36845",
+    "contact_phone": "+1-565-366-6522",
+    "email": "johnsongarrett@johnson.com"
+  },
+  {
+    "manufacturer_name": "AutoCore Components",
+    "identification_type": "CE",
+    "identification_number": "80574",
+    "address": "5708 Brooke Cove Suite 900, Richardsonburgh, DC 31328",
+    "contact_phone": "001-772-395-8113x641",
+    "email": "gonzaleznicholas@manning.biz"
+  },
+  {
+    "manufacturer_name": "Skyline Drone Systems",
+    "identification_type": "CE",
+    "identification_number": "890156",
+    "address": "99394 Matthew Garden, Port Ariel, AL 81862",
+    "contact_phone": "(873)256-4739x6196",
+    "email": "robertawhite@lee.com"
+  },
+  {
+    "manufacturer_name": "NeoSmart Home Inc.",
+    "identification_type": "CE",
+    "identification_number": "280989",
+    "address": "Unit 9034 Box 6429, DPO AP 96397",
+    "contact_phone": "(378)898-0324x661",
+    "email": "fbeasley@burnett.com"
+  }
+]

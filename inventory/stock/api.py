@@ -119,7 +119,7 @@ async def upload_inventory_csv(
         s = StringIO(contents.decode("utf-8"))
         df = pd.read_csv(s)
 
-        required_columns = ["product_id", "quantity"]
+        required_columns = ["product_code", "quantity"]
         if not all(column in df.columns for column in required_columns):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -131,6 +131,13 @@ async def upload_inventory_csv(
         successful_records = 0
         failed_records = 0
 
+        products = {
+            p.product_code: p
+            for p in suppliers_client.get_products_by_code(
+                [record["product_code"] for record in inventory_records]
+            )
+        }
+
         for record in inventory_records:
             try:
                 # Validar que la cantidad sea positiva
@@ -139,14 +146,18 @@ async def upload_inventory_csv(
                     continue
 
                 # Validar que el producto exista
-                product = suppliers_client.get_products([record["product_id"]])
-                if not product or len(product) == 0:
+                product = products.get(record["product_code"])
+                if not product:
                     failed_records += 1
+                    print(
+                        "The product does not exist: "
+                        f"{record['product_code']}"
+                    )
                     continue
-
+                product_id = product.id
                 # Buscar si ya existe el producto en la bodega
                 existing_stock = services.get_stock(
-                    db, warehouse_id, UUID(record["product_id"])
+                    db, warehouse_id, product_id
                 )
 
                 if existing_stock:
@@ -154,7 +165,7 @@ async def upload_inventory_csv(
                     services.increase_stock(
                         db,
                         warehouse_id=warehouse_id,
-                        product_id=UUID(record["product_id"]),
+                        product_id=product_id,
                         quantity=record["quantity"],
                     )
                 else:
@@ -162,12 +173,13 @@ async def upload_inventory_csv(
                     services.create_stock(
                         db,
                         warehouse_id=warehouse_id,
-                        product_id=UUID(record["product_id"]),
+                        product_id=product_id,
                         quantity=record["quantity"],
                     )
 
                 successful_records += 1
-            except Exception:
+            except Exception as e:
+                print(f"Error processing record {record}: {str(e)}")
                 failed_records += 1
                 continue
 

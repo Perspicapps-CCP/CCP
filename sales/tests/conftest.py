@@ -63,17 +63,10 @@ def mock_order_number_sequence():
         db.refresh(sale)
         return sale
 
-    with (
-        mock.patch(
-            "sales.crud.create_sale",
-            side_effect=_create_sale,
-            autospec=True,
-        ),
-        mock.patch(
-            "sales.seed_data.create_sale",
-            side_effect=_create_sale,
-            autospec=True,
-        ),
+    with mock.patch(
+        "sales.crud.create_sale",
+        side_effect=_create_sale,
+        autospec=True,
     ):
         yield
 

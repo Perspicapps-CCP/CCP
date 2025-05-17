@@ -1,12 +1,15 @@
-import uuid
 from datetime import datetime, timedelta
 
+from faker import Faker
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from rpc_clients.users_client import UsersClient
 
 from .models import Route, Stop
+
+fake = Faker()
+Faker.seed(0)
 
 
 def seed_routes(db: Session):
@@ -50,7 +53,7 @@ def seed_routes(db: Session):
         for i in range(90):
             # Create a route for the seller
             route = Route(
-                id=uuid.uuid4(),
+                id=fake.uuid4(cast_to=None),
                 date=datetime.now() + timedelta(days=i),
                 seller_id=seller_id,
             )
@@ -61,7 +64,7 @@ def seed_routes(db: Session):
                 if not client.address:
                     continue
                 stop = Stop(
-                    id=uuid.uuid4(),
+                    id=fake.uuid4(cast_to=None),
                     route_id=route.id,
                     client_id=client.id,
                 )
