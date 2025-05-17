@@ -1,0 +1,72 @@
+[
+  {
+    "warehouse_name": "Centro Logístico Parker",
+    "country": "Colombia",
+    "city": "Bogotá",
+    "address": "Carrera 30 #107-41, Chapinero, Bogotá, Colombia",
+    "phone": "6016673778"
+  },
+  {
+    "warehouse_name": "Centro de Acopio Montoya",
+    "country": "Colombia",
+    "city": "Bogotá",
+    "address": "Carrera 15 #61-83, Engativá, Bogotá, Colombia",
+    "phone": "3019015425"
+  },
+  {
+    "warehouse_name": "Centro Logístico Salazar",
+    "country": "Colombia",
+    "city": "Bogotá",
+    "address": "Calle 72 #82-87, Chapinero, Bogotá, Colombia",
+    "phone": "3154053966"
+  },
+  {
+    "warehouse_name": "Centro Logístico Jones",
+    "country": "Colombia",
+    "city": "Bogotá",
+    "address": "Carrera 30 #135-27, Kennedy, Bogotá, Colombia",
+    "phone": "6013346044"
+  },
+  {
+    "warehouse_name": "Terminal de Almacenamiento Arias",
+    "country": "Colombia",
+    "city": "Bogotá",
+    "address": "Calle 72 #116-18, Fontibón, Bogotá, Colombia",
+    "phone": "6017494030"
+  },
+  {
+    "warehouse_name": "Plataforma de Distribución Wright",
+    "country": "Colombia",
+    "city": "Bogotá",
+    "address": "Carrera 15 #111-55, Suba, Bogotá, Colombia",
+    "phone": "3145098001"
+  },
+  {
+    "warehouse_name": "Terminal de Almacenamiento Norris",
+    "country": "Colombia",
+    "city": "Bogotá",
+    "address": "Avenida El Dorado #32-7, Usaquén, Bogotá, Colombia",
+    "phone": "6017789648"
+  },
+  {
+    "warehouse_name": "Terminal de Almacenamiento Wilson",
+    "country": "Colombia",
+    "city": "Bogotá",
+    "address": "Calle 13 #6-21, Usaquén, Bogotá, Colombia",
+    "phone": "6016746874"
+  },
+  {
+    "warehouse_name": "Almacén Smith",
+    "country": "Colombia",
+    "city": "Bogotá",
+    "address": "Calle 80 #64-27, Usaquén, Bogotá, Colombia",
+    "phone": "3107866773"
+  },
+  {
+    "warehouse_name": "Terminal de Almacenamiento Cervantes",
+    "country": "Colombia",
+    "city": "Bogotá",
+    "address": "Calle 80 #4-64, Teusaquillo, Bogotá, Colombia",
+    "phone": "3117935296"
+  }
+]

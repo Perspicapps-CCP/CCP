@@ -125,6 +125,17 @@ class GetProductsSchema(BaseModel):
     product_ids: Optional[List[uuid.UUID]]
 
 
+class GetProductsByCodeSchema(BaseModel):
+    product_codes: List[NonEmptyStr]
+
+    @field_validator("product_codes")
+    @classmethod
+    def validate_product_codes(cls, value):
+        if not value:
+            raise ValueError("product_codes cannot be empty")
+        return value
+
+
 class GetProductsResponseSchema(BaseModel):
     products: List[ResponseProductDetailSchema]
 

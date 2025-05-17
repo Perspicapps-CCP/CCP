@@ -28,6 +28,19 @@ class SuppliersClient(BaseRPCClient):
             for products in response["products"]
         ]
 
+    def get_products_by_code(
+        self, product_codes: List[str]
+    ) -> List[ProductSchema]:
+        """
+        Get user by id.
+        """
+        payload = {"product_codes": product_codes}
+        response = self.call_broker("suppliers.get_products_by_code", payload)
+        return [
+            ProductSchema.model_validate(products)
+            for products in response["products"]
+        ]
+
     def get_all_products(self) -> List[ProductSchema]:
         """
         Get all products.

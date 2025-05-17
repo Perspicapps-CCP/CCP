@@ -62,6 +62,7 @@ def seed_delivery_data(db: Session):
                 ),
             )
             create_driver(db, driver)
+    return
     if db.query(DeliveryStop).count() > 0:
         return
 

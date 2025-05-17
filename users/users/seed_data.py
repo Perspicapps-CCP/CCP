@@ -9,18 +9,20 @@ from sqlalchemy.orm import Session
 from .auth import get_password_hash
 from .models import Address, RoleEnum, User, IdTypeEnum
 
+fake = faker.Faker()
+faker.Faker.seed(0)
+
 
 def seed_other_clients(db: Session, total=10):
 
     with open("users/seed_addresses.json", "r") as file:
         data = json.load(file)
-    fake = faker.Faker()
     users = []
     addresses_data = cycle(data)
     addresses = []
     for _i in range(total):
         user = User(
-            id=uuid.uuid4(),
+            id=fake.uuid4(cast_to=None),
             username=fake.user_name(),
             hashed_password=get_password_hash("client_password"),
             full_name=fake.name(),
@@ -38,7 +40,7 @@ def seed_other_clients(db: Session, total=10):
     for user in users:
         address_data = next(addresses_data)
         address = Address(
-            id=uuid.uuid4(),
+            id=fake.uuid4(cast_to=None),
             user_id=user.id,
             line=address_data["line"],
             neighborhood=address_data["neighborhood"],
@@ -64,7 +66,7 @@ def create_users(db: Session):
         return
     users = [
         User(
-            id=uuid.uuid4(),
+            id=fake.uuid4(cast_to=None),
             username="staff_user",
             hashed_password=get_password_hash("staff_user_password"),
             full_name="Staff User",
@@ -73,7 +75,7 @@ def create_users(db: Session):
             email="staff_user@test.com",
         ),
         User(
-            id=uuid.uuid4(),
+            id=fake.uuid4(cast_to=None),
             username="seller_user",
             hashed_password=get_password_hash("seller_user_password"),
             full_name="Seller User",
@@ -83,7 +85,7 @@ def create_users(db: Session):
             phone="2345678901",
         ),
         User(
-            id=uuid.uuid4(),
+            id=fake.uuid4(cast_to=None),
             username="client_user",
             hashed_password=get_password_hash("client_user_password"),
             full_name="client User",

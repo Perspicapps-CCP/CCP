@@ -409,6 +409,8 @@ def test_export_sales_as_csv(client: TestClient, seed_sales):
         "Order Number",
         "Seller ID",
         "Seller Name",
+        "Client ID",
+        "Client Name",
         "Total Value",
         "Currency",
         "Sale At",
@@ -417,10 +419,11 @@ def test_export_sales_as_csv(client: TestClient, seed_sales):
         row = next(csv_reader)
         assert row[0] == str(sale.id)
         assert row[1] == str(sale.order_number)
-        assert row[2] == str(sale.seller_id)
-        assert row[4] == str(sale.total_value)
-        assert row[5] == sale.currency
-        assert row[6] == sale.created_at.isoformat()
+        assert row[2] == str(sale.seller_id) if sale.seller_id else ""
+        assert row[4] == str(sale.client_id) if sale.client_id else ""
+        assert row[6] == str(sale.total_value)
+        assert row[7] == sale.currency
+        assert row[8] == sale.created_at.isoformat()
 
     # Ensure no extra rows in the CSV
     with pytest.raises(StopIteration):
@@ -470,6 +473,8 @@ def test_export_sales_as_csv_with_filters(client: TestClient, seed_sales):
         "Order Number",
         "Seller ID",
         "Seller Name",
+        "Client ID",
+        "Client Name",
         "Total Value",
         "Currency",
         "Sale At",

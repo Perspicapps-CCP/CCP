@@ -1,0 +1,38 @@
+[
+  {
+    "full_name": "Carlos Castro",
+    "email": "hallbrandon@test.com",
+    "id_type": "CC",
+    "identification": "4914951951",
+    "phone": "3159524741",
+    "username": "hallbrandon",
+    "password": "Pa$$w0rd!",
+    "address": {
+      "line": "Carrera 30 20-40",
+      "neighborhood": "Chapinero",
+      "city": "Bogotá",
+      "state": "Bogotá",
+      "country": "Colombia",
+      "latitude": 4.710989,
+      "longitude": -74.07209
+    }
+  },
+  {
+    "full_name": "Santiago García",
+    "email": "ncook@test.com",
+    "id_type": "CC",
+    "identification": "5697862780",
+    "phone": "3031769391",
+    "username": "ncook",
+    "password": "Pa$$w0rd!",
+    "address": {
+      "line": "Calle 72 97-25",
+      "neighborhood": "Barrios Unidos",
+      "city": "Bogotá",
+      "state": "Bogotá",
+      "country": "Colombia",
+      "latitude": 4.710989,
+      "longitude": -74.07209
+    }
+  }
+]

@@ -6,7 +6,11 @@ from database import SessionLocal
 from seedwork.base_consumer import BaseConsumer
 
 from .mappers import product_to_schema
-from .schemas import GetProductsResponseSchema, GetProductsSchema
+from .schemas import (
+    GetProductsResponseSchema,
+    GetProductsSchema,
+    GetProductsByCodeSchema,
+)
 from .services import get_products
 
 
@@ -37,6 +41,49 @@ class GetProductsConsumer(BaseConsumer):
                     key=lambda x: (
                         products_schema.product_ids.index(x.id)
                         if x.id in products_schema.product_ids
+                        else -1
+                    )
+                )
+            return GetProductsResponseSchema.model_validate(
+                {
+                    "products": [
+                        product_to_schema(product) for product in products
+                    ]
+                }
+            ).model_dump_json()
+        except ValidationError as e:
+            return {"error": e.errors()}
+        except Exception as e:
+            return {"error": str(e)}
+        finally:
+            db.close()
+
+
+class GetProductsByCodeConsumer(BaseConsumer):
+    """
+    Consumer for getting sellers.
+    """
+
+    def __init__(self):
+        super().__init__(queue="suppliers.get_products_by_code")
+
+    def process_payload(self, payload: Dict) -> str | Dict:
+        """
+        Consume the data and get all sellers.
+
+        Args:
+            data (Dict): The incoming seller ids.
+        """
+        db = SessionLocal()
+        try:
+            products_schema = GetProductsByCodeSchema.model_validate(payload)
+            products = get_products(db, codeIds=products_schema.product_codes)
+            # Sort sellers by id position in payload
+            if products_schema.product_codes:
+                products.sort(
+                    key=lambda x: (
+                        products_schema.product_codes.index(x.id)
+                        if x.id in products_schema.product_codes
                         else -1
                     )
                 )

@@ -32,6 +32,9 @@ def seed_database(db: Session = None):
     db = db or SessionLocal()
     try:
         users_seed_data.create_users(db)
+    except Exception as e:
+        print(f"Error seeding database: {e}")
+        db.rollback()
     finally:
         db.close()
 

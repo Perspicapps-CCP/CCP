@@ -13,7 +13,6 @@ from plans.api import plans_router
 from routes.api import routes_router
 from routes.seed_data import seed_routes
 from sales.api import sales_router
-from sales.seed_data import seed_sales
 from sellers.api import sellers_router
 from sellers.seed_data import seed_seller_clients
 
@@ -40,8 +39,10 @@ def seed_database(db: Session = None):
     db = db or SessionLocal()
     try:
         seed_seller_clients(db)
-        seed_sales(db)
         seed_routes(db)
+    except Exception as e:
+        print(f"Error seeding database: {e}")
+        db.rollback()
     finally:
         db.close()
 

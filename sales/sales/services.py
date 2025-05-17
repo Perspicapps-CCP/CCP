@@ -79,6 +79,7 @@ def create_sale(
 
     # Create the sale items
     sale_items = []
+    total_value = 0
     for item in create_sale_schema.items:
         unit_price = products[item.product_id].price
         sale_item = models.SaleItem(
@@ -90,6 +91,7 @@ def create_sale(
         )
         crud.create_sale_item(db, sale_item)
         sale_items.append(sale_item)
+        total_value += sale_item.total_value
 
     inventory_order = InventoryClient().reserve_stock(
         {
@@ -146,6 +148,7 @@ def create_sale(
         raise exceptions.SaleCantBeCreated(
             "Logistic order failed",
         )
+    sale.total_value = total_value
     db.commit()
     db.refresh(sale)
     return sale
