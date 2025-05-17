@@ -75,4 +75,4 @@ class ResponseClientVideoSchema(BaseModel):
     status: str
     description: str
     url: str
-    recommendation: Optional[str] = None
+    recomendation: Optional[str] = None

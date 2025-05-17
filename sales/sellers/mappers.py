@@ -82,7 +82,7 @@ def client_video_to_schema(
         url=client_video.url.replace(
             "gs://", "https://storage.googleapis.com/"
         ),
-        recommendation=client_video.recommendations,
+        recomendation=client_video.recommendations,
     )
 
 
@@ -98,7 +98,7 @@ def list_client_video_to_schema(
             url=client_video.url.replace(
                 "gs://", "https://storage.googleapis.com/"
             ),
-            recommendation=client_video.recommendations,
+            recomendation=client_video.recommendations,
         )
         for client_video in list_client_videos
     ]

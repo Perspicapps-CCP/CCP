@@ -7,6 +7,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     Enum,
+    Text,
     UniqueConstraint,
     String,
     ForeignKey,
@@ -96,7 +97,7 @@ class ClientVideo(Base):
     client_id = Column(UUID(as_uuid=True))
     title = Column(String(100), nullable=False)
     description = Column(String(500), nullable=False)
-    recommendations = Column(String(20000), nullable=True)
+    recommendations = Column(Text, nullable=True)
     url = Column(String(500), nullable=False)
     status = Column(
         Enum(VideoStatusEnum),
