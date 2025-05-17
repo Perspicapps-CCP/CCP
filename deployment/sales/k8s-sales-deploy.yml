@@ -150,6 +150,25 @@ spec:
             configMapKeyRef:
               name: sales-config
               key: RESERVE_ITEMS_TOPIC
+        - name: GCS_BUCKET_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: sales-config
+              key: GCS_BUCKET_NAME
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: sales-secrets
+              key: GEMINI_API_KEY
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          valueFrom:
+            configMapKeyRef:
+              name: sales-config
+              key: GOOGLE_APPLICATION_CREDENTIALS
+        volumeMounts:
+        - name: gcp-key-volume
+          mountPath: /etc/gcp
+          readOnly: true
         resources:
           requests:
             cpu: "100m"
@@ -157,6 +176,14 @@ spec:
           limits:
             cpu: "200m"
             memory: "256Mi"
+      volumes:
+      - name: gcp-key-volume
+        secret:
+          secretName: gcp-bucket-sa-key
+          items:
+          - key: service-account-key.json
+            path: service-account-key.json
+
 ---
 # sales API
 apiVersion: apps/v1
