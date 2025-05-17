@@ -15,7 +15,7 @@ class SuppliersClient(BaseRPCClient):
         self, product_ids: Optional[List[UUUID]]
     ) -> List[ProductSchema]:
         """
-         Fetch products by their ids.
+        Fetch products by their ids.
         """
         payload = {
             "product_ids": (
