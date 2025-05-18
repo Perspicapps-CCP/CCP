@@ -83,6 +83,8 @@ def create_users(db: Session):
             role=RoleEnum.SELLER,
             email="seller_user@test.com",
             phone="2345678901",
+            identification=fake.ssn(),
+            id_type=IdTypeEnum.NIT,
         ),
         User(
             id=fake.uuid4(cast_to=None),

@@ -200,5 +200,8 @@ def calculate_ordered_route_stops():
             )
 
     except Exception as e:
+        db.rollback()
         logger.error(f"Error in calculate_ordered_route_stops task: {str(e)}")
+    finally:
+        db.close()
     return {"message": "Calculate ordered route task completed"}

@@ -15,3 +15,4 @@ def setup_db_events():
         product = services.get_product_aggregated(session, target.product_id)
         event = aggr_stock_event_to_schema("update_stock", product)
         publish_stock_change(event)
+        session.close()
