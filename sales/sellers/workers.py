@@ -78,7 +78,10 @@ def generate_video_analysis():
                 f"Video analysis generated for video: {video.id}. Saved to {analysis_path}"
             )
     except Exception as e:
+        db.rollback()
         logger.error(f"Error generating video analysis: {e}")
+    finally:
+        db.close()
 
 
 @celery_app.task(name="sellers.workers.generate_video_recommendations")
@@ -104,4 +107,7 @@ def generate_video_recommendations():
             )
             logger.info(f"Recommendations generated for video: {video.id}")
     except Exception as e:
+        db.rollback()
         logger.error(f"Error generating video recommendations: {e}")
+    finally:
+        db.close()

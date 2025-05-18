@@ -48,6 +48,8 @@ def create_user(
         phone=payload.phone,
         role=role,
         hashed_password="invalid_value",
+        identification=payload.identification,
+        id_type=payload.id_type,
     )
     return crud.create_user(db, user)
 

@@ -130,6 +130,10 @@ def test_create_seller(
     assert seller.username == seller_payload["username"]
     assert seller.email == seller_payload["email"]
     assert seller.role == RoleEnum.SELLER
+    assert seller.full_name == seller_payload["full_name"]
+    assert seller.phone == seller_payload["phone"]
+    assert seller.identification == seller_payload["identification"]
+    assert seller.id_type == seller_payload["id_type"]
 
 
 def test_create_seller_with_existing_fields(

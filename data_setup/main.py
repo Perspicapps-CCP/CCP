@@ -135,12 +135,16 @@ def create_warehouses(seller_token) -> list[str]:
 def load_inventory(seller_token, warehouse_ids, products):
     print("Loading inventory...")
 
+    products_per_warehouse = len(products) // len(warehouse_ids)
+
     for i, warehouse_id in enumerate(warehouse_ids):
-        # Select 10 random products
+        # Select some random products
         if i == 0:
             selected_products = products
         else:
-            selected_products = fake.random_choices(elements=products, length=15)
+            selected_products = fake.random_choices(
+                elements=products, length=products_per_warehouse
+            )
         output = io.StringIO()
         batch_file = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
         batch_file.writerow(["product_code", "quantity"])
@@ -333,6 +337,17 @@ def create_deliveries(staff_token, warehouse_ids):
     print("Deliveries created.")
 
 
+def list_warehouses(staff_token):
+    print("Listing warehouses...")
+    response = do_get_request(
+        f"{INVENTORY_BACKEND_URL}/warehouse",
+        auth_token=staff_token,
+    )
+    warehouse_ids = [warehouse["warehouse_id"] for warehouse in response]
+    print("Warehouses loaded.")
+    return warehouse_ids
+
+
 if __name__ == "__main__":
     # build some data that makes sense
     with open(PRODUCTS_FILE, "r") as products_file, open(
@@ -349,8 +364,9 @@ if __name__ == "__main__":
     seller_token, seller_user_id = auth_user("seller_user", "seller_user_password")
     client_token, client_user_id = auth_user("client_user", "client_user_password")
     manufacturers = load_manufacturers(staff_token, products)
+    seeded_warehouse_ids = list_warehouses(staff_token)
     warehouses = create_warehouses(staff_token)
-    load_inventory(staff_token, warehouses, products)
+    load_inventory(staff_token, seeded_warehouse_ids, products)
     load_sellers(staff_token)
     product_ids = get_all_product_ids(staff_token)
     seller_ids = get_all_seller_ids(staff_token)
